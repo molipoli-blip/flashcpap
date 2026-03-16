@@ -1,0 +1,78 @@
+/* Badge styles for duplicate labels */
+.hl-badge {
+  display: inline-block;
+  background: #007cba;
+  color: white;
+  font-size: 0.7em;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-left: 2px;
+  line-height: 1;
+  vertical-align: super;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid #005a87;
+  position: relative;
+  z-index: 2;
+}
+
+.hl-badge:hover {
+  background: #005a87;
+  border-color: #003d5c;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Badge highlighting when hovering related groups */
+.hl-badge[data-hl-group]:hover,
+.hl[data-hl-group]:hover ~ .hl-badge[data-hl-group],
+.hl-badge[data-hl-group]:hover ~ .hl[data-hl-group] {
+  outline: 2px solid #007cba;
+  outline-offset: 1px;
+}
+
+/* Group hover effects for badges */
+[data-hl-group="g1"]:hover,
+[data-hl-group="g1"]:hover ~ [data-hl-group="g1"],
+.hl-badge[data-hl-group="g1"]:hover ~ .hl[data-hl-group="g1"] {
+  outline: 2px solid var(--group-color, #007cba);
+  outline-offset: 1px;
+}
+
+/* Base highlight styles if not already defined */
+.hl {
+  padding: 0 2px;
+  border-radius: 2px;
+  position: relative;
+}
+
+.hl-label {
+  background-color: #fff2cc;
+  border: 1px solid #d6b656;
+}
+
+.hl-label-ghost {
+  background-color: rgba(255, 242, 204, 0.3);
+  border: 1px solid rgba(214, 182, 86, 0.3);
+}
+
+.hl-excl {
+  background-color: #ffcccc;
+  border: 1px solid #ff6666;
+}
+
+/* Color classes for different groups */
+.hl-g1 { border-color: #d6b656; }
+.hl-g2 { border-color: #70ad47; }
+.hl-g3 { border-color: #4472c4; }
+.hl-g4 { border-color: #c55a5a; }
+.hl-g5 { border-color: #70ad47; }
+.hl-g6 { border-color: #ffc000; }
+
+.hl-separator {
+  background-color: #e91e63;
+  color: white;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 0 4px;
+}

@@ -1,0 +1,908 @@
+{
+  "extName": {
+    "message": "FlashCPAP"
+  },
+  "extDescription": {
+    "message": "Analyze your CPAP reports (web and PDF) and generate a clear summary ready to copy."
+  },
+  "actionOpen": {
+    "message": "Open FlashCPAP"
+  },
+  "popupTitle": {
+    "message": "FlashCPAP"
+  },
+  "tabAnalyze": {
+    "message": "🧪 Analyze"
+  },
+  "tabSettings": {
+    "message": "⚙️ Settings"
+  },
+  "tabBugTitle": {
+    "message": "Report a bug"
+  },
+  "labelProvider": {
+    "message": "Provider:"
+  },
+  "toggleAutoLockUrl": {
+    "message": "Autolock URL"
+  },
+  "buttonAnalyzePage": {
+    "message": "Analyze page"
+  },
+  "titleResetAnalysis": {
+    "message": "Reset analysis"
+  },
+  "alertPageChanged": {
+    "message": "⚠️ The page changed. Click \"Analyze page\" to refresh."
+  },
+  "labelSummary": {
+    "message": "Summary:"
+  },
+  "toggleReadablePreview": {
+    "message": "Show readable preview"
+  },
+  "buttonCopySummary": {
+    "message": "Copy summary"
+  },
+  "titleCopySummary": {
+    "message": "Copy summary"
+  },
+  "placeholderSummary": {
+    "message": "The summary will appear here…"
+  },
+  "ariaSummaryPreview": {
+    "message": "Readable summary preview"
+  },
+  "labelAnalyzePdf": {
+    "message": "📄 Analyze a PDF file (optional):"
+  },
+  "hintAnalyzePdf": {
+    "message": "💡 If a file is selected, it will be analyzed instead of the web page."
+  },
+  "sectionCustomCheckboxes": {
+    "message": "📝 Custom checkboxes"
+  },
+  "ariaSettingsSubtabs": {
+    "message": "Settings subtabs"
+  },
+  "subtabGeneral": {
+    "message": "General"
+  },
+  "subtabInterpretation": {
+    "message": "Interpretation"
+  },
+  "subtabOrganization": {
+    "message": "Organization"
+  },
+  "buttonImportProvider": {
+    "message": "📥 Import provider"
+  },
+  "labelProviderSettings": {
+    "message": "Provider:"
+  },
+  "buttonAddProvider": {
+    "message": "+ Add provider"
+  },
+  "buttonRemoveProvider": {
+    "message": "🗑 Remove provider"
+  },
+  "buttonExportProvider": {
+    "message": "📤 Export"
+  },
+  "sectionTemplates": {
+    "message": "🧩 Templates"
+  },
+  "labelFreeNote": {
+    "message": "Free note:"
+  },
+  "placeholderFreeNote": {
+    "message": "Enter a free note…"
+  },
+  "toggleCompactFields": {
+    "message": "Show fields on one line (compact)"
+  },
+  "headingCustomCheckboxes": {
+    "message": "📝 Custom checkboxes"
+  },
+  "descCustomCheckboxes": {
+    "message": "Create checkboxes that appear in the Analyze tab and add text to the summary."
+  },
+  "buttonImportCheckboxes": {
+    "message": "📥 Import checkboxes (JSON)"
+  },
+  "buttonExportCheckboxes": {
+    "message": "📤 Export checkboxes"
+  },
+  "hintExportCheckboxes": {
+    "message": "Provider export only contains keywords/fields. Checkbox export includes checkboxes, families, and association groups."
+  },
+  "labelCheckboxName": {
+    "message": "Checkbox name:"
+  },
+  "placeholderCheckboxName": {
+    "message": "e.g. Ad size"
+  },
+  "labelCheckboxSummaryText": {
+    "message": "Text added to the summary:"
+  },
+  "placeholderCheckboxSummaryText": {
+    "message": "e.g. Ads are appropriately sized"
+  },
+  "labelCheckboxFamily": {
+    "message": "Family (optional):"
+  },
+  "placeholderCheckboxFamily": {
+    "message": "e.g. Tolerance, Performance, Design..."
+  },
+  "labelFavorite": {
+    "message": "Favorite:"
+  },
+  "buttonCancel": {
+    "message": "Cancel"
+  },
+  "buttonCancelEdit": {
+    "message": "✕ Cancel"
+  },
+  "buttonAddCheckbox": {
+    "message": "✓ Add checkbox"
+  },
+  "headingLinkedPhrases": {
+    "message": "🔗 Linked phrase groups"
+  },
+  "descLinkedPhrases": {
+    "message": "Link several checkboxes from the same family to create combined phrases in the summary."
+  },
+  "headingInterpretationGlobal": {
+    "message": "⚖️ Interpretation (applies to all providers)"
+  },
+  "buttonSave": {
+    "message": "Save"
+  },
+  "headingOrganization": {
+    "message": "🔄 Display organization"
+  },
+  "descOrganization": {
+    "message": "Organize the order of blocks (extracted fields + checkbox families) in the summary by dragging items. Configuration is per provider."
+  },
+  "labelProviderOrganization": {
+    "message": "Provider:"
+  },
+  "buttonRecalcOrganization": {
+    "message": "🔄 Recalculate order (add new families)"
+  },
+  "hintRecalcOrganization": {
+    "message": "Adds checkbox families that appeared since the last configuration to the end of the list."
+  },
+  "tipTitle": {
+    "message": "💡 Tip:"
+  },
+  "tipOrganization": {
+    "message": "The order above is applied as-is in the summary. Favorites no longer have automatic priority: they follow their family."
+  },
+  "headingBugReport": {
+    "message": "Report a bug"
+  },
+  "descBugReport": {
+    "message": "Download a diagnostic report, then send it by email with a description of the problem."
+  },
+  "buttonReportProblem": {
+    "message": "📝 Fill out the form"
+  },
+  "hintBugReport": {
+    "message": "The report is generated locally in your browser."
+  },
+  "jumpSelectPlaceholder": {
+    "message": "Go to…"
+  },
+  "jumpSelectTitle": {
+    "message": "Go to an extracted value"
+  },
+  "ariaSourceWrapper": {
+    "message": "Raw source text"
+  },
+  "buttonOpenSourceText": {
+    "message": "Show source text ↗"
+  },
+  "ariaSourceDock": {
+    "message": "Side panel: source text"
+  },
+  "buttonAttachSource": {
+    "message": "↙ Attach"
+  },
+  "titleAttachSource": {
+    "message": "Re-attach"
+  },
+  "titleClose": {
+    "message": "Close"
+  },
+  "confirmNo": {
+    "message": "No"
+  },
+  "confirmYes": {
+    "message": "Yes"
+  },
+  "ok": {
+    "message": "OK"
+  },
+  "labelProviderName": {
+    "message": "Provider name:"
+  },
+  "placeholderProviderName": {
+    "message": "e.g. Provider"
+  },
+  "buttonCreate": {
+    "message": "Create"
+  },
+  "errorProviderNameRequired": {
+    "message": "Provider name is required"
+  },
+  "errorProviderCreate": {
+    "message": "Error while creating the provider"
+  },
+  "supportTitle": {
+    "message": "Support FlashCPAP"
+  },
+  "supportDescriptionHtml": {
+    "message": "FlashCPAP is <strong>100% free</strong> and will stay that way.<br>If this tool saves you time, you can support me on Ko-fi ☕"
+  },
+  "supportButtonLabel": {
+    "message": "Support FlashCPAP ☕❤️"
+  },
+  "supportButtonLinkLabel": {
+    "message": "☕ Support on Ko-fi"
+  },
+  "supportThanks": {
+    "message": "Thanks for your support! "
+  },
+  "supportOpenTitle": {
+    "message": "Open the FlashCPAP support page"
+  },
+  "copyEmpty": {
+    "message": "Empty summary"
+  },
+  "copySuccess": {
+    "message": "Copied!"
+  },
+  "copyFailure": {
+    "message": "Copy failed"
+  },
+  "warningRunAnalysisFirst": {
+    "message": "Please run an analysis before changing the options."
+  },
+  "errorSummaryUpdate": {
+    "message": "Error while updating the summary: $1"
+  },
+  "feedbackProblemRequired": {
+    "message": "Please describe the problem."
+  },
+  "feedbackGeneratingReport": {
+    "message": "Generating report..."
+  },
+  "feedbackReportDownloaded": {
+    "message": "Report downloaded"
+  },
+  "feedbackErrorPrefix": {
+    "message": "Error: $1"
+  },
+  "checkboxFormMissingFields": {
+    "message": "Please fill in both fields (name and text)."
+  },
+  "checkboxProviderSelect": {
+    "message": "Select a provider."
+  },
+  "checkboxProviderInvalid": {
+    "message": "Select a valid provider."
+  },
+  "checkboxFavoriteRemove": {
+    "message": "Remove from favorites"
+  },
+  "checkboxFavoriteAdd": {
+    "message": "Add to favorites"
+  },
+  "checkboxButtonAddShort": {
+    "message": "+ Add"
+  },
+  "checkboxNoProviderTitle": {
+    "message": "No provider selected"
+  },
+  "checkboxNoProviderDescription": {
+    "message": "Create a provider in the Settings tab to configure its checkboxes."
+  },
+  "checkboxEmptyState": {
+    "message": "No custom checkbox defined."
+  },
+  "checkboxNoFamily": {
+    "message": "No family"
+  },
+  "checkboxEditTitle": {
+    "message": "Edit this checkbox"
+  },
+  "checkboxDeleteTitle": {
+    "message": "Delete this checkbox"
+  },
+  "checkboxDeleteConfirm": {
+    "message": "Delete checkbox \"$1\"?"
+  },
+  "checkboxButtonValidateEdit": {
+    "message": "✓ Confirm edit"
+  },
+  "checkboxLockTitle": {
+    "message": "🔒 Checkbox creation locked"
+  },
+  "checkboxLockDescription": {
+    "message": "Select a valid provider to create new checkboxes."
+  },
+  "fieldLockTitle": {
+    "message": "🔒 Configuration locked"
+  },
+  "fieldLockDescription": {
+    "message": "Select or create a provider to edit its configuration."
+  },
+  "fieldUrlsLabel": {
+    "message": "Domains (one per line):"
+  },
+  "fieldAddSiteRoot": {
+    "message": "＋ Current site root"
+  },
+  "fieldAddSiteRootTitle": {
+    "message": "Automatically adds the active site root (e.g. https://www.site.com/*)"
+  },
+  "fieldAddSiteRootPending": {
+    "message": "Adding..."
+  },
+  "fieldSiteRootAlreadyPresent": {
+    "message": "This root is already saved."
+  },
+  "fieldSiteRootAddedGranted": {
+    "message": "Root added and authorized: $1"
+  },
+  "fieldSiteRootAddedDenied": {
+    "message": "Root added. Authorization denied (analysis still possible by click)."
+  },
+  "fieldSiteRootAddError": {
+    "message": "Unable to add the site root."
+  },
+  "fieldPdfKeywordsLabel": {
+    "message": "PDF detection keywords (one per line):"
+  },
+  "fieldPdfKeywordsTitle": {
+    "message": "If the PDF contains one of these keywords, this provider will be selected automatically."
+  },
+  "fieldPdfKeywordsPlaceholder": {
+    "message": "e.g. ProviderName, MyPortal..."
+  },
+  "fieldAddButton": {
+    "message": "+ Add field"
+  },
+  "fieldConfigLoadError": {
+    "message": "Unable to load the provider configuration."
+  },
+  "fieldAddedSuccess": {
+    "message": "Field added. Edit it, then click Confirm."
+  },
+  "fieldAddError": {
+    "message": "Unable to add a field right now."
+  },
+  "fieldDeleteConfirm": {
+    "message": "Delete \"$1\"?"
+  },
+  "fieldSaved": {
+    "message": "Field saved"
+  },
+  "fieldSaveError": {
+    "message": "Unable to save this field."
+  },
+  "uiInitError": {
+    "message": "Error while initializing the interface"
+  },
+  "uiAnalyzeNeedsProvider": {
+    "message": "Create a provider to analyze"
+  },
+  "uiNoProviderStartDescription": {
+    "message": "Create a provider in the Settings tab to get started."
+  },
+  "checkboxBuiltInInterpretation": {
+    "message": "Add interpretation"
+  },
+  "jumpSelectPlaceholderShort": {
+    "message": "Go to…"
+  },
+  "previewAddText": {
+    "message": "+ Add text"
+  },
+  "previewNewTextPlaceholder": {
+    "message": "New text..."
+  },
+  "phraseFamilyLabel": {
+    "message": "Family: $1"
+  },
+  "phraseConfigPrefix": {
+    "message": "Prefix"
+  },
+  "phraseConfigConnector": {
+    "message": "Connector"
+  },
+  "phraseConfigLastConnector": {
+    "message": "Last"
+  },
+  "phraseConfigSuffix": {
+    "message": "Suffix"
+  },
+  "phrasePreviewLabel": {
+    "message": "Preview: $1"
+  },
+  "phraseBlockedWhileSelecting": {
+    "message": "Selection mode is active. Disable it or confirm the group before editing checkboxes."
+  },
+  "phraseNoProviderDescription": {
+    "message": "Create a provider to configure phrase groups."
+  },
+  "phraseNewGroupTitle": {
+    "message": "🎛️ Create a new group"
+  },
+  "phraseModeActivate": {
+    "message": "▶ Activate selection mode"
+  },
+  "phraseModeDeactivate": {
+    "message": "⏸ Disable"
+  },
+  "phraseClearSelection": {
+    "message": "🧹 Clear"
+  },
+  "phraseCreateGroup": {
+    "message": "✔️ Create group"
+  },
+  "phraseModeInactive": {
+    "message": "Mode inactive"
+  },
+  "phraseSelectFirstCheckbox": {
+    "message": "Select a first checkbox…"
+  },
+  "phraseStatusSelection": {
+    "message": "Family: $1 • Selection: $2"
+  },
+  "phraseSelectAtLeastTwo": {
+    "message": "Select at least two checkboxes."
+  },
+  "phraseGroupDefaultTitle": {
+    "message": "Group $1"
+  },
+  "phraseGroupCreated": {
+    "message": "✓ Group created successfully!"
+  },
+  "phraseExistingGroups": {
+    "message": "📋 Existing groups"
+  },
+  "phraseNoGroups": {
+    "message": "No group created yet."
+  },
+  "phraseDeleteGroupTitle": {
+    "message": "Delete this group"
+  },
+  "phraseDeleteGroupConfirm": {
+    "message": "Delete group \"$1\"?"
+  },
+  "buttonValidate": {
+    "message": "Confirm"
+  },
+  "fieldEditorHeader": {
+    "message": "🛠️ Field editor"
+  },
+  "fieldEditorEmptyKeyword": {
+    "message": "Empty keyword"
+  },
+  "fieldEditorCardTitle": {
+    "message": "📋 $1 (lines $2-$3)"
+  },
+  "fieldEditorFieldName": {
+    "message": "Field name"
+  },
+  "fieldEditorFieldNamePlaceholder": {
+    "message": "e.g. minPressure"
+  },
+  "fieldEditorFieldNameHelp": {
+    "message": "Name as it will appear in the summary. Must be unique per provider."
+  },
+  "fieldEditorAnchorKeyword": {
+    "message": "Anchor keyword"
+  },
+  "fieldEditorAnchorKeywordPlaceholder": {
+    "message": "e.g. AHI, Leaks, Min Pressure"
+  },
+  "fieldEditorLineStart": {
+    "message": "Start line"
+  },
+  "fieldEditorLineEnd": {
+    "message": "End line"
+  },
+  "fieldEditorExcludeLineKeyword": {
+    "message": "Exclude this keyword if the line contains"
+  },
+  "fieldEditorExcludeLineKeywordPlaceholder": {
+    "message": "e.g. Equipment, Previous"
+  },
+  "fieldEditorExcludeContent": {
+    "message": "Exclude content"
+  },
+  "fieldEditorExcludeContentPlaceholder": {
+    "message": "content words to exclude (comma-separated)"
+  },
+  "fieldEditorPriorityWords": {
+    "message": "Priority words"
+  },
+  "fieldEditorPriorityWordsPlaceholder": {
+    "message": "priority words (comma-separated)"
+  },
+  "fieldEditorNameRequired": {
+    "message": "Field name is required"
+  },
+  "fieldEditorProviderConfigMissing": {
+    "message": "Provider configuration not found"
+  },
+  "fieldEditorFieldMissing": {
+    "message": "Field not found"
+  },
+  "fieldEditorCreated": {
+    "message": "Field created"
+  },
+  "fieldEditorSavedChanges": {
+    "message": "Changes saved"
+  },
+  "fieldEditorLeaveEmptyHint": {
+    "message": "Leave this empty if you do not want to add a keyword right now."
+  },
+  "fieldEditorParsingSeparatorsTitle": {
+    "message": "✂️ Parsing separators"
+  },
+  "fieldEditorParsingSeparatorsHelpHtml": {
+    "message": "Splits the text into extra lines before parsing to improve accuracy.<br>Useful for PDFs where everything is on one line."
+  },
+  "fieldEditorParsingSeparatorsLabel": {
+    "message": "Separators (words, characters, punctuation)"
+  },
+  "fieldEditorParsingSeparatorsPlaceholder": {
+    "message": "e.g. . ; Period Type Mode"
+  },
+  "fieldEditorParsingSeparatorsExamplesHtml": {
+    "message": "💡 Examples: \".\" (period), \";\" (semicolon), \"Mode\", \"Period of\", etc.<br>Separate with commas. Each occurrence will add a line break."
+  },
+  "fieldEditorType": {
+    "message": "Type"
+  },
+  "fieldEditorTypeText": {
+    "message": "Text"
+  },
+  "fieldEditorTypeNumeric": {
+    "message": "Numeric"
+  },
+  "fieldEditorTypeTime": {
+    "message": "Time"
+  },
+  "fieldEditorUnitLabel": {
+    "message": "Unit (optional, if numeric)"
+  },
+  "fieldEditorUnitPlaceholder": {
+    "message": "e.g. cmH2O, L/min, /h"
+  },
+  "fieldEditorTupleExtraction": {
+    "message": "Tuple extraction (multiple values)"
+  },
+  "fieldEditorTupleSize": {
+    "message": "Size"
+  },
+  "fieldEditorTupleSelection": {
+    "message": "Value selection"
+  },
+  "fieldEditorTupleConnectors": {
+    "message": "Connectors between values (optional)"
+  },
+  "fieldEditorTupleConnectorHint": {
+    "message": "Text inserted after each X (spaces matter: \" kg\" → \"123 kg\")"
+  },
+  "fieldEditorTimeConfig": {
+    "message": "Time configuration"
+  },
+  "fieldEditorTimeRaw": {
+    "message": "Raw format (extraction)"
+  },
+  "fieldEditorTimeDisplay": {
+    "message": "Display format (output)"
+  },
+  "fieldEditorChoose": {
+    "message": "-- Choose --"
+  },
+  "fieldEditorTimeFormatHint": {
+    "message": "Raw format = what is extracted from the text. Display format = how to show it in the summary."
+  },
+  "fieldEditorTupleTipsTitle": {
+    "message": "Tuple tips:"
+  },
+  "fieldEditorTupleTip1": {
+    "message": "\"Size\" = expected number of elements (1 to 5)."
+  },
+  "fieldEditorTupleTip2": {
+    "message": "Choose the positions to keep using the list (X = kept, * = ignored)."
+  },
+  "fieldEditorTupleTip3": {
+    "message": "Connectors: text added after each extracted number (e.g. X [kg] X [L] → \"12kg 34L\")."
+  },
+  "fieldEditorTupleSizeOption": {
+    "message": "$1 value$2"
+  },
+  "fieldEditorExtractionModeTitle": {
+    "message": "⚙️ Extraction mode"
+  },
+  "fieldEditorExtractionAutoTitle": {
+    "message": "🤖 Automatic (default)"
+  },
+  "fieldEditorExtractionAutoDesc": {
+    "message": "Looks on the label line first, then on the following lines if empty."
+  },
+  "fieldEditorExtractionAutoExample": {
+    "message": "Example: \"Mode: APAP\" → \"APAP\" | \"Mode:\nAPAP\" → \"APAP\""
+  },
+  "fieldEditorExtractionInlineTitle": {
+    "message": "🔒 Label line only"
+  },
+  "fieldEditorExtractionInlineDesc": {
+    "message": "Looks ONLY on the label line. If empty → \"?\""
+  },
+  "fieldEditorExtractionInlineExample": {
+    "message": "Example: \"Mode: APAP\" → \"APAP\" | \"Mode:\nAPAP\" → \"?\""
+  },
+  "fieldEditorExtractionNextTitle": {
+    "message": "⬇️ Following lines only"
+  },
+  "fieldEditorExtractionNextDesc": {
+    "message": "Ignores the inline value and ALWAYS looks in the following lines."
+  },
+  "fieldEditorExtractionNextExample": {
+    "message": "Example: \"Mode: APAP\" → ignore \"APAP\", look at next line | \"Mode:\nAPAP\" → \"APAP\""
+  },
+  "fieldEditorNextRangeTitle": {
+    "message": "📏 Search range in following lines"
+  },
+  "fieldEditorNextRangeHelpHtml": {
+    "message": "<strong>Auto</strong>: looks inline first, then in this range if empty.<strong>Following lines</strong>: looks directly in this range."
+  },
+  "fieldEditorNextRangeFrom": {
+    "message": "From +"
+  },
+  "fieldEditorNextRangeTo": {
+    "message": "to +"
+  },
+  "fieldEditorNextRangeUnit": {
+    "message": "lines"
+  },
+  "fieldEditorNextRangeExample": {
+    "message": "e.g. 1 to 1 = only the next line · e.g. 1 to 5 = search in the next 5 lines"
+  },
+  "fieldEditorModeUsageHtml": {
+    "message": "<strong>💡 When to use each mode:</strong><br>• <strong>Automatic</strong>: variable format (sometimes inline, sometimes on the next line)<br>• <strong>Label line only</strong>: value ALWAYS on the same line (e.g. Mode, Device type)<br>• <strong>Following lines only</strong>: value ALWAYS on the next line (e.g. some report formats)"
+  },
+  "fieldEditorRoleLabel": {
+    "message": "Role (for interpretation)"
+  },
+  "fieldEditorRoleNone": {
+    "message": "None"
+  },
+  "fieldEditorRoleObs": {
+    "message": "Compliance"
+  },
+  "fieldEditorRoleLeaks": {
+    "message": "Leaks"
+  },
+  "fieldEditorRoleHelp": {
+    "message": "Defines how this field will be interpreted."
+  },
+  "fieldEditorSuffixLabel": {
+    "message": "Suffix / punctuation (optional)"
+  },
+  "fieldEditorSuffixDefault": {
+    "message": "Default (line break or . if compact)"
+  },
+  "fieldEditorSuffixSpace": {
+    "message": "Space (\" \")"
+  },
+  "fieldEditorSuffixDotSpace": {
+    "message": "Dot + space (\". \")"
+  },
+  "fieldEditorSuffixCommaSpace": {
+    "message": "Comma + space (\", \")"
+  },
+  "fieldEditorSuffixNewLine": {
+    "message": "Line break"
+  },
+  "fieldEditorSuffixNone": {
+    "message": "Nothing (joined)"
+  },
+  "checkboxPinnedOn": {
+    "message": "Pinned: will be checked automatically"
+  },
+  "checkboxPinnedOff": {
+    "message": "Pin: always check during analysis"
+  },
+  "fieldDeleteTitle": {
+    "message": "Delete"
+  },
+  "fieldUnsavedIndicator": {
+    "message": " ● unsaved"
+  },
+  "interpretationLockTitle": {
+    "message": "🔒 Interpretation locked"
+  },
+  "interpretationLockDescription": {
+    "message": "Select a valid provider to configure interpretation thresholds."
+  },
+  "interpretationInvalidValues": {
+    "message": "Invalid values."
+  },
+  "interpretationSaved": {
+    "message": "Thresholds saved."
+  },
+  "interpretationObsThresholdLabel": {
+    "message": "Compliance ≥"
+  },
+  "interpretationLeaksThresholdLabel": {
+    "message": "Leaks ≥"
+  },
+  "interpretationObsTitle": {
+    "message": "Compliance"
+  },
+  "interpretationTextGeLabel": {
+    "message": "Text if value ≥ threshold"
+  },
+  "interpretationTextLtLabel": {
+    "message": "Text if value < threshold"
+  },
+  "interpretationObsGePlaceholder": {
+    "message": "e.g. good compliance"
+  },
+  "interpretationObsLtPlaceholder": {
+    "message": "e.g. unsatisfactory compliance"
+  },
+  "interpretationIahGePlaceholder": {
+    "message": "e.g. ineffective"
+  },
+  "interpretationIahLtPlaceholder": {
+    "message": "e.g. effective"
+  },
+  "interpretationLeaksGePlaceholder": {
+    "message": "e.g. significant leaks"
+  },
+  "interpretationLeaksLtPlaceholder": {
+    "message": "e.g. no leaks"
+  },
+  "organizationLockTitle": {
+    "message": "🔒 Organization locked"
+  },
+  "organizationLockDescription": {
+    "message": "Select a valid provider to configure block ordering."
+  },
+  "organizationRecalcNone": {
+    "message": "✅ No new family"
+  },
+  "organizationRecalcAdded": {
+    "message": "✅ Added: $1"
+  },
+  "checkboxExportSuccess": {
+    "message": "$1 checkboxes exported"
+  },
+  "checkboxImportSelectProvider": {
+    "message": "Select a valid provider before importing"
+  },
+  "checkboxImportSuccess": {
+    "message": "Checkboxes imported for $1"
+  },
+  "checkboxImportError": {
+    "message": "Checkbox import error: $1"
+  },
+  "providerExists": {
+    "message": "This provider already exists!"
+  },
+  "providerCreated": {
+    "message": "Provider \"$1\" created"
+  },
+  "providerDeleteConfirm": {
+    "message": "Delete \"$1\"?"
+  },
+  "providerNoValidExport": {
+    "message": "No valid provider to export"
+  },
+  "providerSelectBeforeImport": {
+    "message": "Select a valid provider before importing"
+  },
+  "providerExportSuccess": {
+    "message": "$1 configuration exported successfully"
+  },
+  "providerImportSuccess": {
+    "message": "$1 configuration imported successfully"
+  },
+  "providerImportError": {
+    "message": "Import error: $1"
+  },
+  "providerImportNewSuccess": {
+    "message": "Provider \"$1\" imported successfully"
+  },
+  "providerImportNewError": {
+    "message": "Import error: $1"
+  },
+  "providerFileReadError": {
+    "message": "File read error: $1"
+  },
+  "providerShareButton": {
+    "message": "🌐 Share with the community"
+  },
+  "providerShareNeedsValid": {
+    "message": "Cannot share without a valid provider"
+  },
+  "providerShareDescription": {
+    "message": "Configuration for $1 ($2 $3)"
+  },
+  "providerShareSuccess": {
+    "message": "Shared successfully (pending validation)"
+  },
+  "providerShareError": {
+    "message": "Share failed: $1"
+  },
+  "sourceDockTitle": {
+    "message": "Source text"
+  },
+  "sourceDockResizeTitle": {
+    "message": "Resize"
+  },
+  "buttonUndo": {
+    "message": "↩️ Undo"
+  },
+  "fieldEditorModalTitle": {
+    "message": "Add a field"
+  },
+  "fieldEditorTupleMaskHelp": {
+    "message": "Choose which positions to keep. For size = 1, it is always \"X\"."
+  },
+  "fieldEditorCardTitleDefault": {
+    "message": "📋 Empty keyword (lines 1-999)"
+  },
+  "fieldEditorRoleHelpLegacy": {
+    "message": "Defines how this field will be interpreted (current thresholds: Compliance ≥ 4h, AHI ≥ 5/h, Leaks ≥ 24 L/min)."
+  },
+  "reportProblemModalTitle": {
+    "message": "🐛 Report a problem"
+  },
+  "reportProblemPrivacyHtml": {
+    "message": "<strong style=\"color:#856404;\">⚠️ Warning - Personal data:</strong><br>The source text below may contain sensitive information. <strong>Manually anonymize it</strong> before sending (replace names, phone numbers, addresses, etc. with XXX).<br><br><strong style=\"color:#0066cc;\">🎨 Automatic anonymization:</strong><br>• <strong>Select text</strong> in the source textarea → letters become <strong>$</strong> and digits become <strong>£</strong><br>• Works in real time while selecting (click-drag)<br>• <strong>Undo</strong> button available to revert<br>• Spaces, punctuation, and other characters remain unchanged"
+  },
+  "reportProblemDescribeLabel": {
+    "message": "Describe the problem:"
+  },
+  "reportProblemMessagePlaceholder": {
+    "message": "e.g. Extraction does not work, incorrect values, display issue..."
+  },
+  "reportProblemSourceLabel": {
+    "message": "Source text (editable for anonymization):"
+  },
+  "reportProblemSourcePlaceholder": {
+    "message": "The page source text will appear here..."
+  },
+  "reportProblemSourceHint": {
+    "message": "💡 You can also edit this text manually to remove sensitive information."
+  },
+  "reportProblemDownload": {
+    "message": "Download report"
+  },
+  "genericGroup": {
+    "message": "Group"
+  },
+  "previewMoveBlock": {
+    "message": "Move"
+  },
+  "previewMoveBlockAria": {
+    "message": "Move this block"
+  },
+  "previewDeleteBlock": {
+    "message": "Delete this block"
+  },
+  "analysisMaskedBySelection": {
+    "message": "Hidden by selection"
+  }
+}

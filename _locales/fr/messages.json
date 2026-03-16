@@ -1,0 +1,908 @@
+{
+  "extName": {
+    "message": "FlashCPAP"
+  },
+  "extDescription": {
+    "message": "Analyse vos rapports PPC/CPAP (web et PDF) et génère un résumé clair, prêt à copier."
+  },
+  "actionOpen": {
+    "message": "Ouvrir FlashCPAP"
+  },
+  "popupTitle": {
+    "message": "FlashCPAP"
+  },
+  "tabAnalyze": {
+    "message": "🧪 Analyse"
+  },
+  "tabSettings": {
+    "message": "⚙️ Paramètres"
+  },
+  "tabBugTitle": {
+    "message": "Déclarer un bug"
+  },
+  "labelProvider": {
+    "message": "Prestataire :"
+  },
+  "toggleAutoLockUrl": {
+    "message": "Autolock URL"
+  },
+  "buttonAnalyzePage": {
+    "message": "Analyser la page"
+  },
+  "titleResetAnalysis": {
+    "message": "Réinitialiser l'analyse"
+  },
+  "alertPageChanged": {
+    "message": "⚠️ La page a changé, cliquez sur \"Analyser la page\" pour actualiser."
+  },
+  "labelSummary": {
+    "message": "Résumé :"
+  },
+  "toggleReadablePreview": {
+    "message": "Afficher l'aperçu lisible"
+  },
+  "buttonCopySummary": {
+    "message": "Copier le résumé"
+  },
+  "titleCopySummary": {
+    "message": "Copier le résumé"
+  },
+  "placeholderSummary": {
+    "message": "Le résumé apparaîtra ici…"
+  },
+  "ariaSummaryPreview": {
+    "message": "Aperçu lisible du résumé"
+  },
+  "labelAnalyzePdf": {
+    "message": "📄 Analyser un fichier PDF (optionnel) :"
+  },
+  "hintAnalyzePdf": {
+    "message": "💡 Si un fichier est sélectionné, il sera analysé à la place de la page web."
+  },
+  "sectionCustomCheckboxes": {
+    "message": "📝 Checkboxes personnalisées"
+  },
+  "ariaSettingsSubtabs": {
+    "message": "Sous-onglets Paramètres"
+  },
+  "subtabGeneral": {
+    "message": "Général"
+  },
+  "subtabInterpretation": {
+    "message": "Interprétation"
+  },
+  "subtabOrganization": {
+    "message": "Organisation"
+  },
+  "buttonImportProvider": {
+    "message": "📥 Importer un prestataire"
+  },
+  "labelProviderSettings": {
+    "message": "Prestataire :"
+  },
+  "buttonAddProvider": {
+    "message": "+ Ajouter prestataire"
+  },
+  "buttonRemoveProvider": {
+    "message": "🗑 Supprimer prestataire"
+  },
+  "buttonExportProvider": {
+    "message": "📤 Exporter"
+  },
+  "sectionTemplates": {
+    "message": "🧩 Modèles"
+  },
+  "labelFreeNote": {
+    "message": "Note libre :"
+  },
+  "placeholderFreeNote": {
+    "message": "Saisissez une note libre…"
+  },
+  "toggleCompactFields": {
+    "message": "Afficher les champs sur une seule ligne (Compact)"
+  },
+  "headingCustomCheckboxes": {
+    "message": "📝 Checkboxes personnalisées"
+  },
+  "descCustomCheckboxes": {
+    "message": "Créez des checkboxes qui apparaîtront dans l'onglet Analyse et ajouteront du texte au résumé."
+  },
+  "buttonImportCheckboxes": {
+    "message": "📥 Importer des checkboxes (JSON)"
+  },
+  "buttonExportCheckboxes": {
+    "message": "📤 Exporter les checkboxes"
+  },
+  "hintExportCheckboxes": {
+    "message": "L'export Prestataire contient uniquement les mots clés/champs. L'export Checkboxes inclut les cases, familles et groupes d'association."
+  },
+  "labelCheckboxName": {
+    "message": "Nom de la checkbox :"
+  },
+  "placeholderCheckboxName": {
+    "message": "ex: Taille des annonces"
+  },
+  "labelCheckboxSummaryText": {
+    "message": "Texte ajouté au résumé :"
+  },
+  "placeholderCheckboxSummaryText": {
+    "message": "ex: Les annonces sont de taille appropriée"
+  },
+  "labelCheckboxFamily": {
+    "message": "Famille (optionnel) :"
+  },
+  "placeholderCheckboxFamily": {
+    "message": "ex: Tolérance, Performance, Design..."
+  },
+  "labelFavorite": {
+    "message": "Favori :"
+  },
+  "buttonCancel": {
+    "message": "Annuler"
+  },
+  "buttonCancelEdit": {
+    "message": "✕ Annuler"
+  },
+  "buttonAddCheckbox": {
+    "message": "✓ Ajouter la checkbox"
+  },
+  "headingLinkedPhrases": {
+    "message": "🔗 Groupes de phrases liées"
+  },
+  "descLinkedPhrases": {
+    "message": "Liez plusieurs checkboxes d'une même famille pour créer des phrases combinées dans le résumé."
+  },
+  "headingInterpretationGlobal": {
+    "message": "⚖️ Interprétation (valable pour tous les prestataires)"
+  },
+  "buttonSave": {
+    "message": "Enregistrer"
+  },
+  "headingOrganization": {
+    "message": "🔄 Organisation de l'affichage"
+  },
+  "descOrganization": {
+    "message": "Organisez l'ordre d'apparition des blocs (champs extraits + familles de checkboxes) dans le résumé en faisant glisser les éléments. Configuration par prestataire."
+  },
+  "labelProviderOrganization": {
+    "message": "Prestataire :"
+  },
+  "buttonRecalcOrganization": {
+    "message": "🔄 Recalculer l'ordre (ajoute nouvelles familles)"
+  },
+  "hintRecalcOrganization": {
+    "message": "Ajoute à la fin les familles de checkboxes apparues depuis la dernière configuration."
+  },
+  "tipTitle": {
+    "message": "💡 Astuce :"
+  },
+  "tipOrganization": {
+    "message": "L'ordre ci-dessus est appliqué tel quel dans le résumé. Les favoris n'ont plus de priorité automatique : ils suivent la famille à laquelle ils appartiennent."
+  },
+  "headingBugReport": {
+    "message": "Déclarer un bug"
+  },
+  "descBugReport": {
+    "message": "Téléchargez un rapport de diagnostic puis envoyez-le par mail avec une description du problème."
+  },
+  "buttonReportProblem": {
+    "message": "📝 Remplir le formulaire"
+  },
+  "hintBugReport": {
+    "message": "Le rapport est généré localement dans votre navigateur."
+  },
+  "jumpSelectPlaceholder": {
+    "message": "Aller à…"
+  },
+  "jumpSelectTitle": {
+    "message": "Aller à une valeur extraite"
+  },
+  "ariaSourceWrapper": {
+    "message": "Texte source brut"
+  },
+  "buttonOpenSourceText": {
+    "message": "Afficher le texte source ↗"
+  },
+  "ariaSourceDock": {
+    "message": "Panneau latéral: texte source"
+  },
+  "buttonAttachSource": {
+    "message": "↙ Attacher"
+  },
+  "titleAttachSource": {
+    "message": "Ré-attacher"
+  },
+  "titleClose": {
+    "message": "Fermer"
+  },
+  "confirmNo": {
+    "message": "Non"
+  },
+  "confirmYes": {
+    "message": "Oui"
+  },
+  "ok": {
+    "message": "OK"
+  },
+  "labelProviderName": {
+    "message": "Nom du prestataire :"
+  },
+  "placeholderProviderName": {
+    "message": "ex: Prestataire"
+  },
+  "buttonCreate": {
+    "message": "Créer"
+  },
+  "errorProviderNameRequired": {
+    "message": "Nom du prestataire requis"
+  },
+  "errorProviderCreate": {
+    "message": "Erreur lors de la création du prestataire"
+  },
+  "supportTitle": {
+    "message": "Soutenir FlashCPAP"
+  },
+  "supportDescriptionHtml": {
+    "message": "FlashCPAP est <strong>100% gratuit</strong> et le restera.<br>Si cet outil vous fait gagner du temps, vous pouvez me soutenir sur Ko-fi ☕"
+  },
+  "supportButtonLabel": {
+    "message": "Soutenir FlashCPAP ☕❤️"
+  },
+  "supportButtonLinkLabel": {
+    "message": "☕ Soutenir sur Ko-fi"
+  },
+  "supportThanks": {
+    "message": "Merci pour votre soutien ! "
+  },
+  "supportOpenTitle": {
+    "message": "Ouvrir la page de soutien FlashCPAP"
+  },
+  "copyEmpty": {
+    "message": "Résumé vide"
+  },
+  "copySuccess": {
+    "message": "Copié !"
+  },
+  "copyFailure": {
+    "message": "Échec copie"
+  },
+  "warningRunAnalysisFirst": {
+    "message": "Veuillez lancer une analyse avant de modifier les options."
+  },
+  "errorSummaryUpdate": {
+    "message": "Erreur lors de la mise à jour du résumé: $1"
+  },
+  "feedbackProblemRequired": {
+    "message": "Veuillez décrire le problème."
+  },
+  "feedbackGeneratingReport": {
+    "message": "Génération du rapport..."
+  },
+  "feedbackReportDownloaded": {
+    "message": "Rapport téléchargé"
+  },
+  "feedbackErrorPrefix": {
+    "message": "Erreur: $1"
+  },
+  "checkboxFormMissingFields": {
+    "message": "Veuillez remplir les deux champs (nom et texte)."
+  },
+  "checkboxProviderSelect": {
+    "message": "Sélectionnez un prestataire."
+  },
+  "checkboxProviderInvalid": {
+    "message": "Sélectionnez un prestataire valide."
+  },
+  "checkboxFavoriteRemove": {
+    "message": "Retirer des favoris"
+  },
+  "checkboxFavoriteAdd": {
+    "message": "Ajouter aux favoris"
+  },
+  "checkboxButtonAddShort": {
+    "message": "+ Ajouter"
+  },
+  "checkboxNoProviderTitle": {
+    "message": "Aucun prestataire sélectionné"
+  },
+  "checkboxNoProviderDescription": {
+    "message": "Créez un prestataire dans l'onglet Paramètres pour configurer ses checkboxes."
+  },
+  "checkboxEmptyState": {
+    "message": "Aucune checkbox personnalisée définie."
+  },
+  "checkboxNoFamily": {
+    "message": "Sans famille"
+  },
+  "checkboxEditTitle": {
+    "message": "Modifier cette checkbox"
+  },
+  "checkboxDeleteTitle": {
+    "message": "Supprimer cette checkbox"
+  },
+  "checkboxDeleteConfirm": {
+    "message": "Supprimer la checkbox \"$1\" ?"
+  },
+  "checkboxButtonValidateEdit": {
+    "message": "✓ Valider modification"
+  },
+  "checkboxLockTitle": {
+    "message": "🔒 Création de checkboxes verrouillée"
+  },
+  "checkboxLockDescription": {
+    "message": "Sélectionnez un prestataire valide pour créer de nouvelles checkboxes."
+  },
+  "fieldLockTitle": {
+    "message": "🔒 Configuration verrouillée"
+  },
+  "fieldLockDescription": {
+    "message": "Sélectionnez ou créez un prestataire pour modifier sa configuration."
+  },
+  "fieldUrlsLabel": {
+    "message": "Domaines (un par ligne) :"
+  },
+  "fieldAddSiteRoot": {
+    "message": "＋ Racine du site courant"
+  },
+  "fieldAddSiteRootTitle": {
+    "message": "Ajoute automatiquement la racine du site actif (ex: https://www.site.com/*)"
+  },
+  "fieldAddSiteRootPending": {
+    "message": "Ajout en cours…"
+  },
+  "fieldSiteRootAlreadyPresent": {
+    "message": "Cette racine est déjà enregistrée."
+  },
+  "fieldSiteRootAddedGranted": {
+    "message": "Racine ajoutée et autorisée: $1"
+  },
+  "fieldSiteRootAddedDenied": {
+    "message": "Racine ajoutée. Autorisation refusée (analyse possible via clic)."
+  },
+  "fieldSiteRootAddError": {
+    "message": "Impossible d'ajouter la racine du site."
+  },
+  "fieldPdfKeywordsLabel": {
+    "message": "Mots-clés détection PDF (un par ligne) :"
+  },
+  "fieldPdfKeywordsTitle": {
+    "message": "Si le PDF contient l'un de ces mots, ce prestataire sera automatiquement sélectionné."
+  },
+  "fieldPdfKeywordsPlaceholder": {
+    "message": "Ex: NomPrestataire, MonPortail..."
+  },
+  "fieldAddButton": {
+    "message": "+ Ajouter un champ"
+  },
+  "fieldConfigLoadError": {
+    "message": "Impossible de charger la configuration du prestataire."
+  },
+  "fieldAddedSuccess": {
+    "message": "Champ ajouté. Modifiez-le puis cliquez sur Valider."
+  },
+  "fieldAddError": {
+    "message": "Impossible d'ajouter un champ pour le moment."
+  },
+  "fieldDeleteConfirm": {
+    "message": "Supprimer \"$1\" ?"
+  },
+  "fieldSaved": {
+    "message": "Champ enregistré"
+  },
+  "fieldSaveError": {
+    "message": "Impossible d'enregistrer ce champ."
+  },
+  "uiInitError": {
+    "message": "Erreur lors de l'initialisation de l'interface"
+  },
+  "uiAnalyzeNeedsProvider": {
+    "message": "Créez un prestataire pour analyser"
+  },
+  "uiNoProviderStartDescription": {
+    "message": "Créez un prestataire dans l'onglet Paramètres pour commencer."
+  },
+  "checkboxBuiltInInterpretation": {
+    "message": "Ajouter l'interprétation"
+  },
+  "jumpSelectPlaceholderShort": {
+    "message": "Aller à…"
+  },
+  "previewAddText": {
+    "message": "+ Ajouter du texte"
+  },
+  "previewNewTextPlaceholder": {
+    "message": "Nouveau texte..."
+  },
+  "phraseFamilyLabel": {
+    "message": "Famille: $1"
+  },
+  "phraseConfigPrefix": {
+    "message": "Préfixe"
+  },
+  "phraseConfigConnector": {
+    "message": "Connecteur"
+  },
+  "phraseConfigLastConnector": {
+    "message": "Dernier"
+  },
+  "phraseConfigSuffix": {
+    "message": "Suffixe"
+  },
+  "phrasePreviewLabel": {
+    "message": "Aperçu: $1"
+  },
+  "phraseBlockedWhileSelecting": {
+    "message": "Mode sélection actif. Désactivez-le ou validez le groupe avant de modifier les checkboxes."
+  },
+  "phraseNoProviderDescription": {
+    "message": "Créez un prestataire pour configurer les groupes de phrases."
+  },
+  "phraseNewGroupTitle": {
+    "message": "🎛️ Créer un nouveau groupe"
+  },
+  "phraseModeActivate": {
+    "message": "▶ Activer le mode sélection"
+  },
+  "phraseModeDeactivate": {
+    "message": "⏸ Désactiver"
+  },
+  "phraseClearSelection": {
+    "message": "🧹 Vider"
+  },
+  "phraseCreateGroup": {
+    "message": "✔️ Créer le groupe"
+  },
+  "phraseModeInactive": {
+    "message": "Mode inactif"
+  },
+  "phraseSelectFirstCheckbox": {
+    "message": "Sélectionnez une première case…"
+  },
+  "phraseStatusSelection": {
+    "message": "Famille: $1 • Sélection: $2"
+  },
+  "phraseSelectAtLeastTwo": {
+    "message": "Sélectionnez au moins deux cases."
+  },
+  "phraseGroupDefaultTitle": {
+    "message": "Groupe $1"
+  },
+  "phraseGroupCreated": {
+    "message": "✓ Groupe créé avec succès !"
+  },
+  "phraseExistingGroups": {
+    "message": "📋 Groupes existants"
+  },
+  "phraseNoGroups": {
+    "message": "Aucun groupe créé pour l'instant."
+  },
+  "phraseDeleteGroupTitle": {
+    "message": "Supprimer ce groupe"
+  },
+  "phraseDeleteGroupConfirm": {
+    "message": "Supprimer le groupe \"$1\" ?"
+  },
+  "buttonValidate": {
+    "message": "Valider"
+  },
+  "fieldEditorHeader": {
+    "message": "🛠️ Éditeur de champ"
+  },
+  "fieldEditorEmptyKeyword": {
+    "message": "Mot clé vide"
+  },
+  "fieldEditorCardTitle": {
+    "message": "📋 $1 (lignes $2-$3)"
+  },
+  "fieldEditorFieldName": {
+    "message": "Nom du champ"
+  },
+  "fieldEditorFieldNamePlaceholder": {
+    "message": "ex: pressionMin"
+  },
+  "fieldEditorFieldNameHelp": {
+    "message": "Nom tel qu'il apparaîtra dans le résumé. Uniques par prestataire."
+  },
+  "fieldEditorAnchorKeyword": {
+    "message": "Mot clé d'ancrage"
+  },
+  "fieldEditorAnchorKeywordPlaceholder": {
+    "message": "ex: IAH, Fuites, Pression Min"
+  },
+  "fieldEditorLineStart": {
+    "message": "Ligne début"
+  },
+  "fieldEditorLineEnd": {
+    "message": "Ligne fin"
+  },
+  "fieldEditorExcludeLineKeyword": {
+    "message": "Exclure ce mot clé si la ligne contient"
+  },
+  "fieldEditorExcludeLineKeywordPlaceholder": {
+    "message": "ex: Equipement, Ancien"
+  },
+  "fieldEditorExcludeContent": {
+    "message": "Exclure contenu"
+  },
+  "fieldEditorExcludeContentPlaceholder": {
+    "message": "mots à exclure du contenu (séparés par des virgules)"
+  },
+  "fieldEditorPriorityWords": {
+    "message": "Mots prioritaires"
+  },
+  "fieldEditorPriorityWordsPlaceholder": {
+    "message": "mots prioritaires (séparés par des virgules)"
+  },
+  "fieldEditorNameRequired": {
+    "message": "Le nom du champ est requis"
+  },
+  "fieldEditorProviderConfigMissing": {
+    "message": "Configuration prestataire introuvable"
+  },
+  "fieldEditorFieldMissing": {
+    "message": "Champ introuvable"
+  },
+  "fieldEditorCreated": {
+    "message": "Champ créé"
+  },
+  "fieldEditorSavedChanges": {
+    "message": "Modifications enregistrées"
+  },
+  "fieldEditorLeaveEmptyHint": {
+    "message": "Laissez vide si vous ne souhaitez pas ajouter de mot clé pour l'instant."
+  },
+  "fieldEditorParsingSeparatorsTitle": {
+    "message": "✂️ Séparateurs de parsing"
+  },
+  "fieldEditorParsingSeparatorsHelpHtml": {
+    "message": "Divise le texte en lignes supplémentaires avant le parsing pour améliorer la précision.<br>Utile pour les PDFs où tout est sur une seule ligne."
+  },
+  "fieldEditorParsingSeparatorsLabel": {
+    "message": "Séparateurs (mots, caractères, ponctuation)"
+  },
+  "fieldEditorParsingSeparatorsPlaceholder": {
+    "message": "ex: . ; Période Type Mode"
+  },
+  "fieldEditorParsingSeparatorsExamplesHtml": {
+    "message": "💡 Exemples : \".\" (point), \";\" (point-virgule), \"Mode\", \"Période du\", etc.<br>Séparez par des virgules. Chaque occurrence ajoutera un saut de ligne."
+  },
+  "fieldEditorType": {
+    "message": "Type"
+  },
+  "fieldEditorTypeText": {
+    "message": "Texte"
+  },
+  "fieldEditorTypeNumeric": {
+    "message": "Numérique"
+  },
+  "fieldEditorTypeTime": {
+    "message": "Temps"
+  },
+  "fieldEditorUnitLabel": {
+    "message": "Unité (optionnel, si numérique)"
+  },
+  "fieldEditorUnitPlaceholder": {
+    "message": "ex: cmH2O, L/min, /h"
+  },
+  "fieldEditorTupleExtraction": {
+    "message": "Extraction de tuples (valeurs multiples)"
+  },
+  "fieldEditorTupleSize": {
+    "message": "Taille"
+  },
+  "fieldEditorTupleSelection": {
+    "message": "Sélection des valeurs"
+  },
+  "fieldEditorTupleConnectors": {
+    "message": "Connecteurs entre valeurs (optionnel)"
+  },
+  "fieldEditorTupleConnectorHint": {
+    "message": "Texte inséré après chaque X (espaces comptent: \" kg\" → \"123 kg\")"
+  },
+  "fieldEditorTimeConfig": {
+    "message": "Configuration Temps"
+  },
+  "fieldEditorTimeRaw": {
+    "message": "Format brut (extraction)"
+  },
+  "fieldEditorTimeDisplay": {
+    "message": "Format affiché (sortie)"
+  },
+  "fieldEditorChoose": {
+    "message": "-- Choisir --"
+  },
+  "fieldEditorTimeFormatHint": {
+    "message": "Format brut = ce qui est extrait du texte. Format affiché = comment le montrer dans le résumé."
+  },
+  "fieldEditorTupleTipsTitle": {
+    "message": "Astuces tuples:"
+  },
+  "fieldEditorTupleTip1": {
+    "message": "\"Taille\" = nombre d'éléments attendus (1 à 5)."
+  },
+  "fieldEditorTupleTip2": {
+    "message": "Choisissez les positions à garder via la liste (X = gardé, * = ignoré)."
+  },
+  "fieldEditorTupleTip3": {
+    "message": "Connecteurs: texte ajouté après chaque nombre extrait (ex: X [kg] X [L] → \"12kg 34L\")."
+  },
+  "fieldEditorTupleSizeOption": {
+    "message": "$1 valeur$2"
+  },
+  "fieldEditorExtractionModeTitle": {
+    "message": "⚙️ Mode d'extraction"
+  },
+  "fieldEditorExtractionAutoTitle": {
+    "message": "🤖 Automatique (par défaut)"
+  },
+  "fieldEditorExtractionAutoDesc": {
+    "message": "Cherche d'abord sur la ligne du label, puis sur les lignes suivantes si vide."
+  },
+  "fieldEditorExtractionAutoExample": {
+    "message": "Exemple: \"Mode: APAP\" → \"APAP\" | \"Mode:\nAPAP\" → \"APAP\""
+  },
+  "fieldEditorExtractionInlineTitle": {
+    "message": "🔒 Ligne du label uniquement"
+  },
+  "fieldEditorExtractionInlineDesc": {
+    "message": "Ne cherche QUE sur la ligne du label. Si vide → \"?\""
+  },
+  "fieldEditorExtractionInlineExample": {
+    "message": "Exemple: \"Mode: APAP\" → \"APAP\" | \"Mode:\nAPAP\" → \"?\""
+  },
+  "fieldEditorExtractionNextTitle": {
+    "message": "⬇️ Lignes suivantes uniquement"
+  },
+  "fieldEditorExtractionNextDesc": {
+    "message": "Ignore la valeur inline, cherche TOUJOURS dans les lignes suivantes."
+  },
+  "fieldEditorExtractionNextExample": {
+    "message": "Exemple: \"Mode: APAP\" → ignore \"APAP\", cherche ligne suivante | \"Mode:\nAPAP\" → \"APAP\""
+  },
+  "fieldEditorNextRangeTitle": {
+    "message": "📏 Plage de recherche dans les lignes suivantes"
+  },
+  "fieldEditorNextRangeHelpHtml": {
+    "message": "<strong>Auto</strong> : cherche d'abord inline, puis dans cette plage si vide.<strong>Lignes suivantes</strong> : cherche directement dans cette plage."
+  },
+  "fieldEditorNextRangeFrom": {
+    "message": "De +"
+  },
+  "fieldEditorNextRangeTo": {
+    "message": "à +"
+  },
+  "fieldEditorNextRangeUnit": {
+    "message": "lignes"
+  },
+  "fieldEditorNextRangeExample": {
+    "message": "Ex: 1 à 1 = juste la ligne suivante · Ex: 1 à 5 = cherche dans les 5 lignes suivantes"
+  },
+  "fieldEditorModeUsageHtml": {
+    "message": "<strong>💡 Quand utiliser quel mode :</strong><br>• <strong>Automatique</strong> : Format variable (parfois inline, parfois sur ligne suivante)<br>• <strong>Ligne du label uniquement</strong> : Valeur TOUJOURS sur la même ligne (ex: Mode, Type appareil)<br>• <strong>Lignes suivantes uniquement</strong> : Valeur TOUJOURS sur ligne suivante (ex: certains formats de rapports)"
+  },
+  "fieldEditorRoleLabel": {
+    "message": "Rôle (pour l'interprétation)"
+  },
+  "fieldEditorRoleNone": {
+    "message": "Aucun"
+  },
+  "fieldEditorRoleObs": {
+    "message": "Observance"
+  },
+  "fieldEditorRoleLeaks": {
+    "message": "Fuites"
+  },
+  "fieldEditorRoleHelp": {
+    "message": "Définit comment ce champ sera interprété."
+  },
+  "fieldEditorSuffixLabel": {
+    "message": "Suffixe / Ponctuation (optionnel)"
+  },
+  "fieldEditorSuffixDefault": {
+    "message": "Par défaut (Saut de ligne ou . si compact)"
+  },
+  "fieldEditorSuffixSpace": {
+    "message": "Espace (\" \")"
+  },
+  "fieldEditorSuffixDotSpace": {
+    "message": "Point + Espace (\". \")"
+  },
+  "fieldEditorSuffixCommaSpace": {
+    "message": "Virgule + Espace (\", \")"
+  },
+  "fieldEditorSuffixNewLine": {
+    "message": "Saut de ligne"
+  },
+  "fieldEditorSuffixNone": {
+    "message": "Rien (collé)"
+  },
+  "checkboxPinnedOn": {
+    "message": "Pinné: sera coché automatiquement"
+  },
+  "checkboxPinnedOff": {
+    "message": "Pinner: toujours cocher à l'analyse"
+  },
+  "fieldDeleteTitle": {
+    "message": "Supprimer"
+  },
+  "fieldUnsavedIndicator": {
+    "message": " ● non enregistré"
+  },
+  "interpretationLockTitle": {
+    "message": "🔒 Interprétation verrouillée"
+  },
+  "interpretationLockDescription": {
+    "message": "Sélectionnez un prestataire valide pour configurer les seuils d'interprétation."
+  },
+  "interpretationInvalidValues": {
+    "message": "Valeurs invalides."
+  },
+  "interpretationSaved": {
+    "message": "Seuils enregistrés."
+  },
+  "interpretationObsThresholdLabel": {
+    "message": "Observance ≥"
+  },
+  "interpretationLeaksThresholdLabel": {
+    "message": "Fuites ≥"
+  },
+  "interpretationObsTitle": {
+    "message": "Observance"
+  },
+  "interpretationTextGeLabel": {
+    "message": "Texte si valeur ≥ seuil"
+  },
+  "interpretationTextLtLabel": {
+    "message": "Texte si valeur < seuil"
+  },
+  "interpretationObsGePlaceholder": {
+    "message": "Ex: bonne observance"
+  },
+  "interpretationObsLtPlaceholder": {
+    "message": "Ex: observance non satisfaisante"
+  },
+  "interpretationIahGePlaceholder": {
+    "message": "Ex: non efficace"
+  },
+  "interpretationIahLtPlaceholder": {
+    "message": "Ex: efficace"
+  },
+  "interpretationLeaksGePlaceholder": {
+    "message": "Ex: fuites significatives"
+  },
+  "interpretationLeaksLtPlaceholder": {
+    "message": "Ex: pas de fuites"
+  },
+  "organizationLockTitle": {
+    "message": "🔒 Organisation verrouillée"
+  },
+  "organizationLockDescription": {
+    "message": "Sélectionnez un prestataire valide pour configurer l'organisation des blocs."
+  },
+  "organizationRecalcNone": {
+    "message": "✅ Aucune nouvelle famille"
+  },
+  "organizationRecalcAdded": {
+    "message": "✅ Ajouté: $1"
+  },
+  "checkboxExportSuccess": {
+    "message": "Checkboxes de $1 exportées"
+  },
+  "checkboxImportSelectProvider": {
+    "message": "Sélectionnez un prestataire valide avant l'import"
+  },
+  "checkboxImportSuccess": {
+    "message": "Checkboxes importées pour $1"
+  },
+  "checkboxImportError": {
+    "message": "Erreur d'import des checkboxes: $1"
+  },
+  "providerExists": {
+    "message": "Ce prestataire existe déjà !"
+  },
+  "providerCreated": {
+    "message": "Prestataire \"$1\" créé"
+  },
+  "providerDeleteConfirm": {
+    "message": "Supprimer \"$1\" ?"
+  },
+  "providerNoValidExport": {
+    "message": "Aucun prestataire valide à exporter"
+  },
+  "providerSelectBeforeImport": {
+    "message": "Sélectionnez un prestataire valide avant l'import"
+  },
+  "providerExportSuccess": {
+    "message": "Configuration de $1 exportée avec succès"
+  },
+  "providerImportSuccess": {
+    "message": "Configuration de $1 importée avec succès"
+  },
+  "providerImportError": {
+    "message": "Erreur d'import : $1"
+  },
+  "providerImportNewSuccess": {
+    "message": "Prestataire \"$1\" importé avec succès"
+  },
+  "providerImportNewError": {
+    "message": "Erreur d'import: $1"
+  },
+  "providerFileReadError": {
+    "message": "Erreur de lecture du fichier : $1"
+  },
+  "providerShareButton": {
+    "message": "🌐 Partager à la communauté"
+  },
+  "providerShareNeedsValid": {
+    "message": "Impossible de partager sans prestataire valide"
+  },
+  "providerShareDescription": {
+    "message": "Configuration pour $1 ($2 $3)"
+  },
+  "providerShareSuccess": {
+    "message": "Partagé avec succès (en attente de validation)"
+  },
+  "providerShareError": {
+    "message": "Échec du partage: $1"
+  },
+  "sourceDockTitle": {
+    "message": "Texte source"
+  },
+  "sourceDockResizeTitle": {
+    "message": "Redimensionner"
+  },
+  "buttonUndo": {
+    "message": "↩️ Undo"
+  },
+  "fieldEditorModalTitle": {
+    "message": "Ajouter un champ"
+  },
+  "fieldEditorTupleMaskHelp": {
+    "message": "Choisissez les positions à garder. Pour taille = 1, c'est toujours \"X\"."
+  },
+  "fieldEditorCardTitleDefault": {
+    "message": "📋 Mot clé vide (lignes 1-999)"
+  },
+  "fieldEditorRoleHelpLegacy": {
+    "message": "Définit comment ce champ sera interprété (seuils actuels: Observance ≥ 4h, IAH ≥ 5/h, Fuites ≥ 24 L/min)."
+  },
+  "reportProblemModalTitle": {
+    "message": "🐛 Signaler un problème"
+  },
+  "reportProblemPrivacyHtml": {
+    "message": "<strong style=\"color:#856404;\">⚠️ Attention - Données personnelles :</strong><br>Le texte source ci-dessous peut contenir des informations sensibles. <strong>Anonymisez manuellement</strong> avant l'envoi (remplacez noms, numéros de téléphone, adresses, etc. par XXX).<br><br><strong style=\"color:#0066cc;\">🎨 Anonymisation automatique :</strong><br>• <strong>Sélectionnez du texte</strong> dans le textarea source → les lettres deviennent <strong>$</strong> et les chiffres <strong>£</strong><br>• Fonctionne en temps réel pendant la sélection (glisser-déposer)<br>• Bouton <strong>Undo</strong> disponible pour revenir en arrière<br>• Les espaces, ponctuation et autres caractères restent inchangés"
+  },
+  "reportProblemDescribeLabel": {
+    "message": "Décrivez le problème :"
+  },
+  "reportProblemMessagePlaceholder": {
+    "message": "Ex: L'extraction ne fonctionne pas, valeurs incorrectes, problème d'affichage..."
+  },
+  "reportProblemSourceLabel": {
+    "message": "Texte source (modifiable pour anonymisation) :"
+  },
+  "reportProblemSourcePlaceholder": {
+    "message": "Le texte source de la page apparaîtra ici..."
+  },
+  "reportProblemSourceHint": {
+    "message": "💡 Vous pouvez aussi modifier ce texte manuellement pour supprimer des informations sensibles."
+  },
+  "reportProblemDownload": {
+    "message": "Télécharger le rapport"
+  },
+  "genericGroup": {
+    "message": "Groupe"
+  },
+  "previewMoveBlock": {
+    "message": "Déplacer"
+  },
+  "previewMoveBlockAria": {
+    "message": "Déplacer ce bloc"
+  },
+  "previewDeleteBlock": {
+    "message": "Supprimer ce bloc"
+  },
+  "analysisMaskedBySelection": {
+    "message": "Masqué par sélection"
+  }
+}

@@ -1,12 +1,11 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "__MSG_extDescription__",
   "default_locale": "fr",
   "icons": {
     "16": "icons/favicon_16px.png",
-    "32": "icons/favicon_32px.png",
     "48": "icons/favicon_48px.png",
     "128": "icons/favicon_128px.png"
   },
@@ -15,7 +14,6 @@
     "default_icon": "icons/favicon_128px.png"
   },
   "background": {
-    "service_worker": "background.js",
     "scripts": ["background.js"]
   },
   "permissions": [
@@ -35,7 +33,11 @@
   "web_accessible_resources": [],
   "browser_specific_settings": {
     "gecko": {
-      "id": "flashcpap@molipoli-blip"
+      "id": "flashcpap@molipoli-blip",
+      "data_collection_permissions": {
+        "required": ["none"],
+        "optional": []
+      }
     }
   }
 }

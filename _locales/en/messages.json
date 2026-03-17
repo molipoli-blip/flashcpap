@@ -756,22 +756,22 @@
     "message": "Text if value < threshold"
   },
   "interpretationObsGePlaceholder": {
-    "message": "e.g. good compliance"
+    "message": "Text if value ≥ threshold"
   },
   "interpretationObsLtPlaceholder": {
-    "message": "e.g. unsatisfactory compliance"
+    "message": "Text if value < threshold"
   },
   "interpretationIahGePlaceholder": {
-    "message": "e.g. ineffective"
+    "message": "Text if value ≥ threshold"
   },
   "interpretationIahLtPlaceholder": {
-    "message": "e.g. effective"
+    "message": "Text if value < threshold"
   },
   "interpretationLeaksGePlaceholder": {
-    "message": "e.g. significant leaks"
+    "message": "Text if value ≥ threshold"
   },
   "interpretationLeaksLtPlaceholder": {
-    "message": "e.g. no leaks"
+    "message": "Text if value < threshold"
   },
   "organizationLockTitle": {
     "message": "🔒 Organization locked"

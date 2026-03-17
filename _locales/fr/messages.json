@@ -756,22 +756,22 @@
     "message": "Texte si valeur < seuil"
   },
   "interpretationObsGePlaceholder": {
-    "message": "Ex: bonne observance"
+    "message": "Texte si valeur ≥ seuil"
   },
   "interpretationObsLtPlaceholder": {
-    "message": "Ex: observance non satisfaisante"
+    "message": "Texte si valeur < seuil"
   },
   "interpretationIahGePlaceholder": {
-    "message": "Ex: non efficace"
+    "message": "Texte si valeur ≥ seuil"
   },
   "interpretationIahLtPlaceholder": {
-    "message": "Ex: efficace"
+    "message": "Texte si valeur < seuil"
   },
   "interpretationLeaksGePlaceholder": {
-    "message": "Ex: fuites significatives"
+    "message": "Texte si valeur ≥ seuil"
   },
   "interpretationLeaksLtPlaceholder": {
-    "message": "Ex: pas de fuites"
+    "message": "Texte si valeur < seuil"
   },
   "organizationLockTitle": {
     "message": "🔒 Organisation verrouillée"

@@ -105,16 +105,16 @@ export function setupInterpretationThresholds({ settings, saveSettings, updateSu
   if (!(thObs && thIah && thFuites)) return;
 
   try {
-    thObs.value = settings.interpretation?.obsHours ?? 4;
-    thIah.value = settings.interpretation?.iah ?? 5;
-    thFuites.value = settings.interpretation?.fuites ?? 24;
+    thObs.value = settings.interpretation?.obsHours ?? '';
+    thIah.value = settings.interpretation?.iah ?? '';
+    thFuites.value = settings.interpretation?.fuites ?? '';
     const T = settings.interpretation?.texts || {};
-    if (txtObsGe) txtObsGe.value = T.obs?.ge ?? 'bonne observance';
-    if (txtObsLt) txtObsLt.value = T.obs?.lt ?? 'observance non satisfaisante';
-    if (txtIahGe) txtIahGe.value = T.iah?.ge ?? 'non efficace';
-    if (txtIahLt) txtIahLt.value = T.iah?.lt ?? 'efficace';
-    if (txtFuitesGe) txtFuitesGe.value = T.fuites?.ge ?? 'fuites significatives';
-    if (txtFuitesLt) txtFuitesLt.value = T.fuites?.lt ?? 'pas de fuites';
+    if (txtObsGe) txtObsGe.value = T.obs?.ge ?? '';
+    if (txtObsLt) txtObsLt.value = T.obs?.lt ?? '';
+    if (txtIahGe) txtIahGe.value = T.iah?.ge ?? '';
+    if (txtIahLt) txtIahLt.value = T.iah?.lt ?? '';
+    if (txtFuitesGe) txtFuitesGe.value = T.fuites?.ge ?? '';
+    if (txtFuitesLt) txtFuitesLt.value = T.fuites?.lt ?? '';
   } catch {}
 
   updateInterpretationControlsState({ settings });
@@ -135,16 +135,16 @@ export function setupInterpretationThresholds({ settings, saveSettings, updateSu
 
     const texts = {
       obs: {
-        ge: (txtObsGe?.value || '').trim() || 'bonne observance',
-        lt: (txtObsLt?.value || '').trim() || 'observance non satisfaisante'
+        ge: (txtObsGe?.value || '').trim(),
+        lt: (txtObsLt?.value || '').trim()
       },
       iah: {
-        ge: (txtIahGe?.value || '').trim() || 'non efficace',
-        lt: (txtIahLt?.value || '').trim() || 'efficace'
+        ge: (txtIahGe?.value || '').trim(),
+        lt: (txtIahLt?.value || '').trim()
       },
       fuites: {
-        ge: (txtFuitesGe?.value || '').trim() || 'fuites significatives',
-        lt: (txtFuitesLt?.value || '').trim() || 'pas de fuites'
+        ge: (txtFuitesGe?.value || '').trim(),
+        lt: (txtFuitesLt?.value || '').trim()
       }
     };
 

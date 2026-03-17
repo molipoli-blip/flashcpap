@@ -4,15 +4,15 @@ Extension Firefox & Chromium open source pour **analyser des rapports PPC/CPAP**
 
 ## ✨ Fonctionnalités principales
 
-- Analyse de la page active en 1 clic
-- Analyse optionnelle d'un fichier PDF
+- Analyse et extraction des données de la page active en 1 clic
+- Analyse et extraction des données d'un fichier PDF (optionnel)
 - Détection automatique du prestataire (mode Auto)
 - Génération de résumé éditable + aperçu lisible
 - Copie rapide du résumé dans le presse-papiers
-- Surlignage interactif des données extraites dans le texte source
-- Paramètres avancés par prestataire (champs, labels, unités, ordre)
-- Checkboxes personnalisées avec familles, favoris et phrases combinées
-- Interprétation configurable (seuils + textes)
+- Surlignage interactif des données extraites dans le texte source pour une meilleure visibilité lors du paramètrage.
+- Paramètres avancés par prestataire (champs, mots clés, unités, ordre)
+- Checkboxes personnalisées avec familles, favoris et phrases combinées pour ajout de texte personnalisé
+- Interprétation configurable des données (seuils + textes)
 - Import / Export JSON (prestataires et checkboxes)
 
 ## 🚀 Installation

@@ -145,6 +145,7 @@ function renderTypeSection({ fieldKey, isNumeric, isTime, unitInitial, tupleSize
               <li>${t('fieldEditorTupleTip1')}</li>
               <li>${t('fieldEditorTupleTip2')}</li>
               <li>${t('fieldEditorTupleTip3')}</li>
+              <li>${t('fieldEditorTupleTip4')}</li>
             </ul>
           </div>
         </div>`;

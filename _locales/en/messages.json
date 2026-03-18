@@ -626,6 +626,9 @@
   "fieldEditorTupleTip3": {
     "message": "Connectors: text added after each extracted number (e.g. X [kg] X [L] → \"12kg 34L\")."
   },
+  "fieldEditorTupleTip4": {
+    "message": "Auto-priority: for the same keyword, if multiple fields match, the one extracting fewer values is ignored (rule: 1 value < 2 values — e.g. \"4\" loses to \"4 - 12\")."
+  },
   "fieldEditorTupleSizeOption": {
     "message": "$1 value$2"
   },

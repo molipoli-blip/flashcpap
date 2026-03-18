@@ -642,9 +642,10 @@ export function parseTextMeta(text, prest, settings) {
       }
     }
   }
-  // Déduplication par labelLine : si plusieurs champs ont matché le même label,
-  // le champ qui extrait le moins de nombres perd face à celui qui en extrait plus.
-  // Règle : 1 valeur < 2 valeurs (ex: pressionMin=4 perd contre nouveauChamp=4-12)
+  // Déduplication par labelLine : si plusieurs champs ont matché le même mot-clé/label,
+  // le champ qui extrait le moins de nombres (tuples) perd face à celui qui en extrait plus.
+  // Règle : 1 tuple < 2 tuples (même mot-clé) — ex: pression1=4 (1 valeur) perd contre
+  // pression2=4-12 (2 valeurs) car un tuple avec plus de composantes est prioritaire.
   const matchesByLabelLine = new Map();
   for (const m of matches) {
     const key = m.labelLine;

@@ -626,6 +626,9 @@
   "fieldEditorTupleTip3": {
     "message": "Connecteurs: texte ajouté après chaque nombre extrait (ex: X [kg] X [L] → \"12kg 34L\")."
   },
+  "fieldEditorTupleTip4": {
+    "message": "Priorité automatique : pour un même mot-clé, si plusieurs champs matchent, le champ extrayant le moins de valeurs est ignoré (règle : 1 valeur < 2 valeurs — ex: \"4\" perd contre \"4 - 12\")."
+  },
   "fieldEditorTupleSizeOption": {
     "message": "$1 valeur$2"
   },

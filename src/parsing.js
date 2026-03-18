@@ -642,6 +642,38 @@ export function parseTextMeta(text, prest, settings) {
       }
     }
   }
+  // Déduplication par labelLine : si plusieurs champs ont matché le même label,
+  // le champ qui extrait le moins de nombres perd face à celui qui en extrait plus.
+  // Règle : 1 valeur < 2 valeurs (ex: pressionMin=4 perd contre nouveauChamp=4-12)
+  const matchesByLabelLine = new Map();
+  for (const m of matches) {
+    const key = m.labelLine;
+    if (!matchesByLabelLine.has(key)) matchesByLabelLine.set(key, []);
+    matchesByLabelLine.get(key).push(m);
+  }
+  for (const [, group] of matchesByLabelLine) {
+    if (group.length < 2) continue;
+    const sizedGroup = group.map(m => ({
+      m,
+      n: (String(m.raw || '').match(/\d+(?:[.,]\d+)?/g) || []).length
+    }));
+    const maxN = Math.max(...sizedGroup.map(g => g.n));
+    if (maxN < 2) continue; // personne n'a extrait un range, pas de conflit
+    for (const { m, n } of sizedGroup) {
+      if (n < maxN) {
+        logParsingStrategy('Deduplication labelLine: champ supprime car extrait moins de valeurs', {
+          field: m.field,
+          extractedN: n,
+          winnerN: maxN,
+          labelLine: m.labelLine
+        });
+        data[m.field] = '?';
+        const idx = matches.indexOf(m);
+        if (idx !== -1) matches.splice(idx, 1);
+      }
+    }
+  }
+
   logFlow('PARSE', 'parseTextMeta termine', { matchCount: matches.length, fieldCount: Object.keys(data).length });
   return { data, matches };
 }

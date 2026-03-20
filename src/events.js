@@ -83,7 +83,6 @@ export async function updateSummaryDisplay() {
       nextLines: newAutoLines.length,
       changedLineCount
     });
-
     textarea.value = newAuto;
     logFlow('SUMMARY', 'Textarea mise a jour via marker system');
 

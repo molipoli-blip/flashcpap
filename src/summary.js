@@ -720,6 +720,8 @@ export function generateSummary(data, prestataire, includeInterpretation = false
   // For cb_* markers: detect overrides vs suffix additions
   for (const [id, inner] of existingContentById.entries()) {
     if (id.startsWith('cb_')) {
+      // Les groupes de phrases doivent toujours utiliser la valeur recalculee (jamais overridee)
+      if (id.startsWith('cb_group_')) continue;
       const mxId = `mx_${id}`;
       const base = baseById.get(id) || '';
       if (!base) continue;

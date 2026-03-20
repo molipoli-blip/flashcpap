@@ -246,6 +246,9 @@ export function createCustomCheckboxesUI(prestataire) {
 
     const familyContainer = document.createElement('div');
     familyContainer.style.lineHeight = '1.2';
+    familyContainer.style.display = 'flex';
+    familyContainer.style.flexWrap = 'wrap';
+    familyContainer.style.alignItems = 'center';
 
     families[familyName].forEach(checkbox => {
       const isFavorite = !!checkbox.favorite;

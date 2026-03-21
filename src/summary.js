@@ -338,6 +338,11 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       logDebug('SUMMARY', 'Familles absentes de organizationOrder ajoutees en fin', { count: missingFamilies.length });
       missingFamilies.sort().forEach(fam => appendFamily(fam));
     }
+    // Filet de sécurité: si aucun item 'fields' n'était présent dans orgOrder, émettre quand même le bloc
+    if (!_appendedFieldsBlock) {
+      logDebug('SUMMARY', 'Bloc champs absent de organizationOrder, ajout en tete');
+      appendExtractedFields();
+    }
     logDebug('SUMMARY', 'organizationOrder applique');
   }
   const note = settings.noteLibre[prestataire.toLowerCase()] || '';

@@ -106,7 +106,20 @@ export function renderOrganizationInterface() {
 export function recalcOrganizationOrder(provider = '') {
   if (!settings.organizationOrderByProvider) settings.organizationOrderByProvider = {};
   if (!settings.organizationOrderByProvider[provider]) settings.organizationOrderByProvider[provider] = [];
-  
+
+  // S'assurer qu'un élément 'fields' est toujours présent en tête (auto-réparation des données sauvegardées)
+  const hasFieldsItem = settings.organizationOrderByProvider[provider].some(item => item.type === 'fields');
+  if (!hasFieldsItem) {
+    settings.organizationOrderByProvider[provider].unshift({
+      type: 'fields',
+      id: 'extracted-fields',
+      title: 'Champs extraits',
+      description: 'Les données extraites automatiquement (pression, IAH, observance, etc.)',
+      icon: '📊'
+    });
+    saveSettings();
+  }
+
   // Construire l'ensemble actuel des familles présentes dans organizationOrder de ce provider
   const existingFamilies = new Set(
     settings.organizationOrderByProvider[provider]

@@ -9,9 +9,11 @@
 export function setupTabNavigation({ onMainTabActivated, onSubTabActivated } = {}) {
   const tabAnalyse = document.getElementById('tab-analyse');
   const tabParam = document.getElementById('tab-param');
+  const tabHelp = document.getElementById('tab-help');
   const tabBug = document.getElementById('tab-bug');
   const panelAnalyse = document.getElementById('analyse');
   const panelParam = document.getElementById('param');
+  const panelHelp = document.getElementById('help-panel');
   const panelBug = document.getElementById('bug-panel');
   
   if (!tabAnalyse || !tabParam || !panelAnalyse || !panelParam) return;
@@ -20,9 +22,11 @@ export function setupTabNavigation({ onMainTabActivated, onSubTabActivated } = {
   function switchToTab(activeTab, activePanel, tabName) {
     // Remove active from all tabs
     const tabs = [tabAnalyse, tabParam];
+    if (tabHelp) tabs.push(tabHelp);
     if (tabBug) tabs.push(tabBug);
     
     const panels = [panelAnalyse, panelParam];
+    if (panelHelp) panels.push(panelHelp);
     if (panelBug) panels.push(panelBug);
 
     tabs.forEach(tab => tab.classList.remove('active'));
@@ -44,6 +48,12 @@ export function setupTabNavigation({ onMainTabActivated, onSubTabActivated } = {
   tabParam.addEventListener('click', () => {
     switchToTab(tabParam, panelParam, 'param');
   });
+
+  if (tabHelp && panelHelp) {
+    tabHelp.addEventListener('click', () => {
+      switchToTab(tabHelp, panelHelp, 'help');
+    });
+  }
 
   if (tabBug && panelBug) {
     tabBug.addEventListener('click', () => {

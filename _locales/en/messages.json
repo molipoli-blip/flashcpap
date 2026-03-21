@@ -20,6 +20,15 @@
   "tabBugTitle": {
     "message": "Report a bug"
   },
+  "tabHelpTitle": {
+    "message": "Documentation"
+  },
+  "headingDocumentation": {
+    "message": "Documentation"
+  },
+  "descDocumentation": {
+    "message": "Find user guides, tutorials and news on the official FlashCPAP website."
+  },
   "labelProvider": {
     "message": "Provider:"
   },

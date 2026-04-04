@@ -515,6 +515,12 @@
   "fieldEditorAnchorKeyword": {
     "message": "Mot clé d'ancrage"
   },
+  "fieldEditorAddAlternativeKeyword": {
+    "message": "➕ Mot-clé alternatif"
+  },
+  "fieldEditorRemoveKeyword": {
+    "message": "✕"
+  },
   "fieldEditorAnchorKeywordPlaceholder": {
     "message": "ex: IAH, Fuites, Pression Min"
   },

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
 // FlashCPAP - https://github.com/molipoli-blip/flashcpap
-import { logDebug, logError, logWarn } from './debug-logger.js';
+import { logDebug, logError, logFlow, logWarn } from './debug-logger.js';
 import { getCheckboxInputId } from './checkbox-orchestrator.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
 import { getProviderConfig } from './domain/provider-rules.js';
+import { applySplitSeparators } from './parsing.js';
 import { t } from './i18n.js';
 
 function ensureInterpretationPinned(settings, { bubbles = false } = {}) {
@@ -176,6 +177,10 @@ function buildMatchesByLine(matches) {
 
   for (const match of matches) {
     pushToLine(byLine, match.line, match);
+    logFlow('HL_LABEL', 'buildMatchesByLine: match enregistre', {
+      field: match.field, line: match.line, labelLine: match.labelLine,
+      labelText: match.labelText, hasLabelText: !!match.labelText
+    });
 
     if (match.labelText && match.labelLine && match.labelLine !== match.line) {
       const shadow = {
@@ -186,6 +191,11 @@ function buildMatchesByLine(matches) {
         __hlGroupLink: match
       };
       pushToLine(byLine, shadow.line, shadow);
+      logFlow('HL_LABEL', 'buildMatchesByLine: shadow cree', { field: match.field, shadowLine: match.labelLine });
+    } else if (match.labelText && match.labelLine && match.labelLine === match.line) {
+      logFlow('HL_LABEL', 'buildMatchesByLine: label inline (meme ligne, pas de shadow)', { field: match.field, line: match.line });
+    } else {
+      logFlow('HL_LABEL', 'buildMatchesByLine: pas de shadow (labelText ou labelLine manquant)', { field: match.field, labelText: match.labelText, labelLine: match.labelLine });
     }
   }
 
@@ -202,6 +212,20 @@ function resetAnalysisState(setLastAnalyzedUrl) {
   if (preview) preview.replaceChildren();
 }
 
+function preAlignText(text, provider, settings) {
+  try {
+    const cfg = getProviderConfig(settings, provider) || { fields: {} };
+    const allSeparators = new Set();
+    for (const def of Object.values(cfg.fields || {})) {
+      for (const label of def.labels || []) {
+        if (label.splitSeparators?.length) label.splitSeparators.forEach(s => allSeparators.add(s));
+      }
+    }
+    if (allSeparators.size) return applySplitSeparators(text, Array.from(allSeparators));
+  } catch {}
+  return text;
+}
+
 function runParsingPipeline({
   text,
   provider,
@@ -211,10 +235,11 @@ function runParsingPipeline({
   parseTextMeta,
   setupHighlighting
 }) {
-  const sourceLines = text.split(/\r?\n/);
+  const alignedText = preAlignText(text, provider, settings);
+  const sourceLines = alignedText.split(/\r?\n/);
   wrapper.replaceChildren();
 
-  const maskedText = maskExclusions(text, exclusions);
+  const maskedText = maskExclusions(alignedText, exclusions);
   const { data, matches } = parseTextMeta(maskedText, provider, settings);
 
   addSeparatorMatches(sourceLines, matches);
@@ -495,6 +520,7 @@ function getWrappableTextNodes(root) {
       const parent = node.parentElement;
       if (!parent) return NodeFilter.FILTER_REJECT;
       if (parent.closest('sup.hl-badge')) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('.hl')) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     }
   });
@@ -582,6 +608,12 @@ function applyLabelHighlights({
   getVariantIndex
 }) {
   const labelAnnotations = annotations.filter(annotation => annotation && annotation.labelText && annotation.labelLine === lineNumber);
+  logFlow('HL_LABEL', 'applyLabelHighlights', {
+    lineNumber,
+    totalAnnotations: annotations.length,
+    labelAnnotationsCount: labelAnnotations.length,
+    annotationSummary: annotations.map(a => ({ field: a.field, labelText: a.labelText, labelLine: a.labelLine, onlyLabel: a.onlyLabel }))
+  });
   if (!labelAnnotations.length) return;
 
   const seen = new Set();
@@ -630,7 +662,18 @@ function applyLabelHighlights({
     const groupsCsv = Array.from(allGroupsForLabel).join(',');
     let isFirstOccurrence = true;
 
-    wrapTextMatches(lineDiv, annotation.labelText, matchText => {
+    const WORD = 'A-Za-z0-9_À-ÖØ-öø-ÿĀ-ſƀ-ɏ';
+    const labelBoundaryRe = new RegExp(
+      `(?:^|(?<=[^${WORD}]))${escapeRegExp(annotation.labelText)}(?=[^${WORD}]|$)`,
+      'gi'
+    );
+    logFlow('HL_LABEL', 'wrapTextMatches label appele', {
+      field: annotation.field,
+      labelText: annotation.labelText,
+      regexSource: labelBoundaryRe.source,
+      lineDivText: lineDiv.textContent?.slice(0, 80)
+    });
+    wrapTextMatches(lineDiv, labelBoundaryRe, matchText => {
       const fragment = document.createDocumentFragment();
       fragment.appendChild(createHighlightElement(
         'span',
@@ -801,7 +844,7 @@ function buildValuePayload(annotation, lineNumber, groupId) {
 
   try {
     if (typeof annotation.__tupleSize === 'number' && annotation.__tupleSize >= 2) payload.tupleSize = annotation.__tupleSize;
-    else {
+    else if (annotation.type !== 'text') {
       const numbers = String(annotation.raw || '').match(/\d+(?:[.,]\d+)?/g);
       if (numbers && numbers.length >= 2) payload.tupleSize = numbers.length;
     }
@@ -856,12 +899,21 @@ function applyValueHighlights({ lineDiv, annotations, lineNumber, wrapper, color
       });
     }
 
-    wrapTextMatches(lineDiv, matchText, matchedText => createHighlightElement('span', `hl ${colorClassFor(annotation)}`, matchedText, {
+    const createValueSpan = (matchedText) => createHighlightElement('span', `hl ${colorClassFor(annotation)}`, matchedText, {
       'data-hl-id': payloadId >= 0 ? payloadId : undefined,
       'data-hl-group': groupId,
       'data-hl-variant': variantIndex,
       title: String(annotation.label || '').replace(/["<>]/g, '')
-    }), { firstOnly: true });
+    });
+
+    const wrapped = wrapTextMatches(lineDiv, matchText, createValueSpan, { firstOnly: true });
+
+    // For text fields: if the full raw wasn't found (DOM may be split by other highlights),
+    // try with just the first whitespace-delimited token of the value as a fallback.
+    if (!wrapped.length && annotation.type === 'text' && matchText.includes(' ')) {
+      const firstToken = matchText.split(/\s+/)[0].trim();
+      if (firstToken) wrapTextMatches(lineDiv, firstToken, createValueSpan, { firstOnly: true });
+    }
   }
 }
 

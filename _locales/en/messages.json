@@ -515,6 +515,12 @@
   "fieldEditorAnchorKeyword": {
     "message": "Anchor keyword"
   },
+  "fieldEditorAddAlternativeKeyword": {
+    "message": "➕ Alternative keyword"
+  },
+  "fieldEditorRemoveKeyword": {
+    "message": "✕"
+  },
   "fieldEditorAnchorKeywordPlaceholder": {
     "message": "e.g. AHI, Leaks, Min Pressure"
   },

@@ -787,7 +787,10 @@
     <div class="field-group">
       <!-- Mode PDF simplifié : toujours visible, activé si fichier présent -->
       <div id="pdf-upload-container" style="margin-top:8px;">
-        <label style="display:block; margin-bottom:4px; font-size:12px; color:#555; font-weight:600;" data-i18n="labelAnalyzePdf">📄 Analyser un fichier PDF (optionnel) :</label>
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <label style="font-size:12px; color:#555; font-weight:600;" data-i18n="labelAnalyzePdf">📄 Analyser un fichier PDF (optionnel) :</label>
+          <button id="pdf-clear-btn" type="button" style="display:none; padding:2px 7px; font-size:11px; border:1px solid #ccc; border-radius:4px; background:#f5f5f5; cursor:pointer;" title="Vider le PDF">Vider</button>
+        </div>
         <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" style="width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;" />
         <div style="font-size:11px; color:#666; margin-top:4px;" data-i18n="hintAnalyzePdf">💡 Si un fichier est sélectionné, il sera analysé à la place de la page web.</div>
       </div>

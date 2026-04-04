@@ -1,6 +1,7 @@
-import { buildInlineFieldEditorMarkup } from './field-inline-editor-view.js';
+import { buildInlineFieldEditorMarkup, renderLabelSubCard } from './field-inline-editor-view.js';
 import {
   buildInlineFirstLabel,
+  buildInlineLabels,
   buildTupleMaskTokens,
   getInlineEditorInitialState,
   getTimeFormatOptionsByTupleCount,
@@ -17,165 +18,210 @@ function setupInlineEditorHeaderToggle(header, modeWrap, toggle) {
   });
 }
 
-function setupInlineLabelCard(contentWrap, fieldKey) {
+function setupInlineLabelCards(contentWrap, fieldKey, cardInit = {}) {
+  const { tupleInit, tupleMaskInit, timeRawInit, timeDisplayInit } = cardInit;
   const safeFieldKey = CSS.escape(fieldKey);
-  const body = contentWrap.querySelector(`#add-label-card-body-${safeFieldKey}`);
-  const header = contentWrap.querySelector(`#add-label-card-header-${safeFieldKey}`);
-  const toggle = contentWrap.querySelector(`#add-label-card-toggle-${safeFieldKey}`);
-  const title = contentWrap.querySelector(`#add-label-card-title-${safeFieldKey}`);
-  const text = contentWrap.querySelector(`#add-label-text-${safeFieldKey}`);
-  const start = contentWrap.querySelector(`#add-label-start-${safeFieldKey}`);
-  const end = contentWrap.querySelector(`#add-label-end-${safeFieldKey}`);
-  if (!header || !body || !toggle || !title || !text || !start || !end) return;
+  const labelsList = contentWrap.querySelector(`#add-labels-list-${safeFieldKey}`);
+  const addBtn = contentWrap.querySelector(`#add-label-keyword-add-${safeFieldKey}`);
+  if (!labelsList) return;
 
-  header.addEventListener('click', () => {
-    const isOpen = body.style.display !== 'none';
-    body.style.display = isOpen ? 'none' : 'block';
-    toggle.textContent = isOpen ? '▼' : '▲';
-  });
-
-  const updateTitle = () => {
-    const labelText = text.value || t('fieldEditorEmptyKeyword');
-    const startLine = parseInt(start.value || '1', 10) || 1;
-    const endLine = parseInt(end.value || '999', 10) || 999;
-    title.textContent = t('fieldEditorCardTitle', [labelText, String(startLine), String(endLine)]);
-  };
-
-  ['input', 'change'].forEach((eventName) => {
-    text.addEventListener(eventName, updateTitle);
-    start.addEventListener(eventName, updateTitle);
-    end.addEventListener(eventName, updateTitle);
-  });
-  updateTitle();
-}
-
-function setupInlineTypeTupleControls({ contentWrap, fieldKey, tupleInit, tupleMaskInit, timeRawInit, timeDisplayInit }) {
-  const safeFieldKey = CSS.escape(fieldKey);
-  const typeRadios = contentWrap.querySelectorAll(`input[name="add-field-type-${safeFieldKey}"]`);
-  const tupleRow = contentWrap.querySelector(`#add-field-tuple-row-${safeFieldKey}`);
-  const unitInput = contentWrap.querySelector(`#add-field-unit-${safeFieldKey}`);
-  const sizeSelect = contentWrap.querySelector(`#add-field-tuple-size-${safeFieldKey}`);
-  const maskSelect = contentWrap.querySelector(`#add-field-tuple-mask-${safeFieldKey}`);
-  const timeFormatWrap = contentWrap.querySelector(`#add-field-time-format-${safeFieldKey}`);
-  const timeRawSelect = contentWrap.querySelector(`#add-field-time-raw-${safeFieldKey}`);
-  const timeDisplaySelect = contentWrap.querySelector(`#add-field-time-display-${safeFieldKey}`);
-  const extractionRadios = contentWrap.querySelectorAll(`input[name="extraction-mode-${safeFieldKey}"]`);
-  const nextlineRangeConfig = contentWrap.querySelector(`#nextline-range-config-${safeFieldKey}`);
-
-  const buildAllXMask = (size) => {
-    const parsedSize = parseInt(size, 10);
-    if (!parsedSize || parsedSize < 1 || parsedSize > 7) return '';
-    return Array.from({ length: parsedSize }, () => 'X').join(' ');
-  };
-
-  const populateMaskOptions = (size, current) => {
-    if (!maskSelect) return;
-    const maskParent = maskSelect.parentElement;
-    const isNir = parseInt(size, 10) === 7;
-    if (maskParent) maskParent.style.display = isNir ? 'none' : '';
-    if (isNir) {
-      replaceSelectOptions(maskSelect, [{ value: 'X X X X X X X', label: 'X X X X X X X' }], 'X X X X X X X', '');
-      return;
-    }
-    const values = buildTupleMaskTokens(size);
-    const normalizedCurrent = String(current || '').trim();
-    const fallbackAllX = buildAllXMask(size);
-    const selectedValue = normalizedCurrent || fallbackAllX;
-    replaceSelectOptions(maskSelect, values.map((value) => ({ value, label: value })), selectedValue, '');
-
-    // Safety net: if selection did not stick, force a deterministic default.
-    if (!maskSelect.value && values.length > 0) {
-      maskSelect.value = values.includes(fallbackAllX) ? fallbackAllX : values[0];
-    }
-  };
-
-  const renderConnectorInputs = () => {
-    const connectorsContainer = contentWrap.querySelector(`#add-field-tuple-connectors-${safeFieldKey}`);
-    const connectorsInputs = contentWrap.querySelector(`#add-field-tuple-connectors-inputs-${safeFieldKey}`);
-    if (!connectorsContainer || !connectorsInputs) return;
-
-    const mask = maskSelect?.value || '';
-    const xCount = (mask.match(/X/g) || []).length;
-    if (xCount < 2) {
-      connectorsContainer.style.display = 'none';
-      connectorsInputs.replaceChildren();
-      return;
-    }
-
-    connectorsContainer.style.display = 'block';
-    connectorsInputs.replaceChildren();
-    const existingConnectors = tupleInit?.connectors || [];
-    for (let index = 0; index < xCount; index += 1) {
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex; align-items:center; gap:4px;';
-      const label = document.createElement('span');
-      label.textContent = `X${index + 1}`;
-      label.style.cssText = 'font-size:11px; color:#666; min-width:20px;';
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.id = `add-field-tuple-connector-${fieldKey}-${index}`;
-      input.placeholder = index < xCount - 1 ? 'ex: kg' : 'ex: L';
-      input.value = existingConnectors[index] || '';
-      input.style.cssText = 'width:80px; padding:4px; font-size:11px; box-sizing:border-box;';
-      wrap.appendChild(label);
-      wrap.appendChild(input);
-      connectorsInputs.appendChild(wrap);
-    }
-  };
-
-  const populateTimeFormats = (xCount) => {
-    if (!timeRawSelect || !timeDisplaySelect) return;
-    const { rawOptions, displayOptions } = getTimeFormatOptionsByTupleCount(xCount);
-    replaceSelectOptions(timeRawSelect, rawOptions, timeRawInit);
-    replaceSelectOptions(timeDisplaySelect, displayOptions, timeDisplayInit);
-  };
-
-  const refreshTimeFormatsFromMask = () => {
-    const checked = Array.from(typeRadios).find((radio) => radio.checked);
-    if (checked?.value !== 'time') return;
-    const mask = maskSelect?.value || '';
-    const xCount = (mask.match(/X/g) || []).length;
-    populateTimeFormats(xCount);
-  };
-
-  const updateTypeDisplay = () => {
-    const checked = Array.from(typeRadios).find((radio) => radio.checked);
-    const isNumeric = checked?.value === 'numeric';
-    const isTime = checked?.value === 'time';
-    if (unitInput) unitInput.disabled = !isNumeric;
-    if (tupleRow) tupleRow.style.display = (isNumeric || isTime) ? 'block' : 'none';
-    if (timeFormatWrap) timeFormatWrap.style.display = isTime ? 'block' : 'none';
-    if (!isNumeric && unitInput) unitInput.value = '';
-    if (isTime) refreshTimeFormatsFromMask();
-  };
-
-  const updateRangeState = () => {
-    const selected = contentWrap.querySelector(`input[name="extraction-mode-${safeFieldKey}"]:checked`)?.value;
-    if (nextlineRangeConfig) {
-      nextlineRangeConfig.style.display = selected === 'inline' ? 'none' : 'block';
-    }
-  };
-
-  updateTypeDisplay();
-  populateMaskOptions(sizeSelect?.value || '1', maskSelect?.value || tupleMaskInit || '');
-  renderConnectorInputs();
-  refreshTimeFormatsFromMask();
-  typeRadios.forEach((radio) => radio.addEventListener('change', updateTypeDisplay));
-  extractionRadios.forEach((radio) => radio.addEventListener('change', updateRangeState));
-  updateRangeState();
-
-  if (sizeSelect) {
-    sizeSelect.addEventListener('change', () => {
-      populateMaskOptions(sizeSelect.value, '');
-      renderConnectorInputs();
-      refreshTimeFormatsFromMask();
+  const refreshRemoveButtons = () => {
+    const cards = labelsList.querySelectorAll(':scope > .label-subcard');
+    cards.forEach((card) => {
+      const btn = card.querySelector('.label-subcard-remove');
+      if (btn) btn.style.visibility = cards.length <= 1 ? 'hidden' : 'visible';
     });
-  }
+  };
 
-  if (maskSelect) {
-    maskSelect.addEventListener('change', () => {
-      renderConnectorInputs();
-      refreshTimeFormatsFromMask();
+  const setupSubCard = (card, initOpts = {}) => {
+    const si = card.dataset.subcardIndex;
+    const header = card.querySelector('.label-subcard-header');
+    const body = card.querySelector('.label-subcard-body');
+    const toggle = card.querySelector('.label-subcard-toggle');
+    const titleEl = card.querySelector('.label-subcard-title');
+    const keywordInput = card.querySelector('.label-subcard-keyword');
+    const startInput = card.querySelector('.label-subcard-start');
+    const endInput = card.querySelector('.label-subcard-end');
+    const removeBtn = card.querySelector('.label-subcard-remove');
+    const unitInput = card.querySelector('.label-subcard-unit');
+    const tupleRow = card.querySelector(`#add-field-tuple-row-${fieldKey}-${si}`);
+    const sizeSelect = card.querySelector(`#add-field-tuple-size-${fieldKey}-${si}`);
+    const maskSelect = card.querySelector(`#add-field-tuple-mask-${fieldKey}-${si}`);
+    const timeFormatWrap = card.querySelector(`#add-field-time-format-${fieldKey}-${si}`);
+    const timeRawSelect = card.querySelector(`#add-field-time-raw-${fieldKey}-${si}`);
+    const timeDisplaySelect = card.querySelector(`#add-field-time-display-${fieldKey}-${si}`);
+    const updateTitle = () => {
+      if (!titleEl) return;
+      const kw = keywordInput?.value.trim() || t('fieldEditorEmptyKeyword');
+      const s = parseInt(startInput?.value || '1', 10) || 1;
+      const e = parseInt(endInput?.value || '999', 10) || 999;
+      titleEl.textContent = t('fieldEditorCardTitle', [kw, String(s), String(e)]);
+    };
+
+    const buildAllXMask = (size) => {
+      const parsedSize = parseInt(size, 10);
+      if (!parsedSize || parsedSize < 1 || parsedSize > 7) return '';
+      return Array.from({ length: parsedSize }, () => 'X').join(' ');
+    };
+
+    const populateMaskOptions = (size, current) => {
+      if (!maskSelect) return;
+      const maskParent = maskSelect.parentElement;
+      const isNir = parseInt(size, 10) === 7;
+      if (maskParent) maskParent.style.display = isNir ? 'none' : '';
+      if (isNir) {
+        replaceSelectOptions(maskSelect, [{ value: 'X X X X X X X', label: 'X X X X X X X' }], 'X X X X X X X', '');
+        return;
+      }
+      const values = buildTupleMaskTokens(size);
+      const normalizedCurrent = String(current || '').trim();
+      const fallbackAllX = buildAllXMask(size);
+      const selectedValue = normalizedCurrent || fallbackAllX;
+      replaceSelectOptions(maskSelect, values.map((value) => ({ value, label: value })), selectedValue, '');
+      if (!maskSelect.value && values.length > 0) {
+        maskSelect.value = values.includes(fallbackAllX) ? fallbackAllX : values[0];
+      }
+    };
+
+    const renderConnectorInputs = () => {
+      const connectorsContainer = card.querySelector(`#add-field-tuple-connectors-${fieldKey}-${si}`);
+      const connectorsInputs = card.querySelector(`#add-field-tuple-connectors-inputs-${fieldKey}-${si}`);
+      if (!connectorsContainer || !connectorsInputs) return;
+      const mask = maskSelect?.value || '';
+      const xCount = (mask.match(/X/g) || []).length;
+      if (xCount < 2) {
+        connectorsContainer.style.display = 'none';
+        connectorsInputs.replaceChildren();
+        return;
+      }
+      connectorsContainer.style.display = 'block';
+      connectorsInputs.replaceChildren();
+      const existingConnectors = initOpts.tupleInit?.connectors || [];
+      for (let ci = 0; ci < xCount; ci += 1) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex; align-items:center; gap:4px;';
+        const lbl = document.createElement('span');
+        lbl.textContent = `X${ci + 1}`;
+        lbl.style.cssText = 'font-size:11px; color:#666; min-width:20px;';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `add-field-tuple-connector-${fieldKey}-${si}-${ci}`;
+        input.placeholder = ci < xCount - 1 ? 'ex: kg' : 'ex: L';
+        input.value = existingConnectors[ci] || '';
+        input.style.cssText = 'width:80px; padding:4px; font-size:11px; box-sizing:border-box;';
+        wrap.appendChild(lbl);
+        wrap.appendChild(input);
+        connectorsInputs.appendChild(wrap);
+      }
+    };
+
+    const populateTimeFormats = (xCount) => {
+      if (!timeRawSelect || !timeDisplaySelect) return;
+      const { rawOptions, displayOptions } = getTimeFormatOptionsByTupleCount(xCount);
+      replaceSelectOptions(timeRawSelect, rawOptions, initOpts.timeRawInit);
+      replaceSelectOptions(timeDisplaySelect, displayOptions, initOpts.timeDisplayInit);
+    };
+
+    const refreshTimeFormatsFromMask = (type) => {
+      const resolvedType = type ?? contentWrap.querySelector(`input[name="add-field-type-${fieldKey}"]:checked`)?.value;
+      if (resolvedType !== 'time') return;
+      const mask = maskSelect?.value || '';
+      const xCount = (mask.match(/X/g) || []).length;
+      populateTimeFormats(xCount);
+    };
+
+    const updateForType = (type) => {
+      const isNum = type === 'numeric';
+      const isTm = type === 'time';
+      if (unitInput) unitInput.disabled = !isNum;
+      if (unitInput && !isNum) unitInput.value = '';
+      if (tupleRow) tupleRow.style.display = (isNum || isTm) ? 'block' : 'none';
+      if (timeFormatWrap) timeFormatWrap.style.display = isTm ? 'block' : 'none';
+      if (isTm) refreshTimeFormatsFromMask(type);
+    };
+
+    populateMaskOptions(sizeSelect?.value || '1', initOpts.tupleMaskInit || '');
+    renderConnectorInputs();
+    refreshTimeFormatsFromMask();
+
+    if (sizeSelect) {
+      sizeSelect.addEventListener('change', () => {
+        populateMaskOptions(sizeSelect.value, '');
+        renderConnectorInputs();
+        refreshTimeFormatsFromMask();
+      });
+    }
+    if (maskSelect) {
+      maskSelect.addEventListener('change', () => {
+        renderConnectorInputs();
+        refreshTimeFormatsFromMask();
+      });
+    }
+
+    if (header && body && toggle) {
+      header.addEventListener('click', (ev) => {
+        if (ev.target === removeBtn) return;
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        toggle.textContent = isOpen ? '▼' : '▲';
+      });
+    }
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const cards = labelsList.querySelectorAll(':scope > .label-subcard');
+        if (cards.length <= 1) return;
+        card.remove();
+        refreshRemoveButtons();
+      });
+    }
+
+    [keywordInput, startInput, endInput].forEach((el) => {
+      if (el) el.addEventListener('input', updateTitle);
+    });
+
+    updateTitle();
+    return { updateForType };
+  };
+
+  // Wire existing sub-cards rendered from HTML
+  const subCardUpdaters = [];
+  labelsList.querySelectorAll(':scope > .label-subcard').forEach((card) => {
+    const si = parseInt(card.dataset.subcardIndex, 10);
+    const updater = setupSubCard(card, si === 0 ? { tupleInit, tupleMaskInit, timeRawInit, timeDisplayInit } : {});
+    subCardUpdaters.push(updater);
+  });
+  refreshRemoveButtons();
+
+  const globalTypeRadios = contentWrap.querySelectorAll(`input[name="add-field-type-${fieldKey}"]`);
+  const getCheckedType = () => Array.from(globalTypeRadios).find((r) => r.checked)?.value || 'text';
+  const applyTypeToAll = () => {
+    const type = getCheckedType();
+    subCardUpdaters.forEach((u) => u.updateForType(type));
+  };
+  globalTypeRadios.forEach((r) => r.addEventListener('change', applyTypeToAll));
+  applyTypeToAll();
+
+  if (addBtn) {
+    addBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const index = labelsList.querySelectorAll(':scope > .label-subcard').length;
+      const currentType = getCheckedType();
+      const typeOpts = {
+        isNumeric: currentType === 'numeric',
+        isTime: currentType === 'time',
+        unit: '',
+        tupleSizeInit: 1
+      };
+      const div = document.createElement('div');
+      div.innerHTML = renderLabelSubCard(fieldKey, index, null, typeOpts).trim();
+      const newCard = div.firstElementChild;
+      labelsList.appendChild(newCard);
+      const updater = setupSubCard(newCard, {});
+      subCardUpdaters.push(updater);
+      updater.updateForType(currentType);
+      refreshRemoveButtons();
     });
   }
 }
@@ -256,8 +302,8 @@ function setupInlineEditorActions({
     inlineSubmit.addEventListener('click', (event) => {
       event.stopPropagation();
       const state = readInlineEditorFormState(contentWrap, fieldKey);
-      const firstLabelWanted = buildInlineFirstLabel(fieldKey, state);
-      const saved = onSave?.({ fieldKey, state, firstLabelWanted });
+      const labelsWanted = buildInlineLabels(fieldKey, state);
+      const saved = onSave?.({ fieldKey, state, firstLabelWanted: labelsWanted });
       if (saved === false) {
         onSaveMissingField?.({ fieldKey });
       }
@@ -302,21 +348,12 @@ function createInlineEditorSlot({
     tupleSizeInit,
     timeRawInit,
     timeDisplayInit,
-    firstLabel: lbl0,
-    lblTextInit,
-    lblStartInit,
-    lblEndInit,
-    lblLabelExclInit,
-    lblExcludeInit,
-    lblPriorityInit,
+    allLabels,
     tupleMaskInit
   } = getInlineEditorInitialState(fieldKey, definition);
 
-  console.log(`[FIELD-MGMT][RENDER] Champ "${fieldKey}" - Label chargé:`, {
-    text: lblTextInit,
-    requireInline: lbl0?.requireInline,
-    requireNextLine: lbl0?.requireNextLine,
-    range: lbl0?.range,
+  console.log(`[FIELD-MGMT][RENDER] Champ "${fieldKey}" - Labels chargés:`, {
+    count: allLabels.length,
     type: definition.type,
     unit: definition.unit,
     role: definition.role
@@ -335,13 +372,7 @@ function createInlineEditorSlot({
       suffixInitial,
       roleInitial,
       tupleSizeInit,
-      firstLabel: lbl0,
-      lblTextInit,
-      lblStartInit,
-      lblEndInit,
-      lblLabelExclInit,
-      lblExcludeInit,
-      lblPriorityInit
+      allLabels
     }
   });
 
@@ -354,8 +385,7 @@ function createInlineEditorSlot({
   modeWrap.appendChild(contentWrap);
 
   setupInlineEditorHeaderToggle(header, modeWrap, toggle);
-  setupInlineLabelCard(contentWrap, fieldKey);
-  setupInlineTypeTupleControls({ contentWrap, fieldKey, tupleInit, tupleMaskInit, timeRawInit, timeDisplayInit });
+  setupInlineLabelCards(contentWrap, fieldKey, { tupleInit, tupleMaskInit, timeRawInit, timeDisplayInit });
   setupInlineEditorActions({
     contentWrap,
     modeWrap,

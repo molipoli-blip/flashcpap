@@ -228,27 +228,61 @@ function applyImportedProviderPayload(siteLabel, normalizedPayload) {
     if (!settings.organizationOrderByProvider) settings.organizationOrderByProvider = {};
     settings.organizationOrderByProvider[targetLabel] = normalizedPayload.organizationOrder;
   }
+
+  if (normalizedPayload.customCheckboxes !== undefined) {
+    if (!settings.customCheckboxes) settings.customCheckboxes = {};
+    settings.customCheckboxes[key] = normalizedPayload.customCheckboxes;
+  }
+
+  if (normalizedPayload.checkboxPhrases !== undefined) {
+    if (!settings.checkboxPhrases) settings.checkboxPhrases = {};
+    settings.checkboxPhrases[key] = normalizedPayload.checkboxPhrases;
+  }
+
+  if (normalizedPayload.exclusions !== undefined) {
+    if (!settings.exclusionsByProvider) settings.exclusionsByProvider = {};
+    settings.exclusionsByProvider[key] = normalizedPayload.exclusions;
+  }
+
+  if (normalizedPayload.familySettings !== undefined) {
+    if (!settings.familySettings) settings.familySettings = {};
+    settings.familySettings[key] = normalizedPayload.familySettings;
+  }
+
+  if (normalizedPayload.pinnedOptions !== undefined) {
+    if (!settings.pinnedOptions) settings.pinnedOptions = {};
+    settings.pinnedOptions[key] = normalizedPayload.pinnedOptions;
+  }
 }
 
 function buildProviderExportPayload(site) {
   const key = toProviderKey(site);
   const patterns = cloneJsonData(getProviderConfig(settings, site) || {}, {});
+  const meta = (patterns && patterns.meta) || {};
 
   return {
     version: 2,
     type: 'provider',
     provider: site,
     meta: {
-      name: site
+      name: site,
+      vendor: meta.vendor || '',
+      model: meta.model || site
     },
     exportDate: new Date().toISOString(),
     patterns,
-    noteLibre: settings.noteLibre[key] || '',
+    noteLibre: settings.noteLibre?.[key] || '',
     compactFields: !!settings.compactFields?.[key],
     organizationOrder: cloneJsonData(
       settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || [],
       []
-    )
+    ),
+    customCheckboxes: cloneJsonData(settings.customCheckboxes?.[key] || [], []),
+    checkboxPhrases: cloneJsonData(settings.checkboxPhrases?.[key] || [], []),
+    exclusions: cloneJsonData(settings.exclusionsByProvider?.[key] || [], []),
+    globalSeparators: patterns.globalSeparators || [],
+    familySettings: cloneJsonData(settings.familySettings?.[key] || {}, {}),
+    pinnedOptions: cloneJsonData(settings.pinnedOptions?.[key] || [], [])
   };
 }
 
@@ -300,10 +334,6 @@ export function importProviderConfig(site, jsonData) {
   try {
     const normalizedImport = normalizeProviderImportPayload(jsonData);
     applyImportedProviderPayload(site, normalizedImport);
-    
-    // NOTE: On ignore volontairement les données de checkboxes (customCheckboxes,
-    // checkboxPhrases, checkboxFamilies) dans l'import prestataire.
-    
     saveSettings();
     loadSettings(); // ✅ Recharger pour normaliser les labels (incluant requireInline/requireNextLine)
     showToast(t('providerImportSuccess', site), 'success');

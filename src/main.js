@@ -66,14 +66,26 @@ function setupInterpretationAndProviderBindings() {
 function setupPdfFeedbackLogging() {
   const pdfFileInput = document.getElementById('pdf-file-input');
   if (!pdfFileInput) return;
+  const pdfClearBtn = document.getElementById('pdf-clear-btn');
+
+  const syncClearBtn = () => {
+    if (pdfClearBtn) pdfClearBtn.style.display = pdfFileInput.files?.length ? 'inline-block' : 'none';
+  };
 
   pdfFileInput.addEventListener('change', event => {
     const file = event.target.files?.[0];
+    syncClearBtn();
     if (file) {
       logDebug('PDF', 'Fichier sélectionné', { name: file.name, size: `${(file.size / 1024).toFixed(1)} Ko` });
       return;
     }
     logDebug('PDF', 'Aucun fichier sélectionné (retour mode HTML)');
+  });
+
+  pdfClearBtn?.addEventListener('click', () => {
+    pdfFileInput.value = '';
+    syncClearBtn();
+    logDebug('PDF', 'Fichier vidé (retour mode HTML)');
   });
 }
 
@@ -148,7 +160,11 @@ function setupActionFeatures(analysisSelect) {
 
 function init() {
   loadSettings();
-  try { console.log('[INIT] Settings loaded. Families:', settings.checkboxFamilies, 'OrgOrder length:', (settings.organizationOrder||[]).length); } catch {}
+  try {
+    const manifest = browser.runtime.getManifest();
+    console.log(`[INIT] FlashCPAP v${manifest.version}`);
+    console.log('[INIT] Settings loaded. Families:', settings.checkboxFamilies, 'OrgOrder length:', (settings.organizationOrder||[]).length);
+  } catch {}
   const analysisSelect = initializeCoreUi();
   setupInterpretationAndProviderBindings();
   setupPdfFeedbackLogging();

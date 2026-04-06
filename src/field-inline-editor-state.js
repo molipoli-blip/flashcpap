@@ -7,6 +7,9 @@ export function getInlineEditorInitialState(fieldKey, definition) {
   const tupleInit = definition.tupleExtraction || null;
   const timeFormatInit = definition.timeFormat || null;
   const firstLabel = Array.isArray(definition.labels) && definition.labels[0] ? definition.labels[0] : null;
+  const allLabels = Array.isArray(definition.labels) && definition.labels.length > 0
+    ? definition.labels
+    : [];
 
   return {
     isNumeric,
@@ -22,6 +25,7 @@ export function getInlineEditorInitialState(fieldKey, definition) {
     timeRawInit: timeFormatInit?.raw || '',
     timeDisplayInit: timeFormatInit?.display || '',
     firstLabel,
+    allLabels,
     lblTextInit: firstLabel?.text || '',
     lblStartInit: firstLabel?.range?.start ?? 1,
     lblEndInit: firstLabel?.range?.end ?? 999,
@@ -129,44 +133,49 @@ export function getTimeFormatOptionsByTupleCount(xCount) {
 export function readInlineEditorFormState(contentWrap, fieldKey) {
   const safeFieldKey = CSS.escape(fieldKey);
   const nameElement = contentWrap.querySelector(`#add-field-name-${safeFieldKey}`);
+  const firstSubCard = contentWrap.querySelector(`#add-labels-list-${safeFieldKey} > .label-subcard`);
   const typeElement = contentWrap.querySelector(`input[name="add-field-type-${safeFieldKey}"]:checked`);
-  const unitElement = contentWrap.querySelector(`#add-field-unit-${safeFieldKey}`);
+  const unitElement = firstSubCard ? firstSubCard.querySelector('.label-subcard-unit') : null;
   const suffixElement = contentWrap.querySelector(`#add-field-suffix-${safeFieldKey}`);
   const roleElement = contentWrap.querySelector(`#add-field-role-${safeFieldKey}`);
-
   const isNumeric = typeElement?.value === 'numeric';
   const isTime = typeElement?.value === 'time';
   let suffixWanted = suffixElement ? suffixElement.value : undefined;
   if (suffixWanted === '__DEFAULT__') suffixWanted = undefined;
 
-  const tupleSize = (contentWrap.querySelector(`#add-field-tuple-size-${safeFieldKey}`)?.value || '').trim();
-  const tupleMask = (contentWrap.querySelector(`#add-field-tuple-mask-${safeFieldKey}`)?.value || '').trim();
+  const tupleSize = (firstSubCard?.querySelector(`#add-field-tuple-size-${safeFieldKey}-0`)?.value || '').trim();
+  const tupleMask = (firstSubCard?.querySelector(`#add-field-tuple-mask-${safeFieldKey}-0`)?.value || '').trim();
   const tupleSelectedCount = (tupleMask.match(/X/g) || []).length;
   const tupleConnectors = [];
   for (let index = 0; index < tupleSelectedCount; index += 1) {
-    const connectorElement = contentWrap.querySelector(`#add-field-tuple-connector-${safeFieldKey}-${index}`);
+    const connectorElement = firstSubCard?.querySelector(`#add-field-tuple-connector-${safeFieldKey}-0-${index}`);
     tupleConnectors.push(connectorElement?.value || '');
   }
 
-  const labelText = (contentWrap.querySelector(`#add-label-text-${safeFieldKey}`)?.value || '').trim();
-  const labelStart = parseInt(contentWrap.querySelector(`#add-label-start-${safeFieldKey}`)?.value || '1', 10) || 1;
-  const labelEnd = parseInt(contentWrap.querySelector(`#add-label-end-${safeFieldKey}`)?.value || '999', 10) || 999;
-  const labelExclude = (contentWrap.querySelector(`#add-label-label-exclude-${safeFieldKey}`)?.value || '').trim();
-  const contentExclude = (contentWrap.querySelector(`#add-label-exclude-${safeFieldKey}`)?.value || '').trim();
-  const priorityKeywords = (contentWrap.querySelector(`#add-label-priority-${safeFieldKey}`)?.value || '').trim();
-  const splitSeparatorsStr = (contentWrap.querySelector(`#add-label-split-separators-${safeFieldKey}`)?.value || '').trim();
-  const splitSeparators = splitSeparatorsStr
-    ? splitSeparatorsStr.split(',').map((value) => value.trim()).filter(Boolean)
-    : [];
-
-  const extractionMode = contentWrap.querySelector(`input[name="extraction-mode-${safeFieldKey}"]:checked`)?.value || 'auto';
-  const requireInline = extractionMode === 'inline';
-  const requireNextLine = extractionMode === 'nextline';
-  const nextLineMin = parseInt(contentWrap.querySelector(`#add-label-nextline-min-${safeFieldKey}`)?.value || '1', 10);
-  const nextLineMax = parseInt(contentWrap.querySelector(`#add-label-nextline-max-${safeFieldKey}`)?.value || '3', 10);
-  const nextLineRange = requireNextLine && !isNaN(nextLineMin) && !isNaN(nextLineMax)
-    ? [nextLineMin, nextLineMax]
-    : undefined;
+  const labelsList = contentWrap.querySelector(`#add-labels-list-${safeFieldKey}`);
+  const subCards = labelsList ? Array.from(labelsList.querySelectorAll(':scope > .label-subcard')) : [];
+  const labelsData = subCards.map((card) => {
+    const idx = card.dataset.subcardIndex;
+    const text = (card.querySelector('.label-subcard-keyword')?.value || '').trim();
+    const start = parseInt(card.querySelector('.label-subcard-start')?.value || '1', 10) || 1;
+    const end = parseInt(card.querySelector('.label-subcard-end')?.value || '999', 10) || 999;
+    const labelExclude = (card.querySelector('.label-subcard-label-excl')?.value || '').trim();
+    const contentExclude = (card.querySelector('.label-subcard-content-excl')?.value || '').trim();
+    const priorityKeywords = (card.querySelector('.label-subcard-priority')?.value || '').trim();
+    const splitSepsStr = (card.querySelector('.label-subcard-split-seps')?.value || '').trim();
+    const splitSeparators = splitSepsStr ? splitSepsStr.split(',').map((v) => v.trim()).filter(Boolean) : [];
+    const extractionMode = card.querySelector(`input[name="extraction-mode-${safeFieldKey}-${idx}"]:checked`)?.value || 'auto';
+    const requireInline = extractionMode === 'inline';
+    const requireNextLine = extractionMode === 'nextline';
+    const nextLineMinEl = card.querySelector(`#add-label-nextline-min-${safeFieldKey}-${idx}`);
+    const nextLineMaxEl = card.querySelector(`#add-label-nextline-max-${safeFieldKey}-${idx}`);
+    const nextLineMin = parseInt(nextLineMinEl?.value || '1', 10);
+    const nextLineMax = parseInt(nextLineMaxEl?.value || '3', 10);
+    const nextLineRange = requireNextLine && !isNaN(nextLineMin) && !isNaN(nextLineMax) ? [nextLineMin, nextLineMax] : undefined;
+    return { text, start, end, labelExclude, contentExclude, priorityKeywords, splitSeparators, requireInline, requireNextLine, nextLineRange };
+  });
+  const labelText = labelsData[0]?.text || '';
+  const extractionMode = labelsData[0] ? (labelsData[0].requireInline ? 'inline' : labelsData[0].requireNextLine ? 'nextline' : 'auto') : 'auto';
 
   return {
     labelWanted: nameElement?.value || '',
@@ -178,20 +187,14 @@ export function readInlineEditorFormState(contentWrap, fieldKey) {
     tupleSize,
     tupleMask,
     tupleConnectors,
-    timeRaw: contentWrap.querySelector(`#add-field-time-raw-${safeFieldKey}`)?.value || '',
-    timeDisplay: contentWrap.querySelector(`#add-field-time-display-${safeFieldKey}`)?.value || '',
+    timeRaw: firstSubCard?.querySelector(`#add-field-time-raw-${safeFieldKey}-0`)?.value || '',
+    timeDisplay: firstSubCard?.querySelector(`#add-field-time-display-${safeFieldKey}-0`)?.value || '',
     roleWanted: (roleElement?.value || '').trim(),
+    labelsData,
     labelText,
-    labelStart,
-    labelEnd,
-    labelExclude,
-    contentExclude,
-    priorityKeywords,
-    splitSeparators,
     extractionMode,
-    requireInline,
-    requireNextLine,
-    nextLineRange
+    requireInline: extractionMode === 'inline',
+    requireNextLine: extractionMode === 'nextline'
   };
 }
 
@@ -216,51 +219,46 @@ function buildInlineTimeFormat(state) {
   };
 }
 
-export function buildInlineFirstLabel(fieldKey, state) {
-  console.log(`[FIELD-MGMT][SUBMIT] Champ "${fieldKey}":`, {
-    labelText: state.labelText,
-    extractionMode: state.extractionMode,
-    requireInline: state.requireInline,
-    requireNextLine: state.requireNextLine,
-    nextLineRange: state.nextLineRange,
-    splitSeparators: state.splitSeparators,
-    typeWanted: state.typeWanted,
-    unitWanted: state.unitWanted,
-    roleWanted: state.roleWanted
-  });
+export function buildInlineLabels(fieldKey, state) {
+  const labelsData = state.labelsData || [];
+  const filtered = labelsData.filter((d) => d.text);
 
-  if (!state.labelText) {
-    console.log(`[FIELD-MGMT][WARNING] Champ "${fieldKey}" : labelText est vide, le label ne sera pas créé, donc les flags requireInline/requireNextLine seront ignorés.`);
-    if (state.extractionMode !== 'auto') {
+  if (filtered.length === 0) {
+    console.log(`[FIELD-MGMT][WARNING] Champ "${fieldKey}" : aucun mot-clé défini.`);
+    if (state.extractionMode && state.extractionMode !== 'auto') {
       alertInline(
-        `Le mode d'extraction "${state.extractionMode === 'inline' ? 'Ligne du label uniquement' : 'Lignes suivantes uniquement'}" nécessite de définir un "Mot-clé d'ancrage".`,
+        `Le mode d'extraction nécessite de définir au moins un "Mot-clé d'ancrage".`,
         'warning'
       );
     }
-    return null;
+    return [];
   }
 
-  const firstLabelWanted = {
-    text: state.labelText,
-    range: { start: state.labelStart, end: state.labelEnd },
-    labelExcludeKeywords: state.labelExclude ? state.labelExclude.split(',').map((value) => value.trim()).filter(Boolean) : [],
-    excludeKeywords: state.contentExclude ? state.contentExclude.split(',').map((value) => value.trim()).filter(Boolean) : [],
-    priorityKeywords: state.priorityKeywords ? state.priorityKeywords.split(',').map((value) => value.trim()).filter(Boolean) : [],
-    ...(state.splitSeparators.length > 0 ? { splitSeparators: state.splitSeparators } : {})
-  };
-
-  if (state.requireInline) {
-    firstLabelWanted.requireInline = true;
-  }
-  if (state.requireNextLine) {
-    firstLabelWanted.requireNextLine = true;
-    if (state.nextLineRange) {
-      firstLabelWanted.nextLineRange = state.nextLineRange;
+  const labels = filtered.map((d) => {
+    const label = {
+      text: d.text,
+      range: { start: d.start, end: d.end },
+      labelExcludeKeywords: d.labelExclude ? d.labelExclude.split(',').map((v) => v.trim()).filter(Boolean) : [],
+      excludeKeywords: d.contentExclude ? d.contentExclude.split(',').map((v) => v.trim()).filter(Boolean) : [],
+      priorityKeywords: d.priorityKeywords ? d.priorityKeywords.split(',').map((v) => v.trim()).filter(Boolean) : [],
+      ...(d.splitSeparators && d.splitSeparators.length > 0 ? { splitSeparators: d.splitSeparators } : {})
+    };
+    if (d.requireInline) label.requireInline = true;
+    if (d.requireNextLine) {
+      label.requireNextLine = true;
+      if (d.nextLineRange) label.nextLineRange = d.nextLineRange;
     }
-  }
+    return label;
+  });
 
-  console.log(`[FIELD-MGMT][LABEL] Label créé pour "${fieldKey}":`, firstLabelWanted);
-  return firstLabelWanted;
+  console.log(`[FIELD-MGMT][LABELS] Labels créés pour "${fieldKey}":`, labels);
+  return labels;
+}
+
+// Alias de compatibilité
+export function buildInlineFirstLabel(fieldKey, state) {
+  const labels = buildInlineLabels(fieldKey, state);
+  return labels.length > 0 ? labels[0] : null;
 }
 
 export function applyInlineFieldChanges(definition, state, firstLabelWanted) {
@@ -282,5 +280,5 @@ export function applyInlineFieldChanges(definition, state, firstLabelWanted) {
   if (state.roleWanted) definition.role = state.roleWanted;
   else delete definition.role;
 
-  definition.labels = firstLabelWanted ? [firstLabelWanted] : [];
+  definition.labels = Array.isArray(firstLabelWanted) ? firstLabelWanted : (firstLabelWanted ? [firstLabelWanted] : []);
 }

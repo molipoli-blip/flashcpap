@@ -436,7 +436,7 @@ export function extractTextMeta(text, labelDefs) {
         const endOffset = nextLineRange?.[1] || 5;
 
         for (let j = startOffset; j <= endOffset; j++) {
-          const nxt = (L[i + j] || '').trim();
+          const nxt = (L[i + j] || '').trim().replace(/\s*✂\s*/g, '').trim();
           if (!nxt) continue;
           
           if (/\d{2}\/\d{2}\/\d{4}|depuis le|du \d/.test(nxt)) continue;
@@ -459,7 +459,7 @@ export function extractTextMeta(text, labelDefs) {
       // ✅ Mode requireInline : valeur DOIT être sur la ligne du label
       if (requireInline) {
         if (m) {
-          const raw = m[1].trim();
+          const raw = m[1].replace(/\s*✂\s*/g, '').trim();
           return { value: raw || '?', match: raw ? { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } : null };
         }
         return { value: '?', match: null };
@@ -467,7 +467,7 @@ export function extractTextMeta(text, labelDefs) {
       
       // ✅ Mode automatique : cherche d'abord inline, puis lignes suivantes
       if (m) {
-        const raw = m[1].trim();
+        const raw = m[1].replace(/\s*✂\s*/g, '').trim();
         if (raw.length > 0) {
           return { value: raw, match: { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
         }
@@ -481,7 +481,7 @@ export function extractTextMeta(text, labelDefs) {
       });
       const candidates = [];
       for (let j = 1; j <= 5; j++) {
-        const nxt = (L[i + j] || '').trim();
+        const nxt = (L[i + j] || '').trim().replace(/\s*✂\s*/g, '').trim();
         if (!nxt) continue;
         if (/\d{2}\/\d{2}\/\d{4}|depuis le|du \d/.test(nxt)) continue;
         if (excludeKeywords && excludeKeywords.length > 0) {
@@ -795,7 +795,9 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
       };
       
       if (!requireNextLine) {
-        scan(line, i, rawLine);
+        const lblMatch = labelBoundaryPattern(lbl).exec(line);
+        const afterLabelIdx = lblMatch ? lblMatch.index + lblMatch[0].length : 0;
+        scan(line.slice(afterLabelIdx), i, rawLine.slice(afterLabelIdx));
       }
       
       if (!requireInline && (requireNextLine || collected.length < 2)) {

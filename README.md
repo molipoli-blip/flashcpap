@@ -1,132 +1,207 @@
 # FlashCPAP [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H81VJXO5)
 
-Extension Firefox & Chromium open source pour **analyser des rapports PPC/CPAP** (pages web ou PDF), extraire les données importantes et générer un **résumé prêt à copier**.
+**FlashCPAP** is an open-source Firefox & Chromium browser extension designed to analyze **CPAP/PPC reports** (web pages or PDFs from providers), extract key data, and generate a **structured clinical summary** ready to be copied into medical records.
 
-## ✨ Fonctionnalités principales
+<p align="center">
+  <a href="https://www.flashcpap.com">Website</a> •
+  <a href="#main-features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#quick-start">Quick start</a> •
+  <a href="#privacy--data">Privacy</a>
+</p>
 
-- Analyse et extraction des données de la page active en 1 clic
-- Analyse et extraction des données d'un fichier PDF (optionnel)
-- Détection automatique du prestataire (mode Auto)
-- Génération de résumé éditable + aperçu lisible
-- Copie rapide du résumé dans le presse-papiers
-- Surlignage interactif des données extraites dans le texte source pour une meilleure visibilité lors du paramètrage.
-- Paramètres avancés par prestataire (champs, mots clés, unités, ordre)
-- Checkboxes personnalisées avec familles, favoris et phrases combinées pour ajout de texte personnalisé
-- Interprétation configurable des données (seuils + textes)
-- Import / Export JSON (prestataires et checkboxes)
+---
 
-## 🚀 Installation
+## What FlashCPAP is for
 
-### Firefox (AMO)
+FlashCPAP is designed for clinicians and sleep practitioners who need to:
 
-Disponible sur [addons.mozilla.org](https://addons.mozilla.org/fr/firefox/addon/flashcpap/).
+- review CPAP/PPC reports faster  
+- standardize repetitive extraction values (e.g. AHI, leaks rate, Adherence etc..)
+- generate a clear, structured summary  
+- keep full control over local data processing  
 
-### Chargement local (mode développeur)
+> [!NOTE]
+> **FlashCPAP is a workflow support tool.**  
+> It does not provide medical advice, diagnosis, or treatment recommendations.  
+> Clinical review of all extracted data is mandatory.
 
-**Prérequis** : bash, python3
+---
+
+## Main features
+
+- One-click analysis and extraction from the active page based on field keywords  
+- Advanced provider-specific settings (fields, keywords, units, order)  
+- Interactive highlighting of extracted values in the source text for easier configuration and verification  
+- Custom checkboxes with families, favorites, and combined phrases for adding personalized text  
+- Optional analysis and extraction from PDF files  
+- Automatic provider detection (**Auto mode**)  
+- Editable summary generation with readable preview  
+- Quick copy of the generated summary to the clipboard  
+- JSON import/export for providers and checkboxes  
+
+---
+
+## Installation
+
+<details>
+<summary><strong>Firefox, Chrome, Edge Webstores</strong></summary>
+
+FlashCPAP is available on:
+
+- <a href="https://addons.mozilla.org/en-US/firefox/addon/flashcpap/">Firefox Add-ons</a>  
+- <a href="https://chromewebstore.google.com/detail/pedibchhakipflddbcfckhgojjagoiim">Chrome Web Store</a>  
+- <a href="https://microsoftedge.microsoft.com/addons/detail/flashcpap/poakfgkhfiamihmcbihhajkjbdndgilf">Edge Add-ons</a>  
+
+</details>
+
+<details>
+<summary><strong>Local build (developer mode)</strong></summary>
+
+**Requirements:** `bash`, `python3`
 
 ```bash
 bash build.sh firefox    # → dist/firefox-x.x.x.zip
 bash build.sh chromium   # → dist/chromium-x.x.x.zip
 bash build.sh edge       # → dist/edge-x.x.x.zip
-```
+````
 
-<details>
-<summary>Firefox</summary>
+**Firefox**
+Load the generated package or use Firefox developer tools for temporary installation.
 
-1. `bash build.sh firefox`
-2. Ouvrir `about:debugging#/runtime/this-firefox`
-3. Cliquer sur **Charger un module temporaire**
-4. Sélectionner le fichier `dist/firefox-x.x.x.zip`
-
-</details>
-
-<details>
-<summary>Chrome / Chromium</summary>
-
-1. `bash build.sh chromium`
-2. Décompresser `dist/chromium-x.x.x.zip` dans un dossier
-3. Ouvrir `chrome://extensions`
-4. Activer le **Mode développeur**
-5. Cliquer sur **Charger l'extension non empaquetée**
-6. Sélectionner le dossier décompressé
+**Chrome / Edge**
+1. Open the extensions page
+2. Enable **Developer mode**
+3. Click **Load unpacked**
+4. Select the extension folder
 
 </details>
 
-<details>
-<summary>Edge</summary>
+---
 
-1. `bash build.sh edge`
-2. Décompresser `dist/edge-x.x.x.zip` dans un dossier
-3. Ouvrir `edge://extensions`
-4. Activer le **Mode développeur**
-5. Cliquer sur **Charger l'extension non empaquetée**
-6. Sélectionner le dossier décompressé
+## Quick start
+<summary><strong>Basic workflow</strong></summary>
+
+1. Open a CPAP/PPC report page or select a PDF
+2. Click the extension icon to open the popup
+3. Click **Analyze page**
+4. Configure fields and keywords based on the values you want to extact
+5. Run **Analyze page** again
+6. Review and adjust the generated summary
+7. Add custom options / checkboxes if needed
+8. Click **Copy summary**
+> [!NOTE]
+>  For further informations or details go to <a href="https://www.flashcpap.com/docs">Manual Guide </a>
+---
+
+## Cross-browser support
+
+FlashCPAP shares the same source code across all supported targets.
+The `build.sh` script adapts the manifest depending on the browser target.
+
+| Target   | Background                      | Notes                             |
+| -------- | ------------------------------- | --------------------------------- |
+| Firefox  | `scripts: [background.js]`      | `browser_specific_settings.gecko` |
+| Chromium | `service_worker: background.js` | —                                 |
+| Edge     | `service_worker: background.js` | —                                 |
+
+`background.js` uses a browser compatibility shim:
+
+```javascript
+const _browser = (typeof globalThis.browser !== 'undefined')
+  ? globalThis.browser
+  : globalThis.chrome;
+```
+
+`src/platform/` contains browser-specific adapters used by the popup.
+
+---
+
+## Permissions used
+
+<details>
+<summary><strong>Why these permissions are needed</strong></summary>
+
+* `activeTab`, `tabs`, `windows` — access the active tab and context
+* `scripting` — extract text from the page
+* `storage` — save local settings
+* `clipboardWrite` — copy the generated summary
+* `optional_host_permissions` — granted on demand by the user
+
+Permissions are used strictly for extension functionality.
 
 </details>
 
-## 🧭 Utilisation rapide
+---
 
-1. Ouvrir une page de rapport CPAP (ou sélectionner un PDF dans l'extension)
-2. Cliquer sur l'icône de l'extension — une fenêtre popup s'ouvre
-3. Cliquer sur **Analyser la page**
-4. Vérifier/ajuster le résumé généré
-5. Ajouter si besoin les options/checks personnalisés
-6. Cliquer sur **Copier le résumé**
+## Project architecture
 
-## 🌐 Portabilité navigateurs
+<details>
+<summary><strong>Main files and folders</strong></summary>
 
-Le code source est partagé entre toutes les cibles. Le script `build.sh` adapte le manifest selon la cible :
-
-| Cible | `background` | Spécificités |
-|---|---|---|
-| Firefox | `scripts: [background.js]` | `browser_specific_settings.gecko` |
-| Chromium | `service_worker: background.js` | — |
-| Edge | `service_worker: background.js` | — |
-
-`background.js` utilise un shim de compatibilité :
-```js
-const _browser = (typeof globalThis.browser !== 'undefined') ? globalThis.browser : globalThis.chrome;
+```text
+background.js          Browser background logic / compatibility layer
+popup.html             Main popup interface
+src/main.js            Popup entry point
+src/extraction.js      Page/PDF text extraction
+src/parsing.js         CPAP data parsing
+src/summary.js         Summary generation
+src/platform/          Browser-specific adapters
+lib/                   Vendored PDF.js
+build.sh               Multi-target build script
 ```
 
-`src/platform/` contient les adaptateurs spécifiques à chaque navigateur utilisés par le popup.
+</details>
 
-## ⚙️ Permissions utilisées
+---
 
-- `activeTab`, `tabs`, `windows` : lecture du contexte onglet/fenêtre active
-- `scripting` : extraction du texte dans la page active
-- `storage` : sauvegarde des paramètres locaux
-- `clipboardWrite` : copie du résumé
-- `optional_host_permissions` : accès hôtes accordés à la demande de l'utilisateur
+## Privacy & data
 
-## 🧱 Architecture du projet
+FlashCPAP follows a **local-first** approach:
 
-```
-background.js          Service worker (compat Firefox + Chromium)
-popup.html             Interface principale
-src/main.js            Point d'entrée du popup
-src/extraction.js      Extraction du texte page/PDF
-src/parsing.js         Parsing des données CPAP
-src/summary.js         Génération du résumé
-src/platform/          Adaptateurs navigateur
-lib/                   PDF.js (vendored)
-build.sh               Script de build multi-cibles
-```
+* All processing happens locally in the browser
+* No data is sent to any server
+* Settings are stored locally via `browser.storage.local`
+* Import/export is performed in JSON only at the user’s request
 
-## 🔒 Données & confidentialité
+This project is intended for privacy-conscious clinical workflows.
 
-- Tout le traitement est effectué **localement dans le navigateur** — aucune donnée n'est envoyée à un serveur.
-- Les paramètres sont stockés localement via `browser.storage.local`.
-- Les exports/imports se font en JSON à la demande de l'utilisateur.
+---
 
-## 🛠 Développement
+## Limitations
 
-- Manifest V3
-- JavaScript modulaire (ES modules), aucun bundler
-- PDF.js vendored dans `lib/`
+* Extraction depends on report structure and wording
+* Results may vary across providers
+* PDF extraction depends on text quality
+* Manual verification is always required
+* FlashCPAP does **not** provide diagnosis or treatment recommendations
 
-## 📄 Licence
+**Clinical review remains mandatory.**
 
-Projet distribué sous **Apache License 2.0**.
+---
 
+## Development
+
+<details>
+<summary><strong>Technical stack</strong></summary>
+
+* Manifest V3
+* Modular JavaScript (ES modules)
+* No bundler
+* Vendored PDF.js
+
+</details>
+
+---
+
+## License
+
+Distributed under the **Apache License 2.0**.
+
+---
+
+## Contact
+
+* Website: [https://www.flashcpap.com](https://www.flashcpap.com)
+* GitHub: [https://github.com/molipoli-blip/flashcpap](https://github.com/molipoli-blip/flashcpap)
 

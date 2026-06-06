@@ -4,9 +4,10 @@
 
 import { getProviderSelects } from './provider-sync.js';
 import { settings, saveSettings } from './storage.js';
+import { toProviderKey } from './domain/provider-rules.js';
 
 export function normalizeProviderSiteKey(value) {
-  return String(value || '').trim().toLowerCase();
+  return toProviderKey(value);
 }
 
 export function getCheckboxProviderContext() {

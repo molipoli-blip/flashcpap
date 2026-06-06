@@ -6,7 +6,7 @@ import { getCheckboxInputId } from './checkbox-orchestrator.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
 import { getProviderConfig } from './domain/provider-rules.js';
-import { applySplitSeparators } from './parsing.js';
+import { applySplitSeparators, buildFlexibleLabelBoundaryRegex } from './parsing.js';
 import { t } from './i18n.js';
 
 function ensureInterpretationPinned(settings, { bubbles = false } = {}) {
@@ -649,11 +649,7 @@ function applyLabelHighlights({
     const groupsCsv = Array.from(allGroupsForLabel).join(',');
     let isFirstOccurrence = true;
 
-    const WORD = 'A-Za-z0-9_À-ÖØ-öø-ÿĀ-ſƀ-ɏ';
-    const labelBoundaryRe = new RegExp(
-      `(?:^|(?<=[^${WORD}]))${escapeRegExp(annotation.labelText)}(?=[^${WORD}]|$)`,
-      'gi'
-    );
+    const labelBoundaryRe = buildFlexibleLabelBoundaryRegex(annotation.labelText);
     logFlow('HL_LABEL', 'wrapTextMatches label appele', {
       field: annotation.field,
       labelText: annotation.labelText,

@@ -58,35 +58,14 @@ FlashCPAP is available on:
 <details>
 <summary><strong>Local build (developer mode)</strong></summary>
 
-**Option 1 (Linux/macOS/Git Bash):** `bash`, `python3`, `zip`
+**Requirements (all platforms):** `bash`, `python3`, `zip`
+
+On Windows, install a Bash environment first (for example **Git Bash** or **WSL**) before running the build commands below.
 
 ```bash
 bash build.sh firefox    # -> dist/firefox-x.x.x.zip
 bash build.sh chromium   # -> dist/chromium-x.x.x.zip
 bash build.sh edge       # -> dist/edge-x.x.x.zip
-```
-
-**Option 2 (Windows PowerShell):**
-
-```powershell
-# Firefox package
-$manifest = Get-Content -Raw manifest.json | ConvertFrom-Json
-$version = $manifest.version
-Compress-Archive -Path @('manifest.json','background.js','popup.html','_locales','icons','lib','src','styles') -DestinationPath "dist/firefox-$version.zip" -CompressionLevel Optimal
-```
-
-```powershell
-# Chromium package (service_worker + no gecko settings)
-$manifest = Get-Content -Raw manifest.json | ConvertFrom-Json
-$version = $manifest.version
-$tempRoot = Join-Path $env:TEMP ("flashcpap-build-" + [guid]::NewGuid())
-New-Item -ItemType Directory -Path $tempRoot | Out-Null
-foreach ($p in @('background.js','popup.html','_locales','icons','lib','src','styles')) { Copy-Item -Path $p -Destination (Join-Path $tempRoot $p) -Recurse -Force }
-$manifest.background = @{ service_worker = 'background.js' }
-$manifest.PSObject.Properties.Remove('browser_specific_settings')
-$manifest | ConvertTo-Json -Depth 100 | Set-Content -Path (Join-Path $tempRoot 'manifest.json') -Encoding UTF8
-Compress-Archive -Path (Join-Path $tempRoot '*') -DestinationPath "dist/chromium-$version.zip" -CompressionLevel Optimal
-Remove-Item -Path $tempRoot -Recurse -Force
 ```
 
 **Firefox**

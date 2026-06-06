@@ -294,21 +294,42 @@ function setupInlineEditorActions({
   onSave,
   onSaveMissingField
 }) {
+  const AUTOSAVE_DELAY_MS = 500;
   const safeFieldKey = CSS.escape(fieldKey);
-  const inlineSubmit = contentWrap.querySelector(`#inline-submit-${safeFieldKey}`);
   const inlineCancel = contentWrap.querySelector(`#inline-cancel-${safeFieldKey}`);
+  let autosaveTimer = null;
+  let lastSavedSnapshot = '';
 
-  if (inlineSubmit) {
-    inlineSubmit.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const state = readInlineEditorFormState(contentWrap, fieldKey);
-      const labelsWanted = buildInlineLabels(fieldKey, state);
-      const saved = onSave?.({ fieldKey, state, firstLabelWanted: labelsWanted });
-      if (saved === false) {
-        onSaveMissingField?.({ fieldKey });
-      }
+  const buildSnapshot = state => JSON.stringify(state);
+  const persistState = ({ rerender, toast } = { rerender: false, toast: false }) => {
+    const state = readInlineEditorFormState(contentWrap, fieldKey);
+    const snapshot = buildSnapshot(state);
+    if (!rerender && snapshot === lastSavedSnapshot) return true;
+
+    const labelsWanted = buildInlineLabels(fieldKey, state, { silent: !rerender });
+    const saved = onSave?.({
+      fieldKey,
+      state,
+      firstLabelWanted: labelsWanted,
+      options: { rerender, toast }
     });
-  }
+
+    if (saved === false) {
+      if (rerender) onSaveMissingField?.({ fieldKey });
+      return false;
+    }
+
+    lastSavedSnapshot = snapshot;
+    try { if (unsavedIndicator) unsavedIndicator.style.display = 'none'; } catch {}
+    return true;
+  };
+
+  const scheduleAutosave = () => {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      persistState({ rerender: false, toast: false });
+    }, AUTOSAVE_DELAY_MS);
+  };
 
   if (inlineCancel) {
     inlineCancel.addEventListener('click', (event) => {
@@ -322,9 +343,16 @@ function setupInlineEditorActions({
     });
   }
 
-  const markUnsaved = () => { try { if (unsavedIndicator) unsavedIndicator.style.display = ''; } catch {} };
+  const markUnsaved = () => {
+    try { if (unsavedIndicator) unsavedIndicator.style.display = ''; } catch {}
+    scheduleAutosave();
+  };
   modeWrap.addEventListener('input', markUnsaved, true);
   modeWrap.addEventListener('change', markUnsaved, true);
+
+  try {
+    lastSavedSnapshot = buildSnapshot(readInlineEditorFormState(contentWrap, fieldKey));
+  } catch {}
 }
 
 function createInlineEditorSlot({

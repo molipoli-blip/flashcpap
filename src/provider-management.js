@@ -106,7 +106,7 @@ export function setupProviderButtons({ onProviderCreated, onRefreshSettings } = 
   
   rem.onclick = async () => {
     if (!P) return;
-    const key = P.value.toLowerCase();
+    const key = toProviderKey(P.value);
     const ok = await confirmInline(rem, t('providerDeleteConfirm', P.value));
     if (!ok) return;
     
@@ -617,7 +617,7 @@ export function exportProviderCheckboxes(site) {
  * Importe uniquement les checkboxes et règles d'association pour le prestataire courant
  */
 export function importProviderCheckboxes(site, jsonData) {
-  const key = site.toLowerCase();
+  const key = toProviderKey(site);
   if (!isValidProviderSelection(site)) { showToast(t('checkboxImportSelectProvider'), 'error'); return false; }
   try {
     if (!jsonData || typeof jsonData !== 'object') throw new Error('Format invalide');

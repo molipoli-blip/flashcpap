@@ -4,7 +4,7 @@
 
 import { t } from './i18n.js';
 import { getSupportersConfig } from './supporters.js';
-import { confirmInline, showToast } from './ui-utils.js';
+import { showMiniCtaPopup, showToast } from './ui-utils.js';
 import { registerSuccessfulCopy } from './copy-engagement.js';
 import { shareProviderToCommunity } from './provider-management.js';
 
@@ -13,39 +13,62 @@ function openSupportLink() {
   try { window.open(supportUrl, '_blank', 'noopener,noreferrer'); } catch {}
 }
 
-async function showSupportPopup(totalCopies) {
-  const shouldOpen = await confirmInline(
-    document.getElementById('btn-copy') || document.body,
-    `${t('copySupportPopupTitle')}\n\n${t('copySupportPopupMessage', [String(totalCopies)])}`
-  );
-  if (shouldOpen) openSupportLink();
+function showSupportPopup(totalCopies) {
+  showMiniCtaPopup({
+    id: `copy-support-milestone-${totalCopies}`,
+    title: t('copySupportPopupTitle'),
+    message: t('copySupportPopupMessage', [String(totalCopies)]),
+    actions: [
+      {
+        label: t('confirmNo'),
+        kind: 'secondary'
+      },
+      {
+        label: t('confirmYes'),
+        kind: 'primary',
+        onClick: () => openSupportLink()
+      }
+    ],
+    timeout: 0
+  });
 }
 
-async function showProviderSharePopup(providerLabel, providerCopies) {
-  const shouldShare = await confirmInline(
-    document.getElementById('btn-copy') || document.body,
-    `${t('copyProviderSharePopupTitle', providerLabel)}\n\n${t('copyProviderSharePopupMessage', [providerLabel, String(providerCopies)])}`
-  );
-
-  if (!shouldShare) return;
-
-  try {
-    await shareProviderToCommunity(providerLabel);
-    showToast(t('providerShareSuccess'), 'success');
-  } catch (error) {
-    showToast(t('providerShareError', String(error?.message || error)), 'error');
-  }
+function showProviderSharePopup(providerLabel, providerCopies) {
+  showMiniCtaPopup({
+    id: `copy-provider-share-${String(providerLabel).toLowerCase()}-${providerCopies}`,
+    title: t('copyProviderSharePopupTitle', providerLabel),
+    message: t('copyProviderSharePopupMessage', [providerLabel, String(providerCopies)]),
+    actions: [
+      {
+        label: t('confirmNo'),
+        kind: 'secondary'
+      },
+      {
+        label: t('confirmYes'),
+        kind: 'primary',
+        onClick: async () => {
+          try {
+            await shareProviderToCommunity(providerLabel);
+            showToast(t('providerShareSuccess'), 'success');
+          } catch (error) {
+            showToast(t('providerShareError', String(error?.message || error)), 'error');
+          }
+        }
+      }
+    ],
+    timeout: 0
+  });
 }
 
 export function handleSuccessfulCopyEngagement(providerLabel) {
   const milestone = registerSuccessfulCopy(providerLabel);
 
   if (milestone.shouldShowSupportPrompt) {
-    void showSupportPopup(milestone.totalCopies);
+    showSupportPopup(milestone.totalCopies);
     return;
   }
 
   if (milestone.shouldShowProviderSharePrompt && providerLabel) {
-    void showProviderSharePopup(providerLabel, milestone.providerCopies);
+    showProviderSharePopup(providerLabel, milestone.providerCopies);
   }
 }

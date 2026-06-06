@@ -51,7 +51,9 @@ export function showMiniCtaPopup({
 
   try {
     if (id) {
-      document.querySelectorAll(`.mini-cta-popup[data-mini-cta-id="${id}"]`).forEach(node => node.remove());
+      document.querySelectorAll('.mini-cta-popup').forEach(node => {
+        if (node.dataset?.miniCtaId === id) node.remove();
+      });
     }
   } catch {}
 
@@ -141,9 +143,12 @@ export function showMiniCtaPopup({
 
   document.body.appendChild(popup);
 
-  setTimeout(() => {
-    closePopup();
-  }, Math.max(2500, Number(timeout) || 9000));
+  const timeoutMs = Number(timeout);
+  if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
+    setTimeout(() => {
+      closePopup();
+    }, Math.max(2500, timeoutMs));
+  }
 }
 
 // Accessible blocking confirm dialog used instead of native confirm().

@@ -5,12 +5,22 @@
 import { hasValidProvider, toProviderKey } from './domain/provider-rules.js';
 import { t } from './i18n.js';
 
+const DEFAULT_INTERPRETATION_VALUES = {
+  obsHours: 4,
+  iah: 5,
+  fuites: 24,
+  texts: {
+    obs: { ge: 'bonne observance', lt: 'observance non satisfaisante' },
+    iah: { ge: 'non efficace', lt: 'efficace' },
+    fuites: { ge: 'fuites significatives', lt: 'pas de fuites' }
+  }
+};
+
 function getInterpretationElements() {
   return {
     thObs: document.getElementById('th-obs'),
     thIah: document.getElementById('th-iah'),
     thFuites: document.getElementById('th-fuites'),
-    thSave: document.getElementById('th-save'),
     thStatus: document.getElementById('th-status'),
     txtObsGe: document.getElementById('txt-obs-ge'),
     txtObsLt: document.getElementById('txt-obs-lt'),
@@ -27,7 +37,6 @@ function setInterpretationInputsEnabled(enabled) {
     thObs,
     thIah,
     thFuites,
-    thSave,
     txtObsGe,
     txtObsLt,
     txtIahGe,
@@ -43,11 +52,6 @@ function setInterpretationInputsEnabled(enabled) {
     element.style.cursor = enabled ? '' : 'not-allowed';
   });
 
-  if (thSave) {
-    thSave.disabled = !enabled;
-    thSave.style.opacity = enabled ? '1' : '0.5';
-    thSave.style.cursor = enabled ? 'pointer' : 'not-allowed';
-  }
 }
 
 function updateInterpretationLockMessage(enabled) {
@@ -92,7 +96,6 @@ export function setupInterpretationThresholds({ settings, saveSettings, updateSu
     thObs,
     thIah,
     thFuites,
-    thSave,
     thStatus,
     txtObsGe,
     txtObsLt,
@@ -104,35 +107,14 @@ export function setupInterpretationThresholds({ settings, saveSettings, updateSu
 
   if (!(thObs && thIah && thFuites)) return;
 
-  try {
-    thObs.value = settings.interpretation?.obsHours ?? '';
-    thIah.value = settings.interpretation?.iah ?? '';
-    thFuites.value = settings.interpretation?.fuites ?? '';
-    const T = settings.interpretation?.texts || {};
-    if (txtObsGe) txtObsGe.value = T.obs?.ge ?? '';
-    if (txtObsLt) txtObsLt.value = T.obs?.lt ?? '';
-    if (txtIahGe) txtIahGe.value = T.iah?.ge ?? '';
-    if (txtIahLt) txtIahLt.value = T.iah?.lt ?? '';
-    if (txtFuitesGe) txtFuitesGe.value = T.fuites?.ge ?? '';
-    if (txtFuitesLt) txtFuitesLt.value = T.fuites?.lt ?? '';
-  } catch {}
+  const parseMaybeNumber = rawValue => {
+    const normalized = String(rawValue ?? '').replace(',', '.').trim();
+    if (!normalized) return null;
+    const value = Number(normalized);
+    return Number.isFinite(value) ? value : null;
+  };
 
-  updateInterpretationControlsState({ settings });
-
-  thSave?.addEventListener('click', () => {
-    const obs = parseFloat(thObs.value);
-    const iah = parseFloat(thIah.value);
-    const fuites = parseFloat(thFuites.value);
-
-    if ([obs, iah, fuites].some(v => isNaN(v))) {
-      if (thStatus) {
-        thStatus.style.display = 'block';
-        thStatus.style.color = '#b00020';
-        thStatus.textContent = t('interpretationInvalidValues');
-      }
-      return;
-    }
-
+  const buildInterpretationPayload = () => {
     const texts = {
       obs: {
         ge: (txtObsGe?.value || '').trim(),
@@ -147,21 +129,82 @@ export function setupInterpretationThresholds({ settings, saveSettings, updateSu
         lt: (txtFuitesLt?.value || '').trim()
       }
     };
+    return {
+      obsHours: parseMaybeNumber(thObs.value),
+      iah: parseMaybeNumber(thIah.value),
+      fuites: parseMaybeNumber(thFuites.value),
+      texts
+    };
+  };
 
-    settings.interpretation = { obsHours: obs, iah, fuites, texts };
-    saveSettings();
+  const showStatus = (message, color = '#0a7') => {
+    if (!thStatus) return;
+    thStatus.style.display = 'block';
+    thStatus.style.color = color;
+    thStatus.textContent = message;
+    setTimeout(() => {
+      thStatus.style.display = 'none';
+    }, 1200);
+  };
 
-    if (thStatus) {
-      thStatus.style.display = 'block';
-      thStatus.style.color = '#0a7';
-      thStatus.textContent = t('interpretationSaved');
-      setTimeout(() => {
-        thStatus.style.display = 'none';
-      }, 1500);
+  let autosaveTimer = null;
+  let lastSerializedPayload = '';
+
+  const persistInterpretation = ({ immediate = false } = {}) => {
+    const commit = () => {
+      const payload = buildInterpretationPayload();
+      const serialized = JSON.stringify(payload);
+      if (serialized === lastSerializedPayload) return;
+
+      settings.interpretation = payload;
+      saveSettings();
+      lastSerializedPayload = serialized;
+
+      try {
+        updateSummaryDisplay();
+      } catch {}
+
+      showStatus(t('interpretationSaved'));
+    };
+
+    if (immediate) {
+      clearTimeout(autosaveTimer);
+      commit();
+      return;
     }
 
-    try {
-      updateSummaryDisplay();
-    } catch {}
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(commit, 450);
+  };
+
+  try {
+    thObs.value = Number.isFinite(Number(settings.interpretation?.obsHours)) ? String(settings.interpretation?.obsHours) : '';
+    thIah.value = Number.isFinite(Number(settings.interpretation?.iah)) ? String(settings.interpretation?.iah) : '';
+    thFuites.value = Number.isFinite(Number(settings.interpretation?.fuites)) ? String(settings.interpretation?.fuites) : '';
+    thObs.placeholder = String(DEFAULT_INTERPRETATION_VALUES.obsHours);
+    thIah.placeholder = String(DEFAULT_INTERPRETATION_VALUES.iah);
+    thFuites.placeholder = String(DEFAULT_INTERPRETATION_VALUES.fuites);
+    const T = settings.interpretation?.texts || {};
+    if (txtObsGe) txtObsGe.value = T.obs?.ge ?? '';
+    if (txtObsLt) txtObsLt.value = T.obs?.lt ?? '';
+    if (txtIahGe) txtIahGe.value = T.iah?.ge ?? '';
+    if (txtIahLt) txtIahLt.value = T.iah?.lt ?? '';
+    if (txtFuitesGe) txtFuitesGe.value = T.fuites?.ge ?? '';
+    if (txtFuitesLt) txtFuitesLt.value = T.fuites?.lt ?? '';
+    if (txtObsGe && !txtObsGe.placeholder) txtObsGe.placeholder = DEFAULT_INTERPRETATION_VALUES.texts.obs.ge;
+    if (txtObsLt && !txtObsLt.placeholder) txtObsLt.placeholder = DEFAULT_INTERPRETATION_VALUES.texts.obs.lt;
+    if (txtIahGe && !txtIahGe.placeholder) txtIahGe.placeholder = DEFAULT_INTERPRETATION_VALUES.texts.iah.ge;
+    if (txtIahLt && !txtIahLt.placeholder) txtIahLt.placeholder = DEFAULT_INTERPRETATION_VALUES.texts.iah.lt;
+    if (txtFuitesGe && !txtFuitesGe.placeholder) txtFuitesGe.placeholder = DEFAULT_INTERPRETATION_VALUES.texts.fuites.ge;
+    if (txtFuitesLt && !txtFuitesLt.placeholder) txtFuitesLt.placeholder = DEFAULT_INTERPRETATION_VALUES.texts.fuites.lt;
+    lastSerializedPayload = JSON.stringify(buildInterpretationPayload());
+  } catch {}
+
+  updateInterpretationControlsState({ settings });
+
+  [thObs, thIah, thFuites, txtObsGe, txtObsLt, txtIahGe, txtIahLt, txtFuitesGe, txtFuitesLt].forEach(element => {
+    element?.addEventListener('input', () => persistInterpretation());
+    element?.addEventListener('change', () => persistInterpretation({ immediate: true }));
   });
+
 }

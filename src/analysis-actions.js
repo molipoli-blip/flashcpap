@@ -109,7 +109,7 @@ function prepareAnalysisText({
   };
 }
 
-async function loadExclusionKeywords(siteKey, settings) {
+async function loadExclusionKeywords() {
   try {
     const stored = await browserApi.storage.local.get({ exclusionList: [], exclusions: [] });
     const exclusions = Array.isArray(stored.exclusionList) && stored.exclusionList.length
@@ -119,22 +119,9 @@ async function loadExclusionKeywords(siteKey, settings) {
     if (normalized.length) return normalized;
   } catch {}
 
-  try {
-    const cfg = settings.patterns?.[siteKey] || { fields: {} };
-    const accumulator = new Set();
-    for (const def of Object.values(cfg.fields || {})) {
-      for (const label of def.labels || []) {
-        const excludeKeywords = (label.excludeKeywords || []).filter(Boolean);
-        const labelExcludeKeywords = (label.labelExcludeKeywords || []).filter(Boolean);
-        for (const keyword of [...excludeKeywords, ...labelExcludeKeywords]) {
-          accumulator.add(String(keyword));
-        }
-      }
-    }
-    return Array.from(accumulator).filter(value => value && value.trim());
-  } catch {
-    return [];
-  }
+  // Keep masking scoped to explicit global exclusions only.
+  // Field-level exclusions are handled during parsing per label/field.
+  return [];
 }
 
 function maskExclusions(input, exclusions) {
@@ -327,7 +314,7 @@ async function executeAnalysisRun({
   }).preparedText;
 
   const wrapper = document.getElementById('source-wrapper');
-  const exclusions = await loadExclusionKeywords((providerSelect.value || '').toLowerCase(), settings);
+  const exclusions = await loadExclusionKeywords();
   const { data } = runParsingPipeline({
     text,
     provider: providerSelect.value,

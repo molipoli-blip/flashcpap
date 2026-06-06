@@ -15,14 +15,44 @@ function getLabelBoundaryParts() {
   };
 }
 
+function labelToFlexiblePattern(label) {
+  const value = String(label || '');
+  const WS = '[\\s\\u00A0\\u202F\\u2009\\t]';
+  const punctuation = new Set(['.', ',', ':', ';', '(', ')', '[', ']', '{', '}', '/', '-', '_']);
+
+  let output = '';
+  let previousWasWs = false;
+
+  for (const ch of value) {
+    if (/\s/u.test(ch)) {
+      if (!previousWasWs) {
+        output += `${WS}+`;
+        previousWasWs = true;
+      }
+      continue;
+    }
+
+    previousWasWs = false;
+
+    if (punctuation.has(ch)) {
+      output += `${WS}*${esc(ch)}${WS}*`;
+      continue;
+    }
+
+    output += esc(ch);
+  }
+
+  return output.trim();
+}
+
 function buildLabelBoundaryRegex(lbl) {
   const { before, after, flags } = getLabelBoundaryParts();
-  return new RegExp(`${before}${esc(lbl)}${after}`, flags);
+  return new RegExp(`${before}${labelToFlexiblePattern(lbl)}${after}`, flags);
 }
 
 function buildInlineLabelValueRegex(lbl, valuePattern, separator = '(?:\\s*[:=])?') {
   const { before, flags } = getLabelBoundaryParts();
-  return new RegExp(`${before}${esc(lbl)}${separator}\\s*${valuePattern}`, flags);
+  return new RegExp(`${before}${labelToFlexiblePattern(lbl)}${separator}\\s*${valuePattern}`, flags);
 }
 
 function logParsingStrategy(message, meta) {
@@ -183,6 +213,9 @@ function timeToDecimalHours(values, rawFormat) {
   }
   if (tokens.H !== undefined && tokens.M !== undefined) {
     return tokens.H + (tokens.M / 60);
+  }
+  if (tokens.M !== undefined) {
+    return tokens.M / 60;
   }
   if (tokens.H !== undefined) {
     return tokens.H;

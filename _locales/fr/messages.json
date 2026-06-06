@@ -275,6 +275,24 @@
   "copyFailure": {
     "message": "Échec copie"
   },
+  "copySupportPopupTitle": {
+    "message": "Merci d'utiliser FlashCPAP"
+  },
+  "copySupportPopupMessage": {
+    "message": "Vous avez atteint $1 copies de résumé. Si FlashCPAP vous aide, vous pouvez soutenir le projet."
+  },
+  "copySupportPopupAction": {
+    "message": "Soutenir FlashCPAP"
+  },
+  "copyProviderSharePopupTitle": {
+    "message": "Partager $1"
+  },
+  "copyProviderSharePopupMessage": {
+    "message": "Vous avez utilisé $1 $2 fois. Voulez-vous le partager à la communauté ?"
+  },
+  "copyProviderSharePopupAction": {
+    "message": "Partager ce prestataire"
+  },
   "warningRunAnalysisFirst": {
     "message": "Veuillez lancer une analyse avant de modifier les options."
   },

@@ -39,6 +39,113 @@ export function showToast(message, variant = 'info', timeout = 2200) {
   }, timeout);
 }
 
+// Show a small, non-blocking CTA popup inside the extension popup.
+export function showMiniCtaPopup({
+  id,
+  title,
+  message,
+  actions = [],
+  timeout = 9000
+} = {}) {
+  if (!title || !message) return;
+
+  try {
+    if (id) {
+      document.querySelectorAll(`.mini-cta-popup[data-mini-cta-id="${id}"]`).forEach(node => node.remove());
+    }
+  } catch {}
+
+  const popup = document.createElement('div');
+  popup.className = 'mini-cta-popup';
+  if (id) popup.dataset.miniCtaId = id;
+
+  Object.assign(popup.style, {
+    position: 'fixed',
+    right: '10px',
+    bottom: '10px',
+    zIndex: 10060,
+    maxWidth: '320px',
+    width: 'calc(100vw - 20px)',
+    background: '#ffffff',
+    border: '1px solid #dbe4ee',
+    borderRadius: '10px',
+    boxShadow: '0 8px 22px rgba(15, 23, 42, 0.18)',
+    padding: '10px 12px',
+    color: '#1e293b',
+    fontSize: '12px',
+    lineHeight: '1.35'
+  });
+
+  const heading = document.createElement('div');
+  heading.textContent = title;
+  Object.assign(heading.style, {
+    fontSize: '12px',
+    fontWeight: '700',
+    marginBottom: '4px'
+  });
+
+  const body = document.createElement('div');
+  body.textContent = message;
+  Object.assign(body.style, {
+    fontSize: '12px',
+    color: '#334155',
+    marginBottom: actions.length ? '8px' : '0'
+  });
+
+  popup.appendChild(heading);
+  popup.appendChild(body);
+
+  let closed = false;
+  const closePopup = () => {
+    if (closed) return;
+    closed = true;
+    try { popup.remove(); } catch {}
+  };
+
+  if (actions.length) {
+    const row = document.createElement('div');
+    Object.assign(row.style, {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: '6px',
+      flexWrap: 'wrap'
+    });
+
+    actions.slice(0, 2).forEach(action => {
+      if (!action || !action.label) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = action.label;
+      Object.assign(button.style, {
+        border: action.kind === 'primary' ? 'none' : '1px solid #cbd5e1',
+        background: action.kind === 'primary' ? '#0ea5e9' : '#f8fafc',
+        color: action.kind === 'primary' ? '#ffffff' : '#334155',
+        borderRadius: '6px',
+        padding: '5px 8px',
+        fontSize: '11px',
+        fontWeight: action.kind === 'primary' ? '700' : '600',
+        cursor: 'pointer'
+      });
+      button.addEventListener('click', () => {
+        try {
+          if (typeof action.onClick === 'function') action.onClick();
+        } finally {
+          closePopup();
+        }
+      });
+      row.appendChild(button);
+    });
+
+    popup.appendChild(row);
+  }
+
+  document.body.appendChild(popup);
+
+  setTimeout(() => {
+    closePopup();
+  }, Math.max(2500, Number(timeout) || 9000));
+}
+
 // Accessible blocking confirm dialog used instead of native confirm().
 export function confirmInline(anchorEl, message) {
   return new Promise((resolve) => {

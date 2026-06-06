@@ -2,6 +2,7 @@
 // Copyright (C) 2026 molipoli-blip
 // FlashCPAP - https://github.com/molipoli-blip/flashcpap
 import { t } from './i18n.js';
+import { handleSuccessfulCopyEngagement } from './copy-engagement-prompts.js';
 
 export function setupCopyAction({ buildCleanSummaryText }) {
   const copyButton = document.getElementById('btn-copy');
@@ -43,6 +44,9 @@ export function setupCopyAction({ buildCleanSummaryText }) {
       } catch (_) {}
       await navigator.clipboard.writeText(text);
       markSuccess();
+
+      const providerLabel = document.getElementById('prestataire-select')?.value || '';
+      handleSuccessfulCopyEngagement(providerLabel);
     } catch (_) {
       markFail();
     }

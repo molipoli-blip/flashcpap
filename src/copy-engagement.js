@@ -2,6 +2,8 @@
 // Copyright (C) 2026 molipoli-blip
 // FlashCPAP - copy engagement milestones (support + provider sharing)
 
+import { toProviderKey } from './domain/provider-rules.js';
+
 const COPY_ENGAGEMENT_KEY = 'flashcpap_copy_engagement_v1';
 
 export const COPY_ENGAGEMENT_RULES = {
@@ -22,7 +24,7 @@ const DEFAULT_STATE = {
 };
 
 function normalizeProviderKey(providerLabel) {
-  return String(providerLabel || '').trim().toLowerCase();
+  return toProviderKey(providerLabel);
 }
 
 function cloneDefaultState() {
@@ -49,6 +51,18 @@ function getProviderStepIncrement(promptShownCount) {
   return steps[index];
 }
 
+function asStoredCount(value) {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+function asStoredRecord(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function getPositiveRuleNumber(value, fallback) {
+  return Math.max(1, Number(value) || fallback);
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(COPY_ENGAGEMENT_KEY);
@@ -58,21 +72,13 @@ function loadState() {
     if (!parsed || typeof parsed !== 'object') return cloneDefaultState();
 
     return {
-      totalCopies: Number.isFinite(parsed.totalCopies) ? Math.max(0, parsed.totalCopies) : 0,
-      providerCopies: parsed.providerCopies && typeof parsed.providerCopies === 'object' ? parsed.providerCopies : {},
-      providerNextPromptAtCopies: parsed.providerNextPromptAtCopies && typeof parsed.providerNextPromptAtCopies === 'object'
-        ? parsed.providerNextPromptAtCopies
-        : {},
-      providerPromptShownCount: parsed.providerPromptShownCount && typeof parsed.providerPromptShownCount === 'object'
-        ? parsed.providerPromptShownCount
-        : {},
-      providerAlreadyShared: parsed.providerAlreadyShared && typeof parsed.providerAlreadyShared === 'object'
-        ? parsed.providerAlreadyShared
-        : {},
-      supportDeferredUntilTotal: Number.isFinite(parsed.supportDeferredUntilTotal) ? Math.max(0, parsed.supportDeferredUntilTotal) : 0,
-      providerDeferredUntilCopies: parsed.providerDeferredUntilCopies && typeof parsed.providerDeferredUntilCopies === 'object'
-        ? parsed.providerDeferredUntilCopies
-        : {}
+      totalCopies: asStoredCount(parsed.totalCopies),
+      providerCopies: asStoredRecord(parsed.providerCopies),
+      providerNextPromptAtCopies: asStoredRecord(parsed.providerNextPromptAtCopies),
+      providerPromptShownCount: asStoredRecord(parsed.providerPromptShownCount),
+      providerAlreadyShared: asStoredRecord(parsed.providerAlreadyShared),
+      supportDeferredUntilTotal: asStoredCount(parsed.supportDeferredUntilTotal),
+      providerDeferredUntilCopies: asStoredRecord(parsed.providerDeferredUntilCopies)
     };
   } catch {
     return cloneDefaultState();
@@ -97,9 +103,9 @@ export function registerSuccessfulCopy(providerLabel) {
     state.providerCopies[providerKey] = previousCount + 1;
   }
 
-  const supportEvery = Math.max(1, Number(COPY_ENGAGEMENT_RULES.supportEveryCopies) || 20);
-  const providerFirst = Math.max(1, Number(COPY_ENGAGEMENT_RULES.providerFirstPromptCopies) || 40);
-  const deferExtra = Math.max(1, Number(COPY_ENGAGEMENT_RULES.deferExtraCopiesOnConflict) || 10);
+  const supportEvery = getPositiveRuleNumber(COPY_ENGAGEMENT_RULES.supportEveryCopies, 20);
+  const providerFirst = getPositiveRuleNumber(COPY_ENGAGEMENT_RULES.providerFirstPromptCopies, 40);
+  const deferExtra = getPositiveRuleNumber(COPY_ENGAGEMENT_RULES.deferExtraCopiesOnConflict, 10);
 
   const supportDueByPeriod = state.totalCopies >= supportEvery && (state.totalCopies % supportEvery === 0);
   const supportDeferredUntil = Number(state.supportDeferredUntilTotal) || 0;
@@ -127,8 +133,8 @@ export function registerSuccessfulCopy(providerLabel) {
     }
   }
 
-  // Never chain prompts: when both are due on the same copy, keep provider prompt now
-  // and postpone support prompt by +N copies.
+  // Never chain prompts: keep provider prompt now and defer support eligibility.
+  // The support prompt still only appears on configured support milestones.
   if (shouldShowSupportPrompt && shouldShowProviderSharePrompt) {
     shouldShowSupportPrompt = false;
     state.supportDeferredUntilTotal = state.totalCopies + deferExtra;

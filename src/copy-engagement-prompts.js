@@ -13,7 +13,7 @@ function openSupportLink() {
   try { window.open(supportUrl, '_blank', 'noopener,noreferrer'); } catch {}
 }
 
-async function showSupportPopup(totalCopies) {
+function showSupportPopup(totalCopies) {
   showMiniCtaPopup({
     id: `copy-support-milestone-${totalCopies}`,
     title: t('copySupportPopupTitle'),
@@ -33,7 +33,7 @@ async function showSupportPopup(totalCopies) {
   });
 }
 
-async function showProviderSharePopup(providerLabel, providerCopies) {
+function showProviderSharePopup(providerLabel, providerCopies) {
   showMiniCtaPopup({
     id: `copy-provider-share-${String(providerLabel).toLowerCase()}-${providerCopies}`,
     title: t('copyProviderSharePopupTitle', providerLabel),
@@ -64,11 +64,11 @@ export function handleSuccessfulCopyEngagement(providerLabel) {
   const milestone = registerSuccessfulCopy(providerLabel);
 
   if (milestone.shouldShowSupportPrompt) {
-    void showSupportPopup(milestone.totalCopies);
+    showSupportPopup(milestone.totalCopies);
     return;
   }
 
   if (milestone.shouldShowProviderSharePrompt && providerLabel) {
-    void showProviderSharePopup(providerLabel, milestone.providerCopies);
+    showProviderSharePopup(providerLabel, milestone.providerCopies);
   }
 }

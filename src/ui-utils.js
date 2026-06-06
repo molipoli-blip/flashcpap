@@ -51,7 +51,9 @@ export function showMiniCtaPopup({
 
   try {
     if (id) {
-      document.querySelectorAll(`.mini-cta-popup[data-mini-cta-id="${id}"]`).forEach(node => node.remove());
+      document.querySelectorAll('.mini-cta-popup').forEach(node => {
+        if (node.dataset?.miniCtaId === id) node.remove();
+      });
     }
   } catch {}
 

@@ -292,7 +292,8 @@ async function executeAnalysisRun({
   setPinningInProgress,
   updateSummaryDisplay
 }) {
-  document.getElementById('analyse-alert').style.display = 'none';
+  const analyseAlert = document.getElementById('analyse-alert');
+  if (analyseAlert) analyseAlert.style.display = 'none';
 
   const { currentUrl, isUrlChanged } = await getActiveTabContext({
     setLastAnalyzedUrl,

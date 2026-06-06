@@ -10,6 +10,7 @@ import { renderSummaryPreview } from './preview-renderer.js';
 import { getCheckboxInputId } from './checkbox-orchestrator.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
+import { toProviderKey } from './domain/provider-rules.js';
 import { t } from './i18n.js';
 
 let lastParsedData = null;
@@ -36,7 +37,7 @@ export async function updateSummaryDisplay() {
   }
   __isUpdatingSummary = true;
   logFlow('SUMMARY', 'Debut mise a jour resume');
-  
+
   if (!lastParsedData || !lastSelectedPrestataire) {
     logWarn('SUMMARY', 'Mise a jour impossible: donnees d analyse absentes', {
       hasParsedData: !!lastParsedData,
@@ -49,12 +50,12 @@ export async function updateSummaryDisplay() {
 
   try {
     const cbI = document.getElementById('cb-interpret');
-    
+
     const customCheckboxStates = {};
     if (!settings.customCheckboxes) settings.customCheckboxes = {};
-    const customCheckboxes = settings.customCheckboxes[lastSelectedPrestataire.toLowerCase()] || [];
+    const customCheckboxes = settings.customCheckboxes[toProviderKey(lastSelectedPrestataire)] || [];
     let checkedCustomCount = 0;
-    
+
     for (const checkbox of customCheckboxes) {
       const cbElement = document.getElementById(getCheckboxInputId(checkbox.id));
       if (cbElement) {
@@ -68,7 +69,7 @@ export async function updateSummaryDisplay() {
       customCheckboxCount: customCheckboxes.length,
       customCheckedCount: checkedCustomCount
     });
-    
+
     const { generateSummary } = await import('./summary.js');
     const textarea = document.getElementById('résumé');
     const previous = textarea.value || '';
@@ -91,7 +92,7 @@ export async function updateSummaryDisplay() {
     if (preview) {
       renderSummaryPreview(preview, toggle, textarea, newAuto);
     }
-    
+
     if (!__placeholderNavigationSetup) {
       if (textarea) {
         setupPlaceholderNavigation(textarea);
@@ -151,10 +152,10 @@ export function setupURLChangeMonitoring() {
     try {
       const tab = await getActiveNormalTab();
       const current = tab?.url || '';
-      
+
       if (current) {
         if (hasActiveAnalysisSession && lastAnalyzedUrl && current !== lastAnalyzedUrl) {
-          
+
           const alertDiv = document.getElementById('analyse-alert');
           if (alertDiv) alertDiv.style.display = 'block';
         } else {

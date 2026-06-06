@@ -27,7 +27,7 @@ export function renderSettingsUI(siteLabel, expandedFieldKey = null) {
   container.replaceChildren();
   const btnRem = document.getElementById('btn-remove-provider');
   if (btnRem) btnRem.style.display = site ? 'inline-block' : 'none';
-  
+
   if (!hasValidProvider(settings, siteLabel)) {
     container.appendChild(createLockedProviderMessage());
     return;
@@ -35,23 +35,26 @@ export function renderSettingsUI(siteLabel, expandedFieldKey = null) {
   const cfg = getProviderConfig(settings, siteLabel);
   container.appendChild(createUrlsFieldGroup(cfg));
   container.appendChild(createPdfKeywordsFieldGroup(cfg));
-  
+
   if (hasValidProvider(settings, siteLabel)) {
     container.append(createAddFieldButton(siteLabel));
   }
-  
+
   const fieldOrder = cfg.fieldOrder || Object.keys(cfg.fields || {});
   fieldOrder.forEach((f, index) => {
     const def = cfg.fields[f]; if (!def) return;
-    
+
     const fieldGroup = createFieldGroup(f, def, index, site, siteLabel, cfg, expandedFieldKey);
     container.append(fieldGroup);
   });
-  
+
   const taNote = document.getElementById('note-libre');
-  taNote.value = settings.noteLibre[site] || '';
-  taNote.onblur = () => { settings.noteLibre[site] = taNote.value; saveSettings(); };
-  
+  if (taNote) {
+    if (!settings.noteLibre) settings.noteLibre = {};
+    taNote.value = settings.noteLibre[site] || '';
+    taNote.onblur = () => { settings.noteLibre[site] = taNote.value; saveSettings(); };
+  }
+
   const cbCompact = document.getElementById('compact-fields-toggle');
   if (cbCompact) {
     if (!settings.compactFields) settings.compactFields = {};

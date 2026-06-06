@@ -74,6 +74,8 @@ export function createProvider(providerName) {
     fields: JSON.parse(JSON.stringify(DEFAULT_PROVIDER_FIELDS)),
     fieldOrder: Object.keys(DEFAULT_PROVIDER_FIELDS)
   });
+  if (!settings.noteLibre) settings.noteLibre = {};
+  if (!settings.customCheckboxes) settings.customCheckboxes = {};
   settings.noteLibre[key] = '';
   settings.customCheckboxes[key] = [];
   saveSettings();
@@ -89,7 +91,7 @@ export function setupProviderButtons({ onProviderCreated, onRefreshSettings } = 
   const A = document.getElementById('prestataire-select');
   const P = document.getElementById('prest-param');
   if (!add || !rem) return;
-  
+
   add.onclick = () => {
     showProviderAddInlineForm(add, {
       onSubmit: async (name) => {
@@ -103,16 +105,16 @@ export function setupProviderButtons({ onProviderCreated, onRefreshSettings } = 
       }
     });
   };
-  
+
   rem.onclick = async () => {
     if (!P) return;
     const key = toProviderKey(P.value);
     const ok = await confirmInline(rem, t('providerDeleteConfirm', P.value));
     if (!ok) return;
-    
+
     delete settings.patterns[key];
-    delete settings.noteLibre[key];
-    delete settings.customCheckboxes[key];
+    if (settings.noteLibre) delete settings.noteLibre[key];
+    if (settings.customCheckboxes) delete settings.customCheckboxes[key];
     saveSettings();
     populatePrestataireSelects();
     const firstRemaining = A?.querySelector('option')?.value || '';
@@ -132,11 +134,11 @@ export function setupProviderButtons({ onProviderCreated, onRefreshSettings } = 
 export function detectProviderFromText(text) {
   if (!text) return null;
   const lowerText = text.toLowerCase();
-  
+
   for (const siteKey in settings.patterns) {
     const config = getProviderConfig(settings, siteKey);
     if (!config.pdfKeywords || !Array.isArray(config.pdfKeywords)) continue;
-    
+
     for (const keyword of config.pdfKeywords) {
       if (keyword && lowerText.includes(keyword.toLowerCase())) {
         logDebug('DETECT', 'Prestataire detecte via mot-cle PDF', {
@@ -160,7 +162,32 @@ function cloneJsonData(value, fallback = undefined) {
   }
 }
 
-function normalizeProviderImportPayload(jsonData, options = {}) {
+function cloneArray(value) {
+  return Array.isArray(value) ? cloneJsonData(value, []) : undefined;
+}
+
+function cloneObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? cloneJsonData(value, {})
+    : undefined;
+}
+
+function downloadJson(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+async function readJsonFile(file) {
+  const text = await file.text();
+  return JSON.parse(text);
+}
+
+function normalizeProviderImportPayload(jsonData) {
   if (!jsonData || typeof jsonData !== 'object') {
     throw new Error('Format de fichier invalide');
   }
@@ -205,7 +232,12 @@ function normalizeProviderImportPayload(jsonData, options = {}) {
     compactFields: root.compactFields === undefined ? undefined : !!root.compactFields,
     organizationOrder: Array.isArray(root.organizationOrder)
       ? cloneJsonData(root.organizationOrder, [])
-      : undefined
+      : undefined,
+    customCheckboxes: cloneArray(root.customCheckboxes),
+    checkboxPhrases: cloneArray(root.checkboxPhrases),
+    exclusions: cloneArray(root.exclusions),
+    familySettings: cloneObject(root.familySettings),
+    pinnedOptions: root.pinnedOptions === undefined ? undefined : cloneJsonData(root.pinnedOptions)
   };
 }
 
@@ -349,24 +381,17 @@ export async function shareProviderToCommunity(siteLabel) {
  */
 export function exportProviderConfig(site) {
   const key = toProviderKey(site);
-  
+
   if (!isValidProviderSelection(site)) {
     showToast(t('providerNoValidExport'), 'error');
     return;
   }
-  
-  // Export prestataire aligné sur le schéma courant de l'extension, sans les checkboxes dédiées.
+
+  // Export prestataire aligné sur le schéma courant de l'extension.
   const exportData = buildProviderExportPayload(site);
-  
-  // Créer le blob et télécharger
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${key}_config_${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  
+
+  downloadJson(`${key}_config_${new Date().toISOString().slice(0, 10)}.json`, exportData);
+
   showToast(t('providerExportSuccess', site), 'success');
   logDebug('EXPORT', 'Configuration prestataire exportee', {
     provider: key,
@@ -383,12 +408,12 @@ export function exportProviderConfig(site) {
  */
 export function importProviderConfig(site, jsonData) {
   const key = toProviderKey(site);
-  
+
   if (!isValidProviderSelection(site)) {
     showToast(t('providerSelectBeforeImport'), 'error');
     return false;
   }
-  
+
   try {
     const normalizedImport = normalizeProviderImportPayload(jsonData);
     applyImportedProviderPayload(site, normalizedImport);
@@ -402,10 +427,10 @@ export function importProviderConfig(site, jsonData) {
       hasCompactFields: normalizedImport.compactFields !== undefined,
       organizationCount: normalizedImport.organizationOrder?.length || 0
     });
-    
+
     // Rafraîchir l'UI
     _onRefreshSettings?.(site);
-    
+
     return true;
   } catch (error) {
     showToast(t('providerImportError', String(error.message)), 'error');
@@ -419,7 +444,7 @@ export function importProviderConfig(site, jsonData) {
  */
 export function importProviderConfigAsNew(jsonData, options = {}) {
   try {
-    const normalizedImport = normalizeProviderImportPayload(jsonData, options);
+    const normalizedImport = normalizeProviderImportPayload(jsonData);
 
     if (!normalizedImport.providerLabel) {
       throw new Error('Le fichier JSON doit contenir meta.name pour nommer le prestataire');
@@ -438,15 +463,12 @@ export function importProviderConfigAsNew(jsonData, options = {}) {
 
     const key = candidate; // lower-case key
 
-    // Injecter les données
     applyImportedProviderPayload(label, normalizedImport);
-    // Ne pas importer de checkboxes via import prestataire (dédié via import/export checkboxes)
-    if (!settings.customCheckboxes) settings.customCheckboxes = {};
-    settings.customCheckboxes[key] = [];
-    if (!settings.checkboxPhrases) settings.checkboxPhrases = {};
-    settings.checkboxPhrases[key] = [];
 
-    // Les checkboxes restent gérées séparément via leur propre import/export.
+    if (!settings.customCheckboxes) settings.customCheckboxes = {};
+    if (!Array.isArray(settings.customCheckboxes[key])) settings.customCheckboxes[key] = [];
+    if (!settings.checkboxPhrases) settings.checkboxPhrases = {};
+    if (!Array.isArray(settings.checkboxPhrases[key])) settings.checkboxPhrases[key] = [];
 
     saveSettings();
     loadSettings(); // ✅ Recharger pour normaliser les labels (incluant requireInline/requireNextLine)
@@ -496,8 +518,7 @@ export function setupImportExportUI({ onRefreshSettings } = {}) {
       const file = e.target.files[0];
       if (!file) return;
       try {
-        const text = await file.text();
-        const jsonData = JSON.parse(text);
+        const jsonData = await readJsonFile(file);
         importProviderConfigAsNew(jsonData, { fileName: file.name });
       } catch (error) {
         showToast(t('providerFileReadError', String(error.message)), 'error');
@@ -534,7 +555,7 @@ export function setupImportExportUI({ onRefreshSettings } = {}) {
     try {
       const site = P.value;
       if (!isValidProviderSelection(site)) { showToast(t('providerShareNeedsValid'), 'error'); return; }
-      const result = await shareProviderToCommunity(site);
+      await shareProviderToCommunity(site);
       showToast(t('providerShareSuccess'), 'success');
     } catch (e) {
       showToast(t('providerShareError', String(e.message || e)), 'error');
@@ -549,8 +570,7 @@ export function setupImportExportUI({ onRefreshSettings } = {}) {
       const file = e.target.files[0];
       if (!file) return;
       try {
-        const text = await file.text();
-        const jsonData = JSON.parse(text);
+        const jsonData = await readJsonFile(file);
         const site = P.value;
         const ok = importProviderCheckboxes(site, jsonData);
         if (ok) {
@@ -603,13 +623,7 @@ export function exportProviderCheckboxes(site) {
     })
   };
 
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${key}_checkboxes_${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadJson(`${key}_checkboxes_${new Date().toISOString().slice(0, 10)}.json`, exportData);
   showToast(t('checkboxExportSuccess', site), 'success');
 }
 

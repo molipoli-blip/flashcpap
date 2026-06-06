@@ -10,6 +10,7 @@ import { logDebug, logError, logFlow } from './debug-logger.js';
 import { publishTemplate } from '../lib/share.js';
 import { ensureProviderConfig, getAvailableProviderLabels, getFirstAvailableProviderLabel as getFirstAvailableProviderLabelFromRules, getProviderConfig, hasValidProvider, toProviderKey, toProviderLabel } from './domain/provider-rules.js';
 import { t } from './i18n.js';
+import { markProviderAsShared } from './copy-engagement.js';
 
 // Callback injecté depuis l'extérieur (ui-main.js) pour rafraîchir le panneau paramètres.
 // Évite toute dépendance directe vers field-management.js.
@@ -333,6 +334,7 @@ export async function shareProviderToCommunity(siteLabel) {
   });
 
   const result = await publishTemplate(payload);
+  markProviderAsShared(site);
   logFlow('SHARE', 'Publication communaute terminee', {
     provider: site,
     hasTemplateId: !!(result && (result.id || result.template_id)),

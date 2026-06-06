@@ -219,13 +219,13 @@ function buildInlineTimeFormat(state) {
   };
 }
 
-export function buildInlineLabels(fieldKey, state) {
+export function buildInlineLabels(fieldKey, state, { silent = false } = {}) {
   const labelsData = state.labelsData || [];
   const filtered = labelsData.filter((d) => d.text);
 
   if (filtered.length === 0) {
     console.log(`[FIELD-MGMT][WARNING] Champ "${fieldKey}" : aucun mot-clé défini.`);
-    if (state.extractionMode && state.extractionMode !== 'auto') {
+    if (!silent && state.extractionMode && state.extractionMode !== 'auto') {
       alertInline(
         `Le mode d'extraction nécessite de définir au moins un "Mot-clé d'ancrage".`,
         'warning'

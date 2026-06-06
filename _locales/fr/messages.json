@@ -405,7 +405,7 @@
     "message": "Impossible de charger la configuration du prestataire."
   },
   "fieldAddedSuccess": {
-    "message": "Champ ajouté. Modifiez-le puis cliquez sur Valider."
+    "message": "Champ ajouté. Les modifications sont enregistrées automatiquement."
   },
   "fieldAddError": {
     "message": "Impossible d'ajouter un champ pour le moment."

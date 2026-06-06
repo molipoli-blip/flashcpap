@@ -30,13 +30,13 @@ export let settings = {
   // Options "pinnées" intégrées (toujours activées à l'analyse si true)
   pinnedOptions: { interpret: false, rodap: false },
   interpretation: { 
-    obsHours: 4, 
-    iah: 5, 
-    fuites: 24, 
+    obsHours: null,
+    iah: null,
+    fuites: null,
     texts: { 
-      obs: { ge: 'bonne observance', lt: 'observance non satisfaisante' }, 
-      iah: { ge: 'non efficace', lt: 'efficace' }, 
-      fuites: { ge: 'fuites significatives', lt: 'pas de fuites' } 
+      obs: { ge: '', lt: '' },
+      iah: { ge: '', lt: '' },
+      fuites: { ge: '', lt: '' }
     } 
   }
 };
@@ -121,12 +121,15 @@ export function loadSettings() {
   } catch {}
   
   if (!settings.summaryMeta) settings.summaryMeta = { lastAutoLines: [] };
-  // Ensure global interpretation thresholds and texts exist
-  if (!settings.interpretation) settings.interpretation = { obsHours: 4, iah: 5, fuites: 24 };
+  // Ensure global interpretation thresholds/texts shape exists
+  if (!settings.interpretation) settings.interpretation = { obsHours: null, iah: null, fuites: null, texts: {} };
+  if (settings.interpretation.obsHours === undefined) settings.interpretation.obsHours = null;
+  if (settings.interpretation.iah === undefined) settings.interpretation.iah = null;
+  if (settings.interpretation.fuites === undefined) settings.interpretation.fuites = null;
   const T = settings.interpretation.texts = settings.interpretation.texts || {};
-  T.obs = T.obs || { ge: 'bonne observance', lt: 'observance non satisfaisante' };
-  T.iah = T.iah || { ge: 'non efficace', lt: 'efficace' };
-  T.fuites = T.fuites || { ge: 'fuites significatives', lt: 'pas de fuites' };
+  T.obs = T.obs || { ge: '', lt: '' };
+  T.iah = T.iah || { ge: '', lt: '' };
+  T.fuites = T.fuites || { ge: '', lt: '' };
 
     if (!settings.customCheckboxes) settings.customCheckboxes = {};
 
@@ -172,9 +175,15 @@ export function loadSettings() {
   } else {
     // Aucun prestataire par défaut – l'utilisateur les crée manuellement
 
-    // Ensure default interpretation texts on first init
-    if (!settings.interpretation) settings.interpretation = { obsHours: 4, iah: 5, fuites: 24 };
-    if (!settings.interpretation.texts) settings.interpretation.texts = { obs: { ge: 'bonne observance', lt: 'observance non satisfaisante' }, iah: { ge: 'non efficace', lt: 'efficace' }, fuites: { ge: 'fuites significatives', lt: 'pas de fuites' } };
+    // Ensure interpretation settings exist with empty values (placeholders in UI)
+    if (!settings.interpretation) settings.interpretation = { obsHours: null, iah: null, fuites: null, texts: {} };
+    if (settings.interpretation.obsHours === undefined) settings.interpretation.obsHours = null;
+    if (settings.interpretation.iah === undefined) settings.interpretation.iah = null;
+    if (settings.interpretation.fuites === undefined) settings.interpretation.fuites = null;
+    if (!settings.interpretation.texts) settings.interpretation.texts = {};
+    if (!settings.interpretation.texts.obs) settings.interpretation.texts.obs = { ge: '', lt: '' };
+    if (!settings.interpretation.texts.iah) settings.interpretation.texts.iah = { ge: '', lt: '' };
+    if (!settings.interpretation.texts.fuites) settings.interpretation.texts.fuites = { ge: '', lt: '' };
     // Initialize pinnedOptions for built-in toggles
     if (!settings.pinnedOptions) settings.pinnedOptions = { interpret: false, rodap: false };
     if (typeof settings.autoLockUrl !== 'boolean') settings.autoLockUrl = false;

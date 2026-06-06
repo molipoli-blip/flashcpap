@@ -292,7 +292,6 @@ export function buildInlineFieldEditorMarkup({ fieldKey, siteLabel, initialState
         <div id="add-field-error-${fieldKey}" style="display:none; color:#b00020; font-weight:bold; font-size:12px; margin-bottom:6px;"></div>
         <div class="inline-actions" style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
           <button id="inline-cancel-${fieldKey}" style="padding:6px 10px;">${t('buttonCancel')}</button>
-          <button id="inline-submit-${fieldKey}" style="padding:6px 10px; background:#007acc; color:#fff; border: none; border-radius: 4px;">${t('buttonValidate')}</button>
         </div>
       </div>`;
 }

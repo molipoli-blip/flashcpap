@@ -405,7 +405,7 @@
     "message": "Unable to load the provider configuration."
   },
   "fieldAddedSuccess": {
-    "message": "Field added. Edit it, then click Confirm."
+    "message": "Field added. Changes are saved automatically."
   },
   "fieldAddError": {
     "message": "Unable to add a field right now."

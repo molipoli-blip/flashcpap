@@ -247,7 +247,8 @@ function createFieldGroup(f, def, index, site, siteLabel, cfg, expandedFieldKey 
       siteKey: site,
       expandedFieldKey,
       unsavedIndicator,
-      onSave: ({ fieldKey, state, firstLabelWanted }) => {
+      onSave: ({ fieldKey, state, firstLabelWanted, options = {} }) => {
+        const { rerender = true, toast = true } = options;
         const cfgLocal = getProviderConfig(settings, site);
         if (!saveInlineFieldChanges(cfgLocal, fieldKey, state, firstLabelWanted)) {
           try { console.warn('[UI][InlineSubmit] Field not found in settings for save:', { siteKey: site, f: fieldKey }); } catch {}
@@ -256,6 +257,10 @@ function createFieldGroup(f, def, index, site, siteLabel, cfg, expandedFieldKey 
 
         console.log(`[FIELD-MGMT][SAVE] Configuration finale pour "${fieldKey}":`, cfgLocal.fields[fieldKey]);
         saveSettings();
+        if (!rerender) {
+          return true;
+        }
+
         renderSettingsUI(siteLabel);
         requestAnimationFrame(() => {
           const cont = document.getElementById('patterns-container');
@@ -263,7 +268,9 @@ function createFieldGroup(f, def, index, site, siteLabel, cfg, expandedFieldKey 
           if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
 
-        try { showToast(t('fieldSaved'), 'success'); } catch {}
+        if (toast) {
+          try { showToast(t('fieldSaved'), 'success'); } catch {}
+        }
         return true;
       },
       onSaveMissingField: () => {

@@ -4,7 +4,7 @@
 
 import { t } from './i18n.js';
 import { getSupportersConfig } from './supporters.js';
-import { confirmInline, showToast } from './ui-utils.js';
+import { showMiniCtaPopup, showToast } from './ui-utils.js';
 import { registerSuccessfulCopy } from './copy-engagement.js';
 import { shareProviderToCommunity } from './provider-management.js';
 
@@ -14,27 +14,50 @@ function openSupportLink() {
 }
 
 async function showSupportPopup(totalCopies) {
-  const shouldOpen = await confirmInline(
-    document.getElementById('btn-copy') || document.body,
-    `${t('copySupportPopupTitle')}\n\n${t('copySupportPopupMessage', [String(totalCopies)])}`
-  );
-  if (shouldOpen) openSupportLink();
+  showMiniCtaPopup({
+    id: `copy-support-milestone-${totalCopies}`,
+    title: t('copySupportPopupTitle'),
+    message: t('copySupportPopupMessage', [String(totalCopies)]),
+    actions: [
+      {
+        label: t('confirmNo'),
+        kind: 'secondary'
+      },
+      {
+        label: t('confirmYes'),
+        kind: 'primary',
+        onClick: () => openSupportLink()
+      }
+    ],
+    timeout: 0
+  });
 }
 
 async function showProviderSharePopup(providerLabel, providerCopies) {
-  const shouldShare = await confirmInline(
-    document.getElementById('btn-copy') || document.body,
-    `${t('copyProviderSharePopupTitle', providerLabel)}\n\n${t('copyProviderSharePopupMessage', [providerLabel, String(providerCopies)])}`
-  );
-
-  if (!shouldShare) return;
-
-  try {
-    await shareProviderToCommunity(providerLabel);
-    showToast(t('providerShareSuccess'), 'success');
-  } catch (error) {
-    showToast(t('providerShareError', String(error?.message || error)), 'error');
-  }
+  showMiniCtaPopup({
+    id: `copy-provider-share-${String(providerLabel).toLowerCase()}-${providerCopies}`,
+    title: t('copyProviderSharePopupTitle', providerLabel),
+    message: t('copyProviderSharePopupMessage', [providerLabel, String(providerCopies)]),
+    actions: [
+      {
+        label: t('confirmNo'),
+        kind: 'secondary'
+      },
+      {
+        label: t('confirmYes'),
+        kind: 'primary',
+        onClick: async () => {
+          try {
+            await shareProviderToCommunity(providerLabel);
+            showToast(t('providerShareSuccess'), 'success');
+          } catch (error) {
+            showToast(t('providerShareError', String(error?.message || error)), 'error');
+          }
+        }
+      }
+    ],
+    timeout: 0
+  });
 }
 
 export function handleSuccessfulCopyEngagement(providerLabel) {

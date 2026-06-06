@@ -268,15 +268,6 @@ export function cancelEdit() {
   if (!editingState.isEditing) return;
   const siteForRestore = editingState.editingSite;
 
-  // Restore the checkbox before resetting the form state.
-  if (editingState.editingCheckbox && editingState.editingSite) {
-    if (!settings.customCheckboxes[editingState.editingSite]) {
-      settings.customCheckboxes[editingState.editingSite] = [];
-    }
-    settings.customCheckboxes[editingState.editingSite].splice(editingState.editingIndex, 0, editingState.editingCheckbox);
-    saveSettings();
-  }
-
   resetCheckboxForm();
 
   editingState = {
@@ -320,9 +311,6 @@ export function editCheckboxInForm(checkbox, site, index) {
   if (cancelBtn) {
     cancelBtn.style.display = 'block';
   }
-
-  settings.customCheckboxes[site].splice(index, 1);
-  saveCheckboxSettingsAndRefresh(site, { refreshSummary: true });
 
   const form = document.querySelector('.custom-checkbox-controls');
   if (form) {

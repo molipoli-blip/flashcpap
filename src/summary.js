@@ -54,8 +54,33 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     includeRodap: !!includeRodap,
     previousLength: previousSummary.length
   });
-  const thresholds = (settings && settings.interpretation) ? settings.interpretation : { obsHours: 4, iah: 5, fuites: 24 };
-  const texts = settings?.interpretation?.texts || { obs: { ge: 'bonne observance', lt: 'observance non satisfaisante' }, iah: { ge: 'non efficace', lt: 'efficace' }, fuites: { ge: 'fuites significatives', lt: 'pas de fuites' } };
+  const defaultThresholds = { obsHours: 4, iah: 5, fuites: 24 };
+  const defaultTexts = {
+    obs: { ge: 'bonne observance', lt: 'observance non satisfaisante' },
+    iah: { ge: 'non efficace', lt: 'efficace' },
+    fuites: { ge: 'fuites significatives', lt: 'pas de fuites' }
+  };
+  const interpSettings = settings?.interpretation || {};
+  const thresholds = {
+    obsHours: Number.isFinite(Number(interpSettings.obsHours)) ? Number(interpSettings.obsHours) : defaultThresholds.obsHours,
+    iah: Number.isFinite(Number(interpSettings.iah)) ? Number(interpSettings.iah) : defaultThresholds.iah,
+    fuites: Number.isFinite(Number(interpSettings.fuites)) ? Number(interpSettings.fuites) : defaultThresholds.fuites
+  };
+  const inputTexts = interpSettings.texts || {};
+  const texts = {
+    obs: {
+      ge: (inputTexts.obs?.ge || '').trim() || defaultTexts.obs.ge,
+      lt: (inputTexts.obs?.lt || '').trim() || defaultTexts.obs.lt
+    },
+    iah: {
+      ge: (inputTexts.iah?.ge || '').trim() || defaultTexts.iah.ge,
+      lt: (inputTexts.iah?.lt || '').trim() || defaultTexts.iah.lt
+    },
+    fuites: {
+      ge: (inputTexts.fuites?.ge || '').trim() || defaultTexts.fuites.ge,
+      lt: (inputTexts.fuites?.lt || '').trim() || defaultTexts.fuites.lt
+    }
+  };
   const fieldOrder = cfg.fieldOrder || Object.keys(cfg.fields || {});
 
   // Préparer les checkboxes personnalisées (toutes, favoris inclus) sélectionnées
@@ -107,9 +132,8 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       if (!v || v === '?' || !cfg.fields[f]) continue;
       const fieldDef = cfg.fields[f];
       let unit = fieldDef?.unit ? ` ${fieldDef.unit}` : '';
-      const expectedTupleSize = Number(fieldDef?.tupleExtraction?.size);
-      const extractedValueCount = (String(v).match(/\d+(?:[.,]\d+)?/g) || []).length;
-      const hasIncompleteTuple = expectedTupleSize >= 2 && extractedValueCount === 1;
+      const fieldMeta = data?.__fieldMeta?.[f] || null;
+      const hasIncompleteTuple = !!fieldMeta?.tupleIncomplete;
       
       logDebug('SUMMARY', 'Champ prepare pour le bloc extrait', {
         field: f,

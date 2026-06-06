@@ -50,6 +50,10 @@ function buildLabelBoundaryRegex(lbl) {
   return new RegExp(`${before}${labelToFlexiblePattern(lbl)}${after}`, flags);
 }
 
+export function buildFlexibleLabelBoundaryRegex(lbl) {
+  return buildLabelBoundaryRegex(lbl);
+}
+
 function buildInlineLabelValueRegex(lbl, valuePattern, separator = '(?:\\s*[:=])?') {
   const { before, flags } = getLabelBoundaryParts();
   return new RegExp(`${before}${labelToFlexiblePattern(lbl)}${separator}\\s*${valuePattern}`, flags);
@@ -283,7 +287,8 @@ function extractTimeMeta(text, labelDefs, { mask, connectors, size, timeFormat }
 
   return {
     value: formattedValue,
-    match: tupleResult.match
+    match: tupleResult.match,
+    tupleMeta: tupleResult.tupleMeta || null
   };
 }
 
@@ -556,6 +561,7 @@ export function extractTextMeta(text, labelDefs) {
 export function parseTextMeta(text, prest, settings) {
   const cfg = getProviderConfig(settings, prest) || { fields: {} };
   const data = {};
+  const fieldMeta = {};
   const matches = [];
   logFlow('PARSE', 'parseTextMeta demarre', { provider: prest, fieldCount: Object.keys(cfg.fields || {}).length });
   for (let [f, def] of Object.entries(cfg.fields)) {
@@ -579,13 +585,14 @@ export function parseTextMeta(text, prest, settings) {
     if (def.type === 'time') {
       logDebug('PARSE', 'Champ de type time', { field: f });
       const tupleExt = def.tupleExtraction || {};
-      const { value, match } = extractTimeMeta(text, def.labels, { 
+      const { value, match, tupleMeta } = extractTimeMeta(text, def.labels, { 
         mask: tupleExt.mask || def.mask, 
         connectors: tupleExt.connectors,
         size: tupleExt.size,
         timeFormat: def.timeFormat
       });
       data[f] = value;
+      if (tupleMeta) fieldMeta[f] = { tupleIncomplete: !!tupleMeta.isIncomplete, tupleMeta };
       logDebug('PARSE', 'Resultat time obtenu', { field: f, hasValue: value !== '?', hasMatch: !!match });
       if (match) {
         const m = { field: f, role: (def.role || f).toLowerCase(), label: def.label || f, type: 'time', unit: def.unit || '', ...match };
@@ -598,8 +605,9 @@ export function parseTextMeta(text, prest, settings) {
     } else if (def.type === 'tuple' || role === 'obs' || fname === 'obs' || (def.type === 'numeric' && (def.tupleExtraction?.size || 0) >= 2)) {
       logDebug('PARSE', 'Champ de type tuple', { field: f });
       const tupleExt = def.tupleExtraction || {};
-      const { value, match } = extractTupleMeta(text, def.labels, { mask: tupleExt.mask || def.mask, connectors: tupleExt.connectors, size: tupleExt.size });
+      const { value, match, tupleMeta } = extractTupleMeta(text, def.labels, { mask: tupleExt.mask || def.mask, connectors: tupleExt.connectors, size: tupleExt.size });
       data[f] = value;
+      if (tupleMeta) fieldMeta[f] = { tupleIncomplete: !!tupleMeta.isIncomplete, tupleMeta };
       if (match) {
         const m = { field: f, role: (def.role || f).toLowerCase(), label: def.label || f, type: 'tuple', unit: def.unit || '', ...match };
         matches.push(m);
@@ -708,8 +716,19 @@ export function parseTextMeta(text, prest, settings) {
     }
   }
 
+  try {
+    Object.defineProperty(data, '__fieldMeta', {
+      value: fieldMeta,
+      writable: true,
+      configurable: true,
+      enumerable: false
+    });
+  } catch {
+    data.__fieldMeta = fieldMeta;
+  }
+
   logFlow('PARSE', 'parseTextMeta termine', { matchCount: matches.length, fieldCount: Object.keys(data).length });
-  return { data, matches };
+  return { data, matches, fieldMeta };
 }
 
 // --- Tuple extraction helpers ---
@@ -747,6 +766,18 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
   const numRe = /\d+(?:[.,]\d+)?/g;
   const configuredSize = Number.isInteger(size) && size >= 1 ? Math.min(size, 7) : null;
   const maxCollected = configuredSize || 4;
+  const getExpectedSelectedCount = () => {
+    const rawMask = String(mask || '').trim();
+    if (rawMask) {
+      const xMaskCount = (rawMask.match(/X/gi) || []).length;
+      if (xMaskCount > 0) return xMaskCount;
+      if (/^\d+(\s*,\s*\d+)*$/.test(rawMask)) {
+        return rawMask.split(',').map(part => part.trim()).filter(Boolean).length || (configuredSize || 2);
+      }
+    }
+    return configuredSize || 2;
+  };
+  const expectedSelectedCount = getExpectedSelectedCount();
   const build = (arr) => {
     if (!arr.length) return '?';
     if (mask) {
@@ -857,6 +888,7 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
       const minRequired = configuredSize || (mask ? 1 : 2);
       if (collected.length >= minRequired) {
         const value = build(collected);
+        const observedCount = collected.length;
         // Use the line of the first found value for highlighting, fallback to label line
         const matchLine = (firstValueLine !== -1) ? firstValueLine + 1 : i + 1;
         if (firstValueLine !== -1 && firstValueLine + 1 !== i + 1) {
@@ -874,6 +906,11 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
         }
         return {
           value,
+          tupleMeta: {
+            expectedSelectedCount,
+            observedCount,
+            isIncomplete: observedCount < expectedSelectedCount
+          },
           match: {
             line: matchLine,
             raw: value,

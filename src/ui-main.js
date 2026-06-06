@@ -63,7 +63,12 @@ function applyProviderButtonState(isNoProvider) {
 export function renderParameterViews(providerKey, { forceOrganization = false } = {}) {
   const provider = normalizeProvider(providerKey);
   renderSettingsUI(provider);
-  setupImportExportUI({ onRefreshSettings: renderSettingsUI });
+  setupImportExportUI({
+    onRefreshSettings: nextProvider => refreshProviderUi(nextProvider, {
+      renderSettings: true,
+      renderOrganization: forceOrganization || isOrganizationSubTabActive()
+    })
+  });
 
   if (forceOrganization || isOrganizationSubTabActive()) {
     try {
@@ -104,7 +109,10 @@ export function initializeUI() {
     // 3. Configuration des boutons de gestion des prestataires
     setupProviderButtons({
       onProviderCreated: labelName => refreshProviderUi(labelName, { renderSettings: true }),
-      onRefreshSettings: renderSettingsUI
+      onRefreshSettings: provider => refreshProviderUi(provider, {
+        renderSettings: true,
+        renderOrganization: isOrganizationSubTabActive()
+      })
     });
     
     // 4. Population initiale des selects (inclut Organisation maintenant)

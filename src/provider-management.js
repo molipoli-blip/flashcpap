@@ -10,6 +10,7 @@ import { logDebug, logError, logFlow } from './debug-logger.js';
 import { publishTemplate } from '../lib/share.js';
 import { ensureProviderConfig, getAvailableProviderLabels, getFirstAvailableProviderLabel as getFirstAvailableProviderLabelFromRules, getProviderConfig, hasValidProvider, toProviderKey, toProviderLabel } from './domain/provider-rules.js';
 import { t } from './i18n.js';
+import { markProviderAsShared } from './copy-engagement.js';
 
 // Callback injecté depuis l'extérieur (ui-main.js) pour rafraîchir le panneau paramètres.
 // Évite toute dépendance directe vers field-management.js.
@@ -286,6 +287,63 @@ function buildProviderExportPayload(site) {
   };
 }
 
+export async function shareProviderToCommunity(siteLabel) {
+  const site = siteLabel;
+  const key = toProviderKey(site);
+  if (!isValidProviderSelection(site)) {
+    throw new Error(t('providerShareNeedsValid'));
+  }
+
+  const patterns = getProviderConfig(settings, site) || {};
+  const meta = (patterns && patterns.meta) || {};
+  const vendor = (meta.vendor || 'N/A').toString();
+  const model = (meta.model || site).toString();
+  const payload = {
+    name: site,
+    description: t('providerShareDescription', [site, vendor, model]),
+    type: 'provider',
+    vendor: vendor,
+    model: model,
+    submitted_by: 'User',
+    json: {
+      version: 2,
+      meta: { name: site, vendor, model },
+      patterns: patterns,
+      customCheckboxes: settings.customCheckboxes?.[key] || [],
+      checkboxPhrases: settings.checkboxPhrases?.[key] || [],
+      noteLibre: settings.noteLibre?.[key] || '',
+      compactFields: settings.compactFields?.[key] || false,
+      organizationOrder: settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || [],
+      exclusions: settings.exclusionsByProvider?.[key] || [],
+      globalSeparators: patterns.globalSeparators || [],
+      familySettings: settings.familySettings?.[key] || {},
+      pinnedOptions: settings.pinnedOptions?.[key] || []
+    }
+  };
+  logFlow('SHARE', 'Publication communaute demandee', {
+    provider: site,
+    vendor,
+    model,
+    fieldCount: Object.keys(patterns.fields || {}).length,
+    checkboxCount: (settings.customCheckboxes?.[key] || []).length,
+    phraseCount: (settings.checkboxPhrases?.[key] || []).length,
+    organizationCount: (settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || []).length,
+    exclusionCount: (settings.exclusionsByProvider?.[key] || []).length,
+    separatorCount: (patterns.globalSeparators || []).length,
+    pinnedOptionCount: (settings.pinnedOptions?.[key] || []).length
+  });
+
+  const result = await publishTemplate(payload);
+  markProviderAsShared(site);
+  logFlow('SHARE', 'Publication communaute terminee', {
+    provider: site,
+    hasTemplateId: !!(result && (result.id || result.template_id)),
+    status: result?.status || result?.state || 'ok'
+  });
+
+  return result;
+}
+
 /**
  * Exporte la configuration d'un prestataire vers un fichier JSON
  */
@@ -475,60 +533,9 @@ export function setupImportExportUI({ onRefreshSettings } = {}) {
   shareBtn.onclick = async () => {
     try {
       const site = P.value;
-      const key = toProviderKey(site);
       if (!isValidProviderSelection(site)) { showToast(t('providerShareNeedsValid'), 'error'); return; }
-      const patterns = getProviderConfig(settings, site) || {};
-      // Try to extract vendor/model from stored metadata if present
-      const meta = (patterns && patterns.meta) || {};
-      const vendor = (meta.vendor || 'N/A').toString();
-      const model = (meta.model || site).toString();
-      const payload = {
-        name: site,
-        description: t('providerShareDescription', [site, vendor, model]),
-        type: 'provider',
-        vendor: vendor,
-        model: model,
-        submitted_by: 'User',
-        json: {
-          version: 2,
-          meta: { name: site, vendor, model },
-          patterns: patterns,
-          // Include all related settings for a complete export
-          customCheckboxes: settings.customCheckboxes?.[key] || [],
-          checkboxPhrases: settings.checkboxPhrases?.[key] || [],
-          noteLibre: settings.noteLibre?.[key] || '',
-          compactFields: settings.compactFields?.[key] || false,
-          // Include organization order (family/groups ordering)
-          organizationOrder: settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || [],
-          // Include exclusion rules
-          exclusions: settings.exclusionsByProvider?.[key] || [],
-          // Include global separators if defined
-          globalSeparators: patterns.globalSeparators || [],
-          // Include family settings
-          familySettings: settings.familySettings?.[key] || {},
-          // Include pinned options
-          pinnedOptions: settings.pinnedOptions?.[key] || []
-        }
-      };
-      logFlow('SHARE', 'Publication communaute demandee', {
-        provider: site,
-        vendor,
-        model,
-        fieldCount: Object.keys(patterns.fields || {}).length,
-        checkboxCount: (settings.customCheckboxes?.[key] || []).length,
-        phraseCount: (settings.checkboxPhrases?.[key] || []).length,
-        organizationCount: (settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || []).length,
-        exclusionCount: (settings.exclusionsByProvider?.[key] || []).length,
-        separatorCount: (patterns.globalSeparators || []).length,
-        pinnedOptionCount: (settings.pinnedOptions?.[key] || []).length
-      });
-      const result = await publishTemplate(payload);
+      const result = await shareProviderToCommunity(site);
       showToast(t('providerShareSuccess'), 'success');
-      logFlow('SHARE', 'Publication communaute terminee', {
-        provider: site,
-        hasTemplateId: !!(result && (result.id || result.template_id)),
-        status: result?.status || result?.state || 'ok'
-      });
     } catch (e) {
       showToast(t('providerShareError', String(e.message || e)), 'error');
       logError('SHARE', 'Erreur publication communaute', e);

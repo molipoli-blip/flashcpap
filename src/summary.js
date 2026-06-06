@@ -107,6 +107,9 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       if (!v || v === '?' || !cfg.fields[f]) continue;
       const fieldDef = cfg.fields[f];
       let unit = fieldDef?.unit ? ` ${fieldDef.unit}` : '';
+      const expectedTupleSize = Number(fieldDef?.tupleExtraction?.size);
+      const extractedValueCount = (String(v).match(/\d+(?:[.,]\d+)?/g) || []).length;
+      const hasIncompleteTuple = expectedTupleSize >= 2 && extractedValueCount === 1;
       
       logDebug('SUMMARY', 'Champ prepare pour le bloc extrait', {
         field: f,
@@ -141,7 +144,9 @@ export function generateSummary(data, prestataire, includeInterpretation = false
           l = `${lbl}${sep}${v}${unit}`;
       }
 
-      if (includeInterpretation) {
+        if (hasIncompleteTuple) l += ' (?)';
+
+      if (includeInterpretation && !hasIncompleteTuple) {
         let interp = '';
         const role = (fieldDef.role || f).toLowerCase();
         if (role === 'obs') {

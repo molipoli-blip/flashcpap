@@ -3,7 +3,7 @@ import { readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const root = process.cwd();
-const targets = ['background.js', 'src'];
+const targets = ['background.js', 'src', 'scripts'];
 const files = [];
 
 function collectJsFiles(path) {

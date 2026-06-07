@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/navigation.js - Gestion de la navigation et des onglets
 import { byId } from './dom-utils.js';
 
-/**
- * Configuration de la navigation principale entre les onglets (Analyse, Paramètres)
- */
 export function setupTabNavigation({ onMainTabActivated, onSubTabActivated } = {}) {
   const tabAnalyse = byId('tab-analyse');
   const tabParam = byId('tab-param');
@@ -15,24 +11,21 @@ export function setupTabNavigation({ onMainTabActivated, onSubTabActivated } = {
   const panelParam = byId('param');
   const panelHelp = byId('help-panel');
   const panelBug = byId('bug-panel');
-  
+
   if (!tabAnalyse || !tabParam || !panelAnalyse || !panelParam) return;
-  
-  // Helper function to switch tabs
+
   function switchToTab(activeTab, activePanel, tabName) {
-    // Remove active from all tabs
     const tabs = [tabAnalyse, tabParam];
     if (tabHelp) tabs.push(tabHelp);
     if (tabBug) tabs.push(tabBug);
-    
+
     const panels = [panelAnalyse, panelParam];
     if (panelHelp) panels.push(panelHelp);
     if (panelBug) panels.push(panelBug);
 
     tabs.forEach(tab => tab.classList.remove('active'));
     panels.forEach(panel => panel.classList.remove('active'));
-    
-    // Add active to selected tab and panel
+
     activeTab.classList.add('active');
     activePanel.classList.add('active');
 
@@ -40,11 +33,11 @@ export function setupTabNavigation({ onMainTabActivated, onSubTabActivated } = {
       onMainTabActivated(tabName, activePanel);
     }
   }
-  
+
   tabAnalyse.addEventListener('click', () => {
     switchToTab(tabAnalyse, panelAnalyse, 'analyse');
   });
-  
+
   tabParam.addEventListener('click', () => {
     switchToTab(tabParam, panelParam, 'param');
   });
@@ -61,23 +54,18 @@ export function setupTabNavigation({ onMainTabActivated, onSubTabActivated } = {
     });
   }
 
-  // Setup sub-tabs navigation for Paramètres
   setupSubTabNavigation({ onSubTabActivated });
 }
 
-/**
- * Configuration de la navigation des sous-onglets dans l'onglet Paramètres
- */
 function setupSubTabNavigation({ onSubTabActivated } = {}) {
   const subtabs = ['general', 'interpretation', 'organization'];
-  
+
   subtabs.forEach(subtab => {
     const tabButton = byId(`param-tab-${subtab}`);
     const panel = byId(`param-${subtab}-panel`);
-    
+
     if (tabButton && panel) {
       tabButton.addEventListener('click', () => {
-        // Remove active from all subtabs
         subtabs.forEach(st => {
           const btn = byId(`param-tab-${st}`);
           const pnl = byId(`param-${st}-panel`);
@@ -89,8 +77,7 @@ function setupSubTabNavigation({ onSubTabActivated } = {}) {
             pnl.classList.remove('active');
           }
         });
-        
-        // Add active to clicked subtab
+
         tabButton.classList.add('active');
         tabButton.setAttribute('aria-selected', 'true');
         panel.classList.add('active');

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
 
-// Compat shim : Firefox expose `browser`, Chromium expose `chrome`
+// Browser API shim: Firefox exposes `browser`, Chromium exposes `chrome`.
 const _browser = (typeof globalThis.browser !== 'undefined') ? globalThis.browser : globalThis.chrome;
 
 const ANALYZER_WINDOW_ID_KEY = 'analyzerWindowId';
@@ -98,7 +98,7 @@ _browser.action.onClicked.addListener(async () => {
       const storedSourceTabId = await getStoredSourceTabId();
 
       if (sourceTab?.id != null && sourceTab.id !== storedSourceTabId) {
-        // Nouvel onglet actif : recharger la popup sur ce nouvel onglet
+        // Active tab changed: reload the popup for the new source tab.
         console.log(TAG, 'nouvel onglet détecté, rechargement popup', storedSourceTabId, '->', sourceTab.id);
         const newPopupUrl = buildPopupUrl(sourceTab);
         const popupTabs = await _browser.tabs.query({ windowId: analyzerWindowId });
@@ -108,7 +108,7 @@ _browser.action.onClicked.addListener(async () => {
         await _browser.windows.update(analyzerWindowId, { focused: true });
         await setStoredSourceTabId(sourceTab.id);
       } else {
-        // Même onglet : simple focus
+        // Same source tab: focus the existing popup window.
         await _browser.windows.update(analyzerWindowId, { focused: true });
         console.log(TAG, 'fenêtre existante refocalisée', analyzerWindowId);
       }

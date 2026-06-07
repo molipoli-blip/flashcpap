@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/checkbox-ui.js - Interface utilisateur des checkboxes pour l'onglet Analyse
 import { settings, saveSettings } from './storage.js';
 import {
   getAnalyseProviderSiteKey,

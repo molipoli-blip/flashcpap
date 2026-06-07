@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/storage.js
 import { generateUniqueId } from './shared/id.js';
 import { browserApi } from './platform/browser-api.js';
 import { ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
@@ -238,7 +237,7 @@ export function loadSettings() {
   }
 }
 
-// Gestion des familles de checkboxes
+// Checkbox family suggestions.
 export function addFamilyToSuggestions(familyName) {
   if (!familyName || typeof familyName !== 'string') return;
 

@@ -255,7 +255,7 @@ export function buildInlineLabels(fieldKey, state, { silent = false } = {}) {
   return labels;
 }
 
-// Alias de compatibilité
+// Compatibility alias.
 export function buildInlineFirstLabel(fieldKey, state) {
   const labels = buildInlineLabels(fieldKey, state);
   return labels.length > 0 ? labels[0] : null;

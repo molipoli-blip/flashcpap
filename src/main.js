@@ -171,9 +171,3 @@ function init() {
   setupAutoLockUrlToggle();
   setupActionFeatures(analysisSelect);
 }
-
-
-
-
-
-

@@ -296,4 +296,3 @@ function createFieldGroup(f, def, index, site, siteLabel, cfg, expandedFieldKey 
 
   return g;
 }
-

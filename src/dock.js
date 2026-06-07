@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/dock.js - Right-side dock panel management
 export function initDock() {
   const btnOpenDock = document.getElementById('btn-open-dock');
   const dock = document.getElementById('source-dock');
@@ -13,7 +12,6 @@ export function initDock() {
   const sourceWrapper = document.getElementById('source-wrapper');
   let isDocked = false;
 
-  // Dock width constraints and helpers
   const MIN_LEFT_UI = 220;       // px: keep at least this much for the main UI
   const MIN_DOCK_WIDTH = 120;    // px: new smaller minimum so you can reduce further
   const MAX_DOCK_WIDTH = 900;    // px: hard upper bound
@@ -26,50 +24,42 @@ export function initDock() {
 
   function dockSource() {
     if (isDocked) return;
-    
-    // Move toolbar+wrapper into the dock
+
     dockBody.innerHTML = '';
     dockBody.appendChild(sourceToolbar);
     dockBody.appendChild(sourceWrapper);
-    
-    // Compute safe initial width: leave at least MIN_LEFT_UI for main UI
+
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) || 500;
     const desired = Math.min(420, vw - MIN_LEFT_UI);
     const safeWidth = clampDockWidth(desired);
     dock.style.width = `${safeWidth}px`;
     document.body.style.setProperty('--source-dock-width', `${safeWidth}px`);
-    
-    // Show dock and add body padding
+
     dock.style.display = 'flex';
     document.body.classList.add('docked-right');
-    
-    // Jump visibility based on options (always visible in dock)
+
     const jump = document.getElementById('jump-select');
     if (jump) {
       const hasOptions = jump.options && jump.options.length > 1;
       jump.style.display = hasOptions ? 'inline-block' : 'none';
     }
-    
-    // Hide the open button when docked (optional, but cleaner)
+
     if (btnOpenDock) btnOpenDock.style.display = 'none';
-    
+
     isDocked = true;
   }
 
   function undockSource() {
     if (!isDocked) return;
-    
-    // Move content back into holding pen
+
     holdingPen.appendChild(sourceToolbar);
     holdingPen.appendChild(sourceWrapper);
-    
-    // Hide dock and remove padding
+
     dock.style.display = 'none';
     document.body.classList.remove('docked-right');
-    
-    // Show the open button again
+
     if (btnOpenDock) btnOpenDock.style.display = '';
-    
+
     isDocked = false;
   }
 

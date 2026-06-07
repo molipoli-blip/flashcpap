@@ -1,20 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/highlight-interactions.js - Text highlighting and info popup logic
 import { settings } from './storage.js';
 import { escapeHtml } from './shared/escape.js';
 import { getFieldDisplayName } from './field-card-view.js';
 import { safeRun } from './error-handling.js';
 
 export function setupHighlighting(sourceWrapper, matches) {
-  // Helper to assign a color class per role/field
   const colorClassFor = (m) => {
     const role = (m.role || '').toLowerCase();
     if (role === 'separator') return 'hl-separator';
     if (role === 'obs') return 'hl-obs';
     if (role === 'iah') return 'hl-iah';
     if (role === 'fuites') return 'hl-fuites';
-    // fallback hash for other fields
+    // Stable fallback color for non-role fields.
     return 'hl-other';
   };
 
@@ -24,7 +22,6 @@ export function setupHighlighting(sourceWrapper, matches) {
 
   function hideInfoPopup() {
     if (!infoPopup) return;
-    // Remove persistent group highlight if any
     safeRun(() => {
       if (currentPopupAnchor?.data?.group) toggleGroupHover(currentPopupAnchor.data.group, false);
     }, { context: 'HL_HIDE_POPUP_GROUP_TOGGLE' });
@@ -47,8 +44,7 @@ export function setupHighlighting(sourceWrapper, matches) {
   function showInfoPopup(target, data) {
     if (!infoPopup) return;
     safeRun(() => console.log('[HL][POPUP] showInfoPopup kind=%s label=%s field=%s line=%s raw=%o group=%s', data?.kind || 'value', data?.label || data?.field, data?.field, data?.line, data?.raw, data?.group), { context: 'HL_POPUP_LOG' });
-    // Build content
-  // Resolve friendly display name for the field to use as popup title and Champ
+  // Resolve the user-facing field name for the popup.
   const chosen = (document.getElementById('prest-param')?.value) || (document.getElementById('prestataire-select')?.value) || '';
   const site = (chosen || '').toLowerCase();
   const def = settings?.patterns?.[site]?.fields?.[data?.field];
@@ -61,7 +57,6 @@ export function setupHighlighting(sourceWrapper, matches) {
   const typeText = ((effectiveType === 'numeric' || effectiveType === 'tuple') ? 'Numérique' : 'Texte') + (data?.unit ? ` (${data.unit})` : '');
     const rangeText = (data && data.labelRange) ? `${data.labelRange.start}–${data.labelRange.end}` : '';
     const tupleSize = (typeof data?.tupleSize === 'number' && data.tupleSize >= 2) ? data.tupleSize : '';
-  // Compute tuple mask display from settings (combo selection like "X * X")
   let tupleMaskDisplay = '';
   try {
     const te = def?.tupleExtraction;
@@ -71,12 +66,10 @@ export function setupHighlighting(sourceWrapper, matches) {
       if (!mask) {
         mask = Array.from({ length: size }, () => 'X').join(' ');
       } else if (/^\d+(\s*,\s*\d+)*$/.test(mask)) {
-        // Convert index list (e.g., "1,3") to tokens of length `size`
         const idx = mask.split(',').map(s => parseInt(s.trim(), 10) - 1).filter(i => i >= 0 && i < size);
         const tokens = Array.from({ length: size }, (_, i) => idx.includes(i) ? 'X' : '*');
         mask = tokens.join(' ');
       } else {
-        // Normalize spacing/case and pad/trim to size
         const toks = mask.split(/\s+/).filter(Boolean).map(t => (String(t).toUpperCase() === 'X' ? 'X' : '*'));
         while (toks.length < size) toks.push('*');
         mask = toks.slice(0, size).join(' ');
@@ -139,18 +132,14 @@ export function setupHighlighting(sourceWrapper, matches) {
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     const popupRect = infoPopup.getBoundingClientRect();
-    // Preferred: right side
     let left = rect.right + 8;
     let top = rect.top;
-    // If overflow right, flip to left
     if (left + popupRect.width + 8 > vw) {
       left = Math.max(8, rect.left - popupRect.width - 8);
     }
-    // If overflow bottom, align to bottom of anchor; if still overflow, clamp
     if (top + popupRect.height + 8 > vh) {
       top = Math.max(8, rect.bottom - popupRect.height);
     }
-    // Final clamp
     left = Math.min(Math.max(left, 8), vw - popupRect.width - 8);
     top = Math.min(Math.max(top, 8), vh - popupRect.height - 8);
     infoPopup.style.left = `${left}px`;
@@ -179,10 +168,8 @@ export function setupHighlighting(sourceWrapper, matches) {
           }
         }
         const escaped = CSS && CSS.escape ? CSS.escape(group) : group.replace(/"/g, '\\"');
-        // Gather all candidates in the group that carry a payload id
         const candidates = Array.from(scopeWrapper.querySelectorAll(`[data-hl-group=\"${escaped}\"][data-hl-id]`));
         safeRun(() => console.log('[BADGE][CLICK][FALLBACK] candidates=%d group=%s', candidates.length, group), { context: 'HL_BADGE_FALLBACK_LOG' });
-        // Rank: prefer non-exclusion, non-masked, not label-ghost; among equals, prefer value over label
         const score = (node) => {
           const idAttr = node.getAttribute('data-hl-id');
           const idx = parseInt(idAttr || '-1', 10);
@@ -227,7 +214,6 @@ export function setupHighlighting(sourceWrapper, matches) {
     if (el.classList && el.classList.contains('hl-badge')) {
       if (processBadgeClick(el, sourceWrapper)) return;
     }
-    // Clicking any ghost label should open the same payload as the primary label for that group
     if (el.classList && el.classList.contains('hl-label-ghost')) {
       const group = el.getAttribute('data-hl-group');
       if (group) {
@@ -262,7 +248,6 @@ export function setupHighlighting(sourceWrapper, matches) {
     if (!(target instanceof HTMLElement)) return;
     const badge = target.closest('.hl-badge');
     if (!badge) return;
-    // Find nearest ancestor wrapper that carries a __hlMap (render root)
     let scope = badge.parentElement;
     while (scope && !(scope.__hlMap)) scope = scope.parentElement;
     const scopeWrapper = scope && scope.__hlMap ? scope : sourceWrapper;
@@ -270,7 +255,6 @@ export function setupHighlighting(sourceWrapper, matches) {
     if (handled) { e.stopPropagation(); e.preventDefault(); }
   }, { capture: true });
 
-  // Group hover: when hovering a label/value, highlight all peers in the same group
   const toggleGroupHover = (group, on, variantOverride = null) => {
     if (!group) return;
     try {
@@ -285,7 +269,6 @@ export function setupHighlighting(sourceWrapper, matches) {
           safeRun(() => n.setAttribute('data-hl-variant', String(variantOverride)), { context: 'HL_GROUP_SET_VARIANT_NODE' });
         }
       });
-      // Include labels that are shared across multiple fields for the same label token:
       // They expose data-hl-groups="g1,g2,g3"; highlight them if list contains the target group
       const sharedLabels = sourceWrapper.querySelectorAll('[data-hl-groups]');
       sharedLabels.forEach(n => {
@@ -345,11 +328,11 @@ export function setupHighlighting(sourceWrapper, matches) {
     hideInfoPopup();
   }, { capture: true });
 
-  // Reposition popup when the source wrapper scrolls (vertical/horizontal)
+  // Keep the popup anchored while the source wrapper scrolls.
   sourceWrapper.addEventListener('scroll', () => {
     if (infoPopup && infoPopup.style.display === 'block') positionInfoPopup();
   });
-  // Also reposition on window scroll and resize for stability
+  // Window scroll/resize can also move the anchor.
   window.addEventListener('scroll', () => {
     if (infoPopup && infoPopup.style.display === 'block') positionInfoPopup();
   }, { capture: true, passive: true });

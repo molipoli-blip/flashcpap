@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/parsing.js
 import { logDebug, logError, logFlow, logWarn } from './debug-logger.js';
 import { getProviderConfig } from './domain/provider-rules.js';
 
@@ -86,43 +85,32 @@ function getLabelExtractionMode(labelDefs = []) {
   };
 }
 
-// util - escape special regex characters
 function esc(s) {
   return s.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-/**
- * Applique les séparateurs de parsing configurés pour diviser le texte
- * @param {string} text - Texte brut à traiter
- * @param {Array<string>} separators - Liste de séparateurs (mots, caractères, patterns)
- * @returns {string} Texte avec sauts de ligne insérés aux séparateurs
- */
+// Apply configured split separators by inserting line breaks after matches.
 export function applySplitSeparators(text, separators) {
   if (!separators || separators.length === 0) return text;
-  
+
   logDebug('PARSE', 'Application split separators demarree', {
     inputLength: text.length,
     separatorCount: separators.length
   });
   let result = text;
-  
+
   for (const sep of separators) {
     if (!sep) continue;
-    
-    // Échapper les caractères spéciaux regex
     const escapedSep = esc(sep.trim());
-    
-    // Remplacer chaque occurrence du séparateur par séparateur + saut de ligne
-    // Mais seulement si pas déjà suivi d'un saut de ligne ou du marqueur
+    // Avoid adding another split marker when one is already present.
     const pattern = new RegExp(`(${escapedSep})(?!\\s*(?:✂|\\n))`, 'gi');
     const matchCount = (result.match(pattern) || []).length;
     if (matchCount > 0) {
         logDebug('PARSE', 'Separateur detecte pour split', { separatorLength: sep.length, matchCount });
-        // ✅ AJOUT DU MARQUEUR VISUEL " ✂ " (Ciseaux)
         result = result.replace(pattern, '$1 ✂ \n');
     }
   }
-  
+
   logDebug('PARSE', 'Application split separators terminee', { outputLength: result.length });
   return result;
 }
@@ -133,20 +121,13 @@ function labelBoundaryPattern(lbl) {
   return buildLabelBoundaryRegex(lbl);
 }
 
-/**
- * Format time value according to timeFormat configuration
- * @param {string[]} values - Extracted numeric values
- * @param {string} rawFormat - Format brut (ex: 'H M', 'DD MM YYYY')
- * @param {string} displayFormat - Format affiché (ex: 'HhMMm', 'DD/MM/YYYY')
- * @returns {string} Formatted time string
- */
 function formatTimeValue(values, rawFormat, displayFormat) {
   logDebug('TIME_FORMAT', 'formatTimeValue appele', {
     valueCount: values?.length || 0,
     hasRawFormat: !!rawFormat,
     hasDisplayFormat: !!displayFormat
   });
-  
+
   if (!values || !values.length || !rawFormat || !displayFormat) {
     logDebug('TIME_FORMAT', 'Parametres incomplets, retour joint');
     return values.join(' ');
@@ -157,10 +138,10 @@ function formatTimeValue(values, rawFormat, displayFormat) {
   parts.forEach((part, idx) => {
     if (values[idx] !== undefined) tokens[part] = values[idx];
   });
-  
+
   logDebug('TIME_FORMAT', 'Tokens temporels parses', { tokenCount: Object.keys(tokens).length });
 
-  // Gestion du format spécial "h (convertir)" pour conversion en heures décimales
+  // Convert configured hour displays to decimal hours.
   if (displayFormat === 'h (convertir)') {
     const decimalHours = timeToDecimalHours(values, rawFormat);
     if (decimalHours !== null) {
@@ -170,7 +151,7 @@ function formatTimeValue(values, rawFormat, displayFormat) {
     }
   }
 
-  // Gestion du format spécial "min (convertir)" pour conversion en minutes décimales
+  // Convert configured minute displays to decimal minutes.
   if (displayFormat === 'min (convertir)') {
     const decimalMinutes = timeToDecimalMinutes(values, rawFormat);
     if (decimalMinutes !== null) {
@@ -181,7 +162,7 @@ function formatTimeValue(values, rawFormat, displayFormat) {
   }
 
   let result = displayFormat;
-  
+
   // Replace tokens in display format
   if (tokens.H !== undefined) result = result.replace(/H+/g, tokens.H);
   if (tokens.M !== undefined) result = result.replace(/M+/g, (match) => tokens.M.padStart(match.length, '0'));
@@ -189,22 +170,16 @@ function formatTimeValue(values, rawFormat, displayFormat) {
   if (tokens.DD !== undefined) result = result.replace(/DD/g, tokens.DD.padStart(2, '0'));
   if (tokens.MM !== undefined) result = result.replace(/MM/g, tokens.MM.padStart(2, '0'));
   if (tokens.YYYY !== undefined) result = result.replace(/YYYY/g, tokens.YYYY);
-  
+
   logDebug('TIME_FORMAT', 'Format temporel final produit', { outputLength: result.length });
-  
+
   // Handle literal text (h, m, s, /, -, :, etc.)
   return result;
 }
 
-/**
- * Convert time to decimal hours for interpretation (observance, etc.)
- * @param {string[]} values - Extracted values
- * @param {string} rawFormat - Format brut (ex: 'H M')
- * @returns {number|null} Decimal hours or null
- */
 function timeToDecimalHours(values, rawFormat) {
   if (!values || !rawFormat) return null;
-  
+
   const parts = rawFormat.split(' ');
   const tokens = {};
   parts.forEach((part, idx) => {
@@ -226,15 +201,9 @@ function timeToDecimalHours(values, rawFormat) {
   return null;
 }
 
-/**
- * Convert time to decimal minutes
- * @param {string[]} values - Extracted values
- * @param {string} rawFormat - Format brut (ex: 'H M')
- * @returns {number|null} Decimal minutes or null
- */
 function timeToDecimalMinutes(values, rawFormat) {
   if (!values || !rawFormat) return null;
-  
+
   const parts = rawFormat.split(' ');
   const tokens = {};
   parts.forEach((part, idx) => {
@@ -263,18 +232,18 @@ function extractTimeMeta(text, labelDefs, { mask, connectors, size, timeFormat }
     connectorCount: connectors?.length || 0,
     hasTimeFormat: !!(timeFormat && timeFormat.raw && timeFormat.display)
   });
-  
+
   // Extract raw values using tuple logic
   const tupleResult = extractTupleMeta(text, labelDefs, { mask, connectors, size });
   logDebug('TIME_META', 'extractTupleMeta termine', { hasValue: !!tupleResult?.value, hasMatch: !!tupleResult?.match });
-  
+
   if (!tupleResult || !tupleResult.value || tupleResult.value === '?') {
     logDebug('TIME_META', 'Aucune valeur temporelle trouvee');
     return { value: '?', match: null };
   }
 
   let formattedValue = tupleResult.value;
-  
+
   // If timeFormat specified, format the output
   if (timeFormat && timeFormat.raw && timeFormat.display) {
     const values = tupleResult.value.split(/\s+/).map(v => v.replace(/[^\d.]/g, ''));
@@ -291,12 +260,12 @@ function extractTimeMeta(text, labelDefs, { mask, connectors, size, timeFormat }
   };
 }
 
-// New: meta-aware extractors to capture positions for highlighting
+// Meta-aware extractors keep source positions for highlighting.
 export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
   const effectiveLabelDefs = normalizeLabelDefs(labelDefs);
   if (!effectiveLabelDefs.length) return { value: '?', match: null };
 
-  // Appliquer les séparateurs personnalisés si configurés
+  // Apply configured split separators once per extractor.
   let processedText = text;
   for (const labelDef of effectiveLabelDefs) {
     if (labelDef.splitSeparators && labelDef.splitSeparators.length > 0) {
@@ -307,7 +276,7 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
       const beforeLen = processedText.length;
       processedText = applySplitSeparators(processedText, labelDef.splitSeparators);
       logDebug('PARSE', 'Texte retraite pour extractSmartMeta', { beforeLen, afterLen: processedText.length });
-      break; // Appliquer une seule fois (premier label avec séparateurs)
+      break;
     }
   }
 
@@ -334,19 +303,19 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
       }
       const unitPattern = fieldUnit ? `\\s*(?:${esc(fieldUnit)})?` : '\\s*(?:cmH2O|mbar|hPa|L\\/min|/h|h)?';
       const numPattern = '(\\d+(?:[.,]\\d*)?)(?!\\s*h\\s*\\d)';
-      
-      // Si le label se termine déjà par : ou =, ne pas ajouter [:=]
+
+      // Do not add an optional separator when the label already ends with one.
       const labelEndsWithSeparator = /[:=]\s*$/.test(lbl);
       const separator = labelEndsWithSeparator ? '' : '(?:\\s*[:=])?';
-      
+
       const inline = buildInlineLabelValueRegex(lbl, `${numPattern}${unitPattern}`, separator);
-      
+
       const m = line.match(inline);
       logDebug('PARSE', 'Verification inline numeric', { line: i + 1, matched: !!m });
-      
-      // ✅ Mode requireNextLine : ignore la valeur inline, cherche dans les lignes suivantes
+
+      // requireNextLine ignores inline values and scans following lines.
       if (requireNextLine) {
-        // ✅ Utiliser la plage configurée ou par défaut (1 à 3)
+        // Use the configured following-line range when provided.
         const startOffset = nextLineRange?.[0] || 1;
         const endOffset = nextLineRange?.[1] || 3;
 
@@ -354,12 +323,12 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
           const nxt = (L[i + j] || '').trim();
           logDebug('PARSE', 'Verification ligne suivante numeric', { line: i + j + 1, lineLength: nxt.length });
 
-          // Ignorer les lignes qui ne contiennent que le marqueur de séparation
+          // Ignore lines that only contain a split marker.
           if (nxt === '✂' || nxt === '|') {
             logDebug('PARSE', 'Ligne separateur ignoree pour numeric', { line: i + j + 1 });
               continue;
           }
-          
+
           const m2 = fieldUnit
             ? nxt.match(new RegExp(`${numPattern}\\s*(?:${esc(fieldUnit)})?`, 'i'))
             : nxt.match(new RegExp(numPattern, 'i'));
@@ -371,8 +340,8 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
         }
         return { value: '?', match: null };
       }
-      
-      // ✅ Mode requireInline : valeur DOIT être sur la ligne du label
+
+      // requireInline only accepts values on the label line.
       if (requireInline) {
         if (m) {
           const raw = m[1];
@@ -380,13 +349,13 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
         }
         return { value: '?', match: null };
       }
-      
-      // ✅ Mode automatique : cherche d'abord inline, puis lignes suivantes
+
+      // Auto mode tries inline first, then following lines.
       if (m) {
         const raw = m[1];
         return { value: raw.replace(',', '.'), match: { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
       }
-      
+
       logParsingStrategy('Mode auto numeric: recherche sur lignes suivantes', {
         labelText: lbl,
         labelLength: String(lbl).length,
@@ -396,8 +365,8 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
       for (let j = 1; j <= 3; j++) {
         const nxt = (L[i + j] || '').trim();
         logDebug('PARSE', 'Inspection ligne suivante numeric', { line: i + j + 1, lineLength: nxt.length });
-        
-        // Ignorer les lignes qui ne contiennent que le marqueur de séparation
+
+        // Ignore lines that only contain a split marker.
         if (nxt === '✂' || nxt === '|') {
             logDebug('PARSE', 'Separateur ignore dans fallback numeric', { line: i + j + 1 });
             continue;
@@ -406,7 +375,7 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
         const m2 = fieldUnit
           ? nxt.match(new RegExp(`${numPattern}\\s*(?:${esc(fieldUnit)})?`, 'i'))
           : nxt.match(new RegExp(numPattern, 'i'));
-        
+
         if (m2) {
           logParsingStrategy('Mode auto numeric: valeur trouvee sur ligne suivante', {
             labelText: lbl,
@@ -427,7 +396,7 @@ export function extractTextMeta(text, labelDefs) {
   const effectiveLabelDefs = normalizeLabelDefs(labelDefs);
   if (!effectiveLabelDefs.length) return { value: '?', match: null };
 
-  // Appliquer les séparateurs personnalisés si configurés
+  // Apply configured split separators once per extractor.
   let processedText = text;
   for (const labelDef of effectiveLabelDefs) {
     if (labelDef.splitSeparators && labelDef.splitSeparators.length > 0) {
@@ -438,7 +407,7 @@ export function extractTextMeta(text, labelDefs) {
       const beforeLen = processedText.length;
       processedText = applySplitSeparators(processedText, labelDef.splitSeparators);
       logDebug('PARSE', 'Texte retraite pour extractTextMeta', { beforeLen, afterLen: processedText.length });
-      break; // Appliquer une seule fois (premier label avec séparateurs)
+      break;
     }
   }
 
@@ -453,7 +422,7 @@ export function extractTextMeta(text, labelDefs) {
         const labelExcludePattern = new RegExp(labelExcludeKeywords.join('|'), 'i');
         if (labelExcludePattern.test(line)) continue;
       }
-      // Si le label se termine déjà par : ou =, ne pas ajouter [:=]
+      // Do not add an optional separator when the label already ends with one.
       const labelEndsWithSeparator = /[:=]\s*$/.test(lbl);
       // Allow optional separator (colon/equals) or just whitespace
       const separator = labelEndsWithSeparator ? '' : '(?:\\s*[:=])?';
@@ -463,19 +432,19 @@ export function extractTextMeta(text, labelDefs) {
       logDebug('PARSE', 'Regex texte construite', { labelLength: String(lbl).length, hasInlineRegex: !!inline });
 
       const m = line.match(inline);
-      
-      // ✅ Mode requireNextLine : ignore la valeur inline, cherche dans les lignes suivantes
+
+      // requireNextLine ignores inline values and scans following lines.
       if (requireNextLine) {
         const candidates = [];
-        
-        // ✅ Utiliser la plage configurée ou par défaut (1 à 5)
+
+        // Use the configured following-line range when provided.
         const startOffset = nextLineRange?.[0] || 1;
         const endOffset = nextLineRange?.[1] || 5;
 
         for (let j = startOffset; j <= endOffset; j++) {
           const nxt = (L[i + j] || '').trim().replace(/\s*✂\s*/g, '').trim();
           if (!nxt) continue;
-          
+
           if (/\d{2}\/\d{2}\/\d{4}|depuis le|du \d/.test(nxt)) continue;
           if (excludeKeywords && excludeKeywords.length > 0) {
             const excludePattern = new RegExp(excludeKeywords.join('|'), 'i');
@@ -492,8 +461,8 @@ export function extractTextMeta(text, labelDefs) {
         }
         return { value: '?', match: null };
       }
-      
-      // ✅ Mode requireInline : valeur DOIT être sur la ligne du label
+
+      // requireInline only accepts values on the label line.
       if (requireInline) {
         if (m) {
           const raw = m[1].replace(/\s*✂\s*/g, '').trim();
@@ -501,15 +470,15 @@ export function extractTextMeta(text, labelDefs) {
         }
         return { value: '?', match: null };
       }
-      
-      // ✅ Mode automatique : cherche d'abord inline, puis lignes suivantes
+
+      // Auto mode tries inline first, then following lines.
       if (m) {
         const raw = m[1].replace(/\s*✂\s*/g, '').trim();
         if (raw.length > 0) {
           return { value: raw, match: { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
         }
       }
-      
+
       logParsingStrategy('Mode auto texte: recherche sur lignes suivantes', {
         labelText: lbl,
         labelLength: String(lbl).length,
@@ -580,12 +549,12 @@ export function parseTextMeta(text, prest, settings) {
       tupleMask: def.tupleExtraction?.mask || null,
       hasTimeFormat: !!def.timeFormat
     });
-    
+
     if (def.type === 'time') {
       logDebug('PARSE', 'Champ de type time', { field: f });
       const tupleExt = def.tupleExtraction || {};
-      const { value, match, tupleMeta } = extractTimeMeta(text, def.labels, { 
-        mask: tupleExt.mask || def.mask, 
+      const { value, match, tupleMeta } = extractTimeMeta(text, def.labels, {
+        mask: tupleExt.mask || def.mask,
         connectors: tupleExt.connectors,
         size: tupleExt.size,
         timeFormat: def.timeFormat
@@ -618,8 +587,6 @@ export function parseTextMeta(text, prest, settings) {
       }
     } else if (def.type === 'numeric') {
       logDebug('PARSE', 'Champ de type numeric', { field: f });
-      
-      // ✅ Apply separators locally for debug visibility
       let effectiveText = text;
       if (def.labels) {
         for (const lbl of def.labels) {
@@ -631,8 +598,6 @@ export function parseTextMeta(text, prest, settings) {
       }
 
       logDebug('PARSE', 'Appel extractSmartMeta', { field: f, labelCount: def.labels?.length || 0 });
-      
-      // 🔍 NOUVEAU : Afficher les lignes autour du label pour debug
       if (def.labels && def.labels.length > 0) {
         const labelText = def.labels[0].text;
         const lines = effectiveText.split(/\r?\n/);
@@ -643,7 +608,7 @@ export function parseTextMeta(text, prest, settings) {
           }
         }
       }
-      
+
       const { value, match } = extractSmartMeta(effectiveText, def.labels, def.unit || '');
       data[f] = value;
       logDebug('PARSE', 'Resultat numeric obtenu', { field: f, hasValue: value !== '?', hasMatch: !!match });
@@ -657,8 +622,6 @@ export function parseTextMeta(text, prest, settings) {
       }
     } else {
       logDebug('PARSE', 'Champ de type text', { field: f });
-      
-      // ✅ Apply separators locally for debug visibility
       let effectiveText = text;
       if (def.labels) {
         for (const lbl of def.labels) {
@@ -682,10 +645,7 @@ export function parseTextMeta(text, prest, settings) {
       }
     }
   }
-  // Déduplication par labelLine : si plusieurs champs ont matché le même mot-clé/label,
-  // le champ qui extrait le moins de nombres (tuples) perd face à celui qui en extrait plus.
-  // Règle : 1 tuple < 2 tuples (même mot-clé) — ex: pression1=4 (1 valeur) perd contre
-  // pression2=4-12 (2 valeurs) car un tuple avec plus de composantes est prioritaire.
+  // When several fields match the same label line, keep the one extracting the richest tuple.
   const matchesByLabelLine = new Map();
   for (const m of matches) {
     const key = m.labelLine;
@@ -699,7 +659,7 @@ export function parseTextMeta(text, prest, settings) {
       n: (String(m.raw || '').match(/\d+(?:[.,]\d+)?/g) || []).length
     }));
     const maxN = Math.max(...sizedGroup.map(g => g.n));
-    if (maxN < 2) continue; // personne n'a extrait un range, pas de conflit
+    if (maxN < 2) continue;
     for (const { m, n } of sizedGroup) {
       if (n < maxN) {
         logParsingStrategy('Deduplication labelLine: champ supprime car extrait moins de valeurs', {
@@ -730,14 +690,14 @@ export function parseTextMeta(text, prest, settings) {
   return { data, matches, fieldMeta };
 }
 
-// --- Tuple extraction helpers ---
+
 function tuplePreprocess(s) {
   const res = s
     // 4h26 / 4:26 -> "4 26"
     .replace(/\b(\d{1,3})\s*[h:]\s*(\d{1,2})\b/gi, '$1 $2')
     // 4p55 -> "4 55" (allow letter p between numbers)
     .replace(/\b(\d{1,3})p(\d{1,3})\b/gi, '$1 $2');
-  
+
   if (s !== res) {
     logDebug('PARSE', 'tuplePreprocess modifie la ligne', { beforeLength: s.length, afterLength: res.length });
   }
@@ -748,7 +708,7 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
   const effectiveLabelDefs = normalizeLabelDefs(labelDefs);
   if (!effectiveLabelDefs.length) return { value: '?', match: null };
 
-  // ✅ Apply separators locally for tuple extraction
+  // Apply configured split separators once before tuple extraction.
   let processedText = text;
   for (const labelDef of effectiveLabelDefs) {
     if (labelDef.splitSeparators && labelDef.splitSeparators.length > 0) {
@@ -782,8 +742,8 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
     if (mask) {
       const parts = [];
       const tokens = mask.split(/\s+/);
-      let arrIdx = 0; // index in collected array
-      let xIdx = 0;   // index of X tokens (for connectors)
+      let arrIdx = 0;
+      let xIdx = 0;
       tokens.forEach(token => {
         if (token === 'X') {
           if (arrIdx < arr.length) {
@@ -792,9 +752,9 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
           }
           arrIdx++;
         } else if (token === '*') {
-          arrIdx++; // skip this position in array
+          arrIdx++;
         } else {
-          parts.push(token); // literal token from mask
+          parts.push(token);
         }
       });
       return parts.join(' ').replace(/\s+/g, ' ').trim();
@@ -856,13 +816,13 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
           firstValueSourceRaw = buildTupleSourceRaw(sourceText, collected.length - beforeCount) || String(sourceText || '').trim();
         }
       };
-      
+
       if (!requireNextLine) {
         const lblMatch = labelBoundaryPattern(lbl).exec(line);
         const afterLabelIdx = lblMatch ? lblMatch.index + lblMatch[0].length : 0;
         scan(line.slice(afterLabelIdx), i, rawLine.slice(afterLabelIdx));
       }
-      
+
       if (!requireInline && (requireNextLine || collected.length < 2)) {
         const startOffset = requireNextLine ? (nextLineRange?.[0] || 1) : 1;
         const endOffset = requireNextLine ? (nextLineRange?.[1] || 3) : 3;
@@ -876,9 +836,9 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
         }
         for (let j = startOffset; j <= endOffset && collected.length < maxCollected; j++) {
           const rawNxt = (L[i + j] || '').trim();
-          // Ignorer les lignes qui ne contiennent que le marqueur de séparation
+          // Ignore lines that only contain a split marker.
           if (rawNxt === '✂' || rawNxt === '|') continue;
-          
+
           const nxt = tuplePreprocess(rawNxt);
           if (!nxt) continue;
           scan(nxt, i + j, rawNxt);
@@ -888,7 +848,7 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
       if (collected.length >= minRequired) {
         const value = build(collected);
         const observedCount = collected.length;
-        // Use the line of the first found value for highlighting, fallback to label line
+        // Highlight the first value line, falling back to the label line.
         const matchLine = (firstValueLine !== -1) ? firstValueLine + 1 : i + 1;
         if (firstValueLine !== -1 && firstValueLine + 1 !== i + 1) {
           logParsingStrategy(
@@ -926,5 +886,5 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
   return { value: '?', match: null };
 }
 
-// Export utility for interpretation in summary.js
+
 export { timeToDecimalHours };

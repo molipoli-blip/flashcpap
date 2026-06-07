@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // Checkbox settings panel helpers.
 import { settings, saveSettings, getFamilySuggestions } from './storage.js';
 import { confirmInline, alertInline, createLockedMessage } from './ui-utils.js';

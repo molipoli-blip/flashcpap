@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/field-editor.js - Inline field editor functionality
 import { settings, saveSettings } from './storage.js';
 import { showToast } from './ui-utils.js';

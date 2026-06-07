@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/organization.js - Gestion de l'organisation des éléments dans le résumé
 import { settings, saveSettings } from './storage.js';
 import { hasValidProvider, pickProviderLabel } from './domain/provider-rules.js';

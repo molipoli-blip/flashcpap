@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/highlighting.js - Text highlighting and info popup logic
 import { settings } from './storage.js';
 import { escapeHtml } from './shared/escape.js';

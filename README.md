@@ -205,5 +205,4 @@ Distributed under the **Apache License 2.0**.
 ## Contact
 
 * Website: [https://www.flashcpap.com](https://www.flashcpap.com)
-* GitHub: [https://github.com/molipoli-blip/flashcpap](https://github.com/molipoli-blip/flashcpap)
 

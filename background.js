@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 
 // Compat shim : Firefox expose `browser`, Chromium expose `chrome`
 const _browser = (typeof globalThis.browser !== 'undefined') ? globalThis.browser : globalThis.chrome;

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/extraction.js
 import { extractTextFromPDF } from '../lib/pdf-parser.js';
 import { getActiveNormalTab } from './platform/active-tab.js';

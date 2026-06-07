@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/checkbox-ui.js - Interface utilisateur des checkboxes pour l'onglet Analyse
 import { settings, saveSettings } from './storage.js';
 import {

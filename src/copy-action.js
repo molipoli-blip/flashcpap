@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 import { t } from './i18n.js';
 import { handleSuccessfulCopyEngagement } from './copy-engagement-prompts.js';
 

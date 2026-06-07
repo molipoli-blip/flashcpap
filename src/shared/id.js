@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 
 export function generateUniqueId() {
   return 'cb_' + Math.random().toString(36).substr(2, 9);

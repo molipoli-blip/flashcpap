@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/dock.js - Right-side dock panel management
 export function initDock() {
   const btnOpenDock = document.getElementById('btn-open-dock');

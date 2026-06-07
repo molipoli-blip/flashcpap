@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // Popup entry point.
 import { loadSettings, saveSettings, settings, addFamilyToSuggestions, updateFamilySuggestionsFromExistingCheckboxes } from './storage.js';
 import { logDebug } from './debug-logger.js';

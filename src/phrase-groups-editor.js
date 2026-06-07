@@ -5,6 +5,7 @@ import { settings, saveSettings } from './storage.js';
 import { alertInline, confirmInline } from './ui-utils.js';
 import { createPhraseGroupId, normalizePhraseGroupId } from './shared/id.js';
 import { t } from './i18n.js';
+import { ensureProviderEntry, ensureSettingsObject } from './storage-guards.js';
 
 // Shared selection-mode state.
 let phrasePotState = { active: false, family: '', orderIds: [] };
@@ -97,8 +98,8 @@ export function notifyPhrasePotBlocked(event) {
 }
 
 export function ensureCheckboxPhraseGroups(site) {
-  if (!settings.checkboxPhrases) settings.checkboxPhrases = {};
-  if (!Array.isArray(settings.checkboxPhrases[site])) settings.checkboxPhrases[site] = [];
+  ensureSettingsObject(settings, 'checkboxPhrases');
+  ensureProviderEntry(settings, 'checkboxPhrases', site, []);
 
   let changed = false;
   settings.checkboxPhrases[site] = settings.checkboxPhrases[site].map(group => {

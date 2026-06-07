@@ -2,6 +2,7 @@
 // Copyright (C) 2026 molipoli-blip
 // Shared UI helpers: toasts, dialogs, and inline provider form.
 import { t } from './i18n.js';
+import { safeRun } from './error-handling.js';
 
 // Show a transient toast notification.
 export function showToast(message, variant = 'info', timeout = 2200) {
@@ -31,10 +32,10 @@ export function showToast(message, variant = 'info', timeout = 2200) {
   toast.textContent = message;
   container.appendChild(toast);
   setTimeout(() => { 
-    try { 
+    safeRun(() => {
       toast.remove(); 
       if (!container.children.length) container.remove(); 
-    } catch {} 
+    }, { context: 'UI_TOAST_CLEANUP' });
   }, timeout);
 }
 
@@ -48,13 +49,13 @@ export function showMiniCtaPopup({
 } = {}) {
   if (!title || !message) return;
 
-  try {
+  safeRun(() => {
     if (id) {
       document.querySelectorAll('.mini-cta-popup').forEach(node => {
         if (node.dataset?.miniCtaId === id) node.remove();
       });
     }
-  } catch {}
+  }, { context: 'UI_CTA_DEDUP' });
 
   const popup = document.createElement('div');
   popup.className = 'mini-cta-popup';
@@ -100,7 +101,7 @@ export function showMiniCtaPopup({
   const closePopup = () => {
     if (closed) return;
     closed = true;
-    try { popup.remove(); } catch {}
+    safeRun(() => popup.remove(), { context: 'UI_CTA_CLOSE' });
   };
 
   if (actions.length) {
@@ -154,7 +155,7 @@ export function showMiniCtaPopup({
 export function confirmInline(anchorEl, message) {
   return new Promise((resolve) => {
     // Remove any existing modals
-    try { document.querySelectorAll('.mini-confirm-overlay').forEach(n => n.remove()); } catch {}
+    safeRun(() => document.querySelectorAll('.mini-confirm-overlay').forEach(n => n.remove()), { context: 'UI_CONFIRM_DEDUP' });
 
     // Save currently focused element to restore later
     const previouslyFocused = document.activeElement;
@@ -213,10 +214,10 @@ export function confirmInline(anchorEl, message) {
     if (firstEl) firstEl.focus();
 
     const cleanup = (val) => {
-      try { overlay.remove(); } catch {}
+      safeRun(() => overlay.remove(), { context: 'UI_CONFIRM_CLEANUP_REMOVE' });
       document.body.style.overflow = prevOverflow;
       if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
-        try { previouslyFocused.focus(); } catch {}
+        safeRun(() => previouslyFocused.focus(), { context: 'UI_CONFIRM_REFOCUS' });
       }
       resolve(val);
     };
@@ -262,7 +263,7 @@ export function confirmInline(anchorEl, message) {
 export function alertInline(message, variant = 'info') {
   return new Promise((resolve) => {
     // Remove any existing alert modals
-    try { document.querySelectorAll('.mini-alert-overlay').forEach(n => n.remove()); } catch {}
+    safeRun(() => document.querySelectorAll('.mini-alert-overlay').forEach(n => n.remove()), { context: 'UI_ALERT_DEDUP' });
 
     // Save currently focused element to restore later
     const previouslyFocused = document.activeElement;
@@ -339,10 +340,10 @@ export function alertInline(message, variant = 'info') {
     btnOk.focus();
 
     const cleanup = () => {
-      try { overlay.remove(); } catch {}
+      safeRun(() => overlay.remove(), { context: 'UI_ALERT_CLEANUP_REMOVE' });
       document.body.style.overflow = prevOverflow;
       if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
-        try { previouslyFocused.focus(); } catch {}
+        safeRun(() => previouslyFocused.focus(), { context: 'UI_ALERT_REFOCUS' });
       }
       resolve();
     };
@@ -367,7 +368,7 @@ export function alertInline(message, variant = 'info') {
 // Inline provider creation form used instead of prompt().
 export function showProviderAddInlineForm(anchorEl, { onSubmit } = {}) {
   // Close existing form if any
-  try { document.querySelectorAll('.mini-provider-form').forEach(n => n.remove()); } catch {}
+  safeRun(() => document.querySelectorAll('.mini-provider-form').forEach(n => n.remove()), { context: 'UI_PROVIDER_FORM_DEDUP' });
   
   const form = document.createElement('div');
   form.className = 'mini-provider-form';
@@ -423,7 +424,7 @@ export function showProviderAddInlineForm(anchorEl, { onSubmit } = {}) {
   form.style.left = `${left}px`;
   form.style.top = `${top}px`;
   
-  const cleanup = () => { try { form.remove(); } catch {} };
+  const cleanup = () => { safeRun(() => form.remove(), { context: 'UI_PROVIDER_FORM_CLEANUP' }); };
   
   cancel.onclick = (e) => { e.stopPropagation(); cleanup(); };
   

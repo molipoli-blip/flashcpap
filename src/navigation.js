@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
 // src/navigation.js - Gestion de la navigation et des onglets
+import { byId } from './dom-utils.js';
 
 /**
  * Configuration de la navigation principale entre les onglets (Analyse, Paramètres)
  */
 export function setupTabNavigation({ onMainTabActivated, onSubTabActivated } = {}) {
-  const tabAnalyse = document.getElementById('tab-analyse');
-  const tabParam = document.getElementById('tab-param');
-  const tabHelp = document.getElementById('tab-help');
-  const tabBug = document.getElementById('tab-bug');
-  const panelAnalyse = document.getElementById('analyse');
-  const panelParam = document.getElementById('param');
-  const panelHelp = document.getElementById('help-panel');
-  const panelBug = document.getElementById('bug-panel');
+  const tabAnalyse = byId('tab-analyse');
+  const tabParam = byId('tab-param');
+  const tabHelp = byId('tab-help');
+  const tabBug = byId('tab-bug');
+  const panelAnalyse = byId('analyse');
+  const panelParam = byId('param');
+  const panelHelp = byId('help-panel');
+  const panelBug = byId('bug-panel');
   
   if (!tabAnalyse || !tabParam || !panelAnalyse || !panelParam) return;
   
@@ -71,15 +72,15 @@ function setupSubTabNavigation({ onSubTabActivated } = {}) {
   const subtabs = ['general', 'interpretation', 'organization'];
   
   subtabs.forEach(subtab => {
-    const tabButton = document.getElementById(`param-tab-${subtab}`);
-    const panel = document.getElementById(`param-${subtab}-panel`);
+    const tabButton = byId(`param-tab-${subtab}`);
+    const panel = byId(`param-${subtab}-panel`);
     
     if (tabButton && panel) {
       tabButton.addEventListener('click', () => {
         // Remove active from all subtabs
         subtabs.forEach(st => {
-          const btn = document.getElementById(`param-tab-${st}`);
-          const pnl = document.getElementById(`param-${st}-panel`);
+          const btn = byId(`param-tab-${st}`);
+          const pnl = byId(`param-${st}-panel`);
           if (btn) {
             btn.classList.remove('active');
             btn.setAttribute('aria-selected', 'false');

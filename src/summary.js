@@ -94,8 +94,16 @@ function getFieldLabel(fieldName, fieldDef) {
   return fieldDef?.label || (fieldName === fieldName.toUpperCase() ? fieldName : (fieldName.replace(/([a-z])([A-Z])/g, '$1 $2'))).replace(/^./, c => c.toUpperCase());
 }
 
+function getDerivedTimeUnit(fieldDef) {
+  if (!fieldDef || fieldDef.type !== 'time') return '';
+  const display = String(fieldDef?.timeFormat?.display || '').trim().toLowerCase();
+  if (display === 'h (convertir)') return ' h';
+  if (display === 'min (convertir)') return ' min';
+  return '';
+}
+
 function getFieldUnit(value, fieldDef) {
-  const unit = fieldDef?.unit ? ` ${fieldDef.unit}` : '';
+  const unit = fieldDef?.unit ? ` ${fieldDef.unit}` : getDerivedTimeUnit(fieldDef);
   if (!unit || !value) return unit;
 
   const valueText = String(value).trim().toLowerCase();

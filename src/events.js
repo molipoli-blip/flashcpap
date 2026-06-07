@@ -11,6 +11,7 @@ import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
 import { toProviderKey } from './domain/provider-rules.js';
 import { t } from './i18n.js';
+import { ensureSettingsObject } from './storage-guards.js';
 
 let lastParsedData = null;
 let lastSelectedPrestataire = null;
@@ -51,7 +52,7 @@ export async function updateSummaryDisplay() {
     const cbI = document.getElementById('cb-interpret');
 
     const customCheckboxStates = {};
-    if (!settings.customCheckboxes) settings.customCheckboxes = {};
+    ensureSettingsObject(settings, 'customCheckboxes');
     const customCheckboxes = settings.customCheckboxes[toProviderKey(lastSelectedPrestataire)] || [];
     let checkedCustomCount = 0;
 

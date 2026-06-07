@@ -12,6 +12,7 @@ import {
 } from './checkbox-orchestrator.js';
 import { refreshCheckboxUIs } from './checkbox-refresh.js';
 import { t } from './i18n.js';
+import { ensureSettingsObject } from './storage-guards.js';
 
 const CUSTOM_CHECKBOX_EVENT = 'custom-checkbox-changed';
 const CUSTOM_CHIP_STYLE = {
@@ -179,7 +180,7 @@ export function createCustomCheckboxesUI(prestataire) {
 
   const previousStates = capturePreviousCheckboxStates(container);
   container.innerHTML = '';
-  if (!settings.customCheckboxes) settings.customCheckboxes = {};
+  ensureSettingsObject(settings, 'customCheckboxes');
 
   const siteKey = normalizeProviderSiteKey(prestataire);
   const customCheckboxes = settings.customCheckboxes[siteKey] || [];

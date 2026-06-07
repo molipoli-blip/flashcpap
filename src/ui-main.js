@@ -16,6 +16,8 @@ import { showToast } from './ui-utils.js';
 import { settings } from './storage.js';
 import { hasValidProvider, resolveProviderLabel } from './domain/provider-rules.js';
 import { t } from './i18n.js';
+import { byId } from './dom-utils.js';
+import { safeRun } from './error-handling.js';
 
 function normalizeProvider(providerKey) {
   return resolveProviderLabel(providerKey, settings, { fallbackToFirstAvailable: true });
@@ -26,11 +28,11 @@ function isValidProvider(providerLabel) {
 }
 
 function isParameterPanelActive() {
-  return !!document.getElementById('param')?.classList.contains('active');
+  return !!byId('param')?.classList.contains('active');
 }
 
 function isOrganizationSubTabActive() {
-  return !!document.getElementById('param-tab-organization')?.classList.contains('active');
+  return !!byId('param-tab-organization')?.classList.contains('active');
 }
 
 function ensureProviderOrganizationState(providerLabel) {
@@ -43,8 +45,8 @@ function ensureProviderOrganizationState(providerLabel) {
  * Isole les règles UI de verrouillage hors de la fonction de mise à jour générale.
  */
 function applyProviderButtonState(isNoProvider) {
-  const btnAnalyse = document.getElementById('btn-analyse');
-  const cbInterpret = document.getElementById('cb-interpret');
+  const btnAnalyse = byId('btn-analyse');
+  const cbInterpret = byId('cb-interpret');
 
   if (btnAnalyse) {
     btnAnalyse.disabled = isNoProvider;
@@ -156,7 +158,7 @@ export function updateUIForProvider(providerKey) {
     const isNoProvider = !isValidProvider(prov);
     applyProviderButtonState(isNoProvider);
 
-    const checkboxContainer = document.getElementById('custom-checkboxes-container');
+    const checkboxContainer = byId('custom-checkboxes-container');
     if (isNoProvider) {
       if (checkboxContainer) {
         checkboxContainer.innerHTML = '';
@@ -173,11 +175,11 @@ export function updateUIForProvider(providerKey) {
       ensureProviderOrganizationState(prov);
       if (checkboxContainer) {
         createCustomCheckboxesUI(prov);
-        try { renderBuiltInOptionChips(); } catch (e) { console.warn('[UI] Failed to render built-in chips', e); }
+        safeRun(() => renderBuiltInOptionChips(), { context: 'UI_RENDER_BUILTIN_CHIPS' });
       }
     }
 
-    const phrasesPanel = document.getElementById('phrases-linker-content');
+    const phrasesPanel = byId('phrases-linker-content');
     if (phrasesPanel) {
       refreshCheckboxUIs({ providerLabel: prov, refreshAnalyse: false });
     }
@@ -196,8 +198,8 @@ export function refreshProviderUi(providerKey, { renderSettings = false, renderO
   syncProviderSelects(provider);
   const activeProvider = updateUIForProvider(provider);
 
-  try { updateInterpretationControlsState({ settings, providerKey: activeProvider }); } catch {}
-  try { lockCustomCheckboxControls(); } catch {}
+  safeRun(() => updateInterpretationControlsState({ settings, providerKey: activeProvider }), { context: 'UI_REFRESH_INTERPRETATION_STATE' });
+  safeRun(() => lockCustomCheckboxControls(), { context: 'UI_LOCK_CUSTOM_CHECKBOX' });
 
   if (renderSettings || renderOrganization || isParameterPanelActive() || isOrganizationSubTabActive()) {
     renderParameterViews(activeProvider, {

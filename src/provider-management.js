@@ -10,6 +10,7 @@ import { publishTemplate } from '../lib/share.js';
 import { ensureProviderConfig, getAvailableProviderLabels, getFirstAvailableProviderLabel as getFirstAvailableProviderLabelFromRules, getProviderConfig, hasValidProvider, toProviderKey, toProviderLabel } from './domain/provider-rules.js';
 import { t } from './i18n.js';
 import { markProviderAsShared } from './copy-engagement.js';
+import { ensureProviderEntry, ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
 
 // Callback injecté depuis l'extérieur (ui-main.js) pour rafraîchir le panneau paramètres.
 // Évite toute dépendance directe vers field-management.js.
@@ -73,10 +74,10 @@ export function createProvider(providerName) {
     fields: JSON.parse(JSON.stringify(DEFAULT_PROVIDER_FIELDS)),
     fieldOrder: Object.keys(DEFAULT_PROVIDER_FIELDS)
   });
-  if (!settings.noteLibre) settings.noteLibre = {};
-  if (!settings.customCheckboxes) settings.customCheckboxes = {};
+  ensureSettingsObject(settings, 'noteLibre');
+  ensureSettingsObject(settings, 'customCheckboxes');
   settings.noteLibre[key] = '';
-  settings.customCheckboxes[key] = [];
+  ensureProviderEntry(settings, 'customCheckboxes', key, []);
   saveSettings();
   populatePrestataireSelects();
 
@@ -247,42 +248,42 @@ function applyImportedProviderPayload(siteLabel, normalizedPayload) {
   settings.patterns[key] = normalizedPayload.patterns || {};
 
   if (normalizedPayload.noteLibre !== undefined) {
-    if (!settings.noteLibre) settings.noteLibre = {};
+    ensureSettingsObject(settings, 'noteLibre');
     settings.noteLibre[key] = normalizedPayload.noteLibre;
   }
 
   if (normalizedPayload.compactFields !== undefined) {
-    if (!settings.compactFields) settings.compactFields = {};
+    ensureSettingsObject(settings, 'compactFields');
     settings.compactFields[key] = normalizedPayload.compactFields;
   }
 
   if (normalizedPayload.organizationOrder !== undefined) {
-    if (!settings.organizationOrderByProvider) settings.organizationOrderByProvider = {};
+    ensureSettingsObject(settings, 'organizationOrderByProvider');
     settings.organizationOrderByProvider[targetLabel] = normalizedPayload.organizationOrder;
   }
 
   if (normalizedPayload.customCheckboxes !== undefined) {
-    if (!settings.customCheckboxes) settings.customCheckboxes = {};
+    ensureSettingsObject(settings, 'customCheckboxes');
     settings.customCheckboxes[key] = normalizedPayload.customCheckboxes;
   }
 
   if (normalizedPayload.checkboxPhrases !== undefined) {
-    if (!settings.checkboxPhrases) settings.checkboxPhrases = {};
+    ensureSettingsObject(settings, 'checkboxPhrases');
     settings.checkboxPhrases[key] = normalizedPayload.checkboxPhrases;
   }
 
   if (normalizedPayload.exclusions !== undefined) {
-    if (!settings.exclusionsByProvider) settings.exclusionsByProvider = {};
+    ensureSettingsObject(settings, 'exclusionsByProvider');
     settings.exclusionsByProvider[key] = normalizedPayload.exclusions;
   }
 
   if (normalizedPayload.familySettings !== undefined) {
-    if (!settings.familySettings) settings.familySettings = {};
+    ensureSettingsObject(settings, 'familySettings');
     settings.familySettings[key] = normalizedPayload.familySettings;
   }
 
   if (normalizedPayload.pinnedOptions !== undefined) {
-    if (!settings.pinnedOptions) settings.pinnedOptions = {};
+    ensureSettingsObject(settings, 'pinnedOptions');
     settings.pinnedOptions[key] = normalizedPayload.pinnedOptions;
   }
 }
@@ -464,10 +465,10 @@ export function importProviderConfigAsNew(jsonData, options = {}) {
 
     applyImportedProviderPayload(label, normalizedImport);
 
-    if (!settings.customCheckboxes) settings.customCheckboxes = {};
-    if (!Array.isArray(settings.customCheckboxes[key])) settings.customCheckboxes[key] = [];
-    if (!settings.checkboxPhrases) settings.checkboxPhrases = {};
-    if (!Array.isArray(settings.checkboxPhrases[key])) settings.checkboxPhrases[key] = [];
+    ensureSettingsObject(settings, 'customCheckboxes');
+    ensureProviderEntry(settings, 'customCheckboxes', key, []);
+    ensureSettingsObject(settings, 'checkboxPhrases');
+    ensureProviderEntry(settings, 'checkboxPhrases', key, []);
 
     saveSettings();
     loadSettings(); // ✅ Recharger pour normaliser les labels (incluant requireInline/requireNextLine)
@@ -640,18 +641,18 @@ export function importProviderCheckboxes(site, jsonData) {
     const org = Array.isArray(jsonData.organizationOrder) ? jsonData.organizationOrder : [];
     const families = Array.isArray(jsonData.checkboxFamilies) ? jsonData.checkboxFamilies : [];
 
-    if (!settings.customCheckboxes) settings.customCheckboxes = {};
+    ensureSettingsObject(settings, 'customCheckboxes');
     settings.customCheckboxes[key] = cbList;
-    if (!settings.checkboxPhrases) settings.checkboxPhrases = {};
+    ensureSettingsObject(settings, 'checkboxPhrases');
     settings.checkboxPhrases[key] = phrases;
 
     // Merge families global list
-    if (!settings.checkboxFamilies) settings.checkboxFamilies = [];
+    ensureSettingsArray(settings, 'checkboxFamilies');
     families.forEach(f => { if (f && !settings.checkboxFamilies.includes(f)) settings.checkboxFamilies.push(f); });
     settings.checkboxFamilies.sort();
 
     // Merge organizationOrder items without duplicates
-    if (!settings.organizationOrder) settings.organizationOrder = [];
+    ensureSettingsArray(settings, 'organizationOrder');
     const existingIds = new Set(settings.organizationOrder.map(o => o.id));
     org.forEach(item => { if (item && !existingIds.has(item.id)) settings.organizationOrder.push(item); });
 

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/preview-renderer.js - Summary preview panel rendering (editable rows, DnD, marker sync)
 import { logDebug, logFlow, logWarn } from './debug-logger.js';
 import { selectFirstPlaceholder, selectFirstPlaceholderInPreview } from './placeholder-navigation.js';

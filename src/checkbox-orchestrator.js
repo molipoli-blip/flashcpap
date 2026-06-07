@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 
 import { getProviderSelects } from './provider-sync.js';
 import { settings, saveSettings } from './storage.js';

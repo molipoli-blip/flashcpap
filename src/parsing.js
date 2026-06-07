@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/parsing.js
 import { logDebug, logError, logFlow, logWarn } from './debug-logger.js';
 import { getProviderConfig } from './domain/provider-rules.js';

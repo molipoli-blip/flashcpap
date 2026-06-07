@@ -1,0 +1,699 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2026 molipoli-blip
+import { logDebug, logFlow, logWarn } from './debug-logger.js';
+import { buildFlexibleLabelBoundaryRegex } from './parsing.js';
+import { t } from './i18n.js';
+import { safeRun } from './error-handling.js';
+
+function getSourceLineCell(wrapper, lineNumber) {
+  return wrapper?.children?.[(lineNumber - 1) * 2 + 1] || null;
+}
+
+function linkBadgePayloadIds(wrapper, groupToValueId) {
+  safeRun(() => {
+    const badges = wrapper.querySelectorAll('.hl-badge');
+    let setCount = 0;
+    badges.forEach(badge => {
+      if (badge.hasAttribute('data-hl-id')) return;
+      const group = badge.getAttribute('data-hl-group');
+      if (!group) return;
+      const valueId = groupToValueId.get(group);
+      if (valueId === undefined) return;
+      badge.setAttribute('data-hl-id', String(valueId));
+      setCount++;
+    });
+    logDebug('BADGE', 'Post-pass liaison badges terminee', { total: badges.length, newlySet: setCount });
+  }, { context: 'BADGE_LINK_PAYLOAD_IDS' });
+}
+
+function enrichLabelPayloads(wrapper, groupToValueId) {
+  safeRun(() => {
+    if (!Array.isArray(wrapper.__hlMap) || !wrapper.__hlMap.length) return;
+    wrapper.__hlMap.forEach((payload, index) => {
+      if (!payload || payload.kind !== 'label' || !payload.group) return;
+      const valueId = groupToValueId.get(payload.group);
+      if (valueId === undefined) return;
+      const valuePayload = wrapper.__hlMap[valueId];
+      if (!valuePayload) return;
+
+      payload.valueId = valueId;
+      payload.valueRaw = valuePayload.raw;
+      payload.valueLine = valuePayload.line;
+      payload.valueType = valuePayload.type;
+      if (typeof valuePayload.tupleSize === 'number') payload.tupleSize = valuePayload.tupleSize;
+
+      logDebug('LABEL', 'Label enrichi avec sa valeur associee', {
+        index,
+        group: payload.group,
+        valueId,
+        line: valuePayload.line,
+        hasTupleSize: typeof valuePayload.tupleSize === 'number'
+      });
+    });
+  }, { context: 'LABEL_ENRICH_PAYLOADS' });
+}
+
+function createSourceLineNumberCell({ lineNumber, annotations, wrapper, lineIndex }) {
+  const numberCell = document.createElement('div');
+  numberCell.className = 'src-ln';
+  numberCell.textContent = lineNumber;
+
+  if (annotations.length) {
+    numberCell.classList.add('gutter-hit');
+    numberCell.title = annotations.map(annotation => `${annotation.label} → ${annotation.raw}`).join(' | ');
+    numberCell.addEventListener('click', () => {
+      safeRun(() => {
+        wrapper.children[lineIndex * 2 + 1]?.scrollIntoView({ block: 'center' });
+      }, { context: 'GUTTER_SCROLL' });
+    });
+  }
+
+  return numberCell;
+}
+
+function pushHighlightPayload(wrapper, payload, context = 'HL_PAYLOAD_PUSH') {
+  return safeRun(() => {
+    if (!Array.isArray(wrapper?.__hlMap)) return -1;
+    return wrapper.__hlMap.push(payload) - 1;
+  }, { context, fallback: -1 });
+}
+
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildExclusionRegexes(exclusions) {
+  return (exclusions || [])
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+    .map(term => ({
+      term,
+      re: new RegExp(escapeRegExp(term).replace(/\s+/g, '[\\s\u00A0\u202F\u2009\t\-]+'), 'giu')
+    }));
+}
+
+function createHighlightGroupIdResolver() {
+  let nextGroupId = 1;
+  return payload => {
+    if (!payload) return `g${nextGroupId++}`;
+    if (payload.__hlGroupLink && payload.__hlGroupLink.__hlGroupId) {
+      payload.__hlGroupId = payload.__hlGroupLink.__hlGroupId;
+      return payload.__hlGroupId;
+    }
+    if (!payload.__hlGroupId) payload.__hlGroupId = `g${nextGroupId++}`;
+    if (payload.__hlGroupLink && !payload.__hlGroupLink.__hlGroupId) {
+      payload.__hlGroupLink.__hlGroupId = payload.__hlGroupId;
+    }
+    return payload.__hlGroupId;
+  };
+}
+
+function buildLabelToFieldsMap(byLine, ensureGroupId) {
+  const map = new Map();
+  const seenPerLabel = new Map();
+
+  for (const annotations of byLine.values()) {
+    for (const annotation of annotations) {
+      if (!annotation || !annotation.labelText || !annotation.field) continue;
+      const key = String(annotation.labelText).toLowerCase();
+      let seen = seenPerLabel.get(key);
+      if (!seen) {
+        seen = new Set();
+        seenPerLabel.set(key, seen);
+      }
+      if (seen.has(annotation.field)) continue;
+      seen.add(annotation.field);
+      const entries = map.get(key) || [];
+      entries.push({ field: annotation.field, group: ensureGroupId(annotation) });
+      map.set(key, entries);
+    }
+  }
+
+  logDebug('LABELMAP', 'Map label vers fields construite', {
+    labelCount: map.size,
+    sampleLabels: [...map.keys()].slice(0, 5)
+  });
+
+  return map;
+}
+
+function buildGroupToVariantMap(labelToFields) {
+  const groupMap = new Map();
+  for (const [, entries] of labelToFields.entries()) {
+    entries.forEach((entry, index) => {
+      if (entry.group) groupMap.set(entry.group, index + 1);
+    });
+  }
+  return groupMap;
+}
+
+function createHighlightRenderContext(byLine, exclusions) {
+  const ensureGroupId = createHighlightGroupIdResolver();
+  const labelToFields = buildLabelToFieldsMap(byLine, ensureGroupId);
+  const groupToVariant = buildGroupToVariantMap(labelToFields);
+  const groupToValueId = new Map();
+  const exclusionRegexes = buildExclusionRegexes(exclusions);
+  const getVariantIndex = (labelKey, field) => {
+    const entries = labelToFields.get(labelKey) || [];
+    const index = entries.findIndex(entry => entry.field === field);
+    return index >= 0 ? index + 1 : 1;
+  };
+
+  return {
+    ensureGroupId,
+    labelToFields,
+    groupToVariant,
+    groupToValueId,
+    exclusionRegexes,
+    getVariantIndex
+  };
+}
+
+function createHighlightElement(tagName, className, textContent, attributes = {}) {
+  const element = document.createElement(tagName);
+  if (className) element.className = className;
+  if (textContent !== undefined && textContent !== null) element.textContent = String(textContent);
+  Object.entries(attributes).forEach(([name, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    element.setAttribute(name, String(value));
+  });
+  return element;
+}
+
+function getWrappableTextNodes(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node?.textContent) return NodeFilter.FILTER_REJECT;
+      const parent = node.parentElement;
+      if (!parent) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('sup.hl-badge')) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('.hl')) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+
+  const nodes = [];
+  let current = walker.nextNode();
+  while (current) {
+    nodes.push(current);
+    current = walker.nextNode();
+  }
+  return nodes;
+}
+
+function wrapTextMatches(root, pattern, createReplacement, { firstOnly = false } = {}) {
+  const regex = pattern instanceof RegExp
+    ? new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`)
+    : new RegExp(escapeRegExp(pattern), 'gi');
+
+  const matches = [];
+  outer: for (const node of getWrappableTextNodes(root)) {
+    let currentNode = node;
+    while (currentNode?.parentNode) {
+      const text = currentNode.textContent || '';
+      regex.lastIndex = 0;
+      const match = regex.exec(text);
+      if (!match || !match[0]) break;
+
+      const matchText = match[0];
+      const start = match.index;
+      const middleNode = currentNode.splitText(start);
+      const tailNode = middleNode.splitText(matchText.length);
+      const replacement = createReplacement(matchText, { match });
+      middleNode.parentNode.replaceChild(replacement, middleNode);
+      matches.push(matchText);
+      currentNode = tailNode;
+
+      if (firstOnly) break outer;
+    }
+  }
+
+  return matches;
+}
+
+function createLabelBadgeCluster({ globalFieldEntries, localGroups, groupToValueId }) {
+  const fragment = document.createDocumentFragment();
+  globalFieldEntries.forEach((entry, index) => {
+    const variantIndex = index + 1;
+    const targetGroup = localGroups.get(entry.field) || entry.group;
+    const valueId = groupToValueId.get(targetGroup);
+    fragment.appendChild(createHighlightElement('sup', 'hl-badge', `(${variantIndex})`, {
+      'data-hl-group': targetGroup,
+      'data-hl-variant': variantIndex,
+      'data-hl-field': entry.field,
+      'data-hl-id': valueId,
+      title: `${variantIndex}) ${entry.field}`,
+      'aria-hidden': 'false'
+    }));
+  });
+  return fragment;
+}
+
+function applyExclusionHighlights(lineDiv, exclusionRegexes, lineNumber, wrapper) {
+  for (const { re, term } of exclusionRegexes) {
+    wrapTextMatches(lineDiv, re, matchText => {
+      const payload = { kind: 'exclusion', line: lineNumber, raw: matchText, term };
+      const payloadId = pushHighlightPayload(wrapper, payload, 'HL_EXCLUSION_PUSH');
+      return createHighlightElement('span', 'hl hl-excl', matchText, {
+        'data-hl-id': payloadId >= 0 ? payloadId : undefined,
+        title: `Exclu: ${String(term).replace(/["<>]/g, '')}`
+      });
+    });
+  }
+}
+
+function applyLabelHighlights({
+  lineDiv,
+  annotations,
+  lineNumber,
+  wrapper,
+  ensureGroupId,
+  colorClassFor,
+  labelToFields,
+  groupToValueId,
+  getVariantIndex
+}) {
+  const labelAnnotations = annotations.filter(annotation => annotation && annotation.labelText && annotation.labelLine === lineNumber);
+  logFlow('HL_LABEL', 'applyLabelHighlights', {
+    lineNumber,
+    totalAnnotations: annotations.length,
+    labelAnnotationsCount: labelAnnotations.length,
+    annotationSummary: annotations.map(a => ({ field: a.field, labelText: a.labelText, labelLine: a.labelLine, onlyLabel: a.onlyLabel }))
+  });
+  if (!labelAnnotations.length) return;
+
+  const seen = new Set();
+  for (const annotation of labelAnnotations) {
+    const tokenKey = String(annotation.labelText || '').toLowerCase();
+    if (!tokenKey || seen.has(tokenKey)) continue;
+    seen.add(tokenKey);
+
+    const groupId = ensureGroupId(annotation);
+    const colorClass = colorClassFor(annotation);
+    const variantIndex = getVariantIndex(tokenKey, annotation.field);
+    const payload = {
+      kind: 'label',
+      line: lineNumber,
+      raw: annotation.labelText,
+      label: annotation.labelText,
+      field: annotation.field,
+      role: annotation.role,
+      type: 'label',
+      unit: '',
+      group: groupId,
+      labelText: annotation.labelText,
+      labelRange: annotation.labelRange
+    };
+
+    const payloadId = pushHighlightPayload(wrapper, payload, 'HL_LABEL_PUSH');
+
+    const globalFieldEntries = labelToFields.get(tokenKey) || [];
+    const localGroups = new Map();
+    for (const localAnnotation of labelAnnotations) {
+      if (!localAnnotation) continue;
+      if (String(localAnnotation.labelText || '').toLowerCase() !== tokenKey) continue;
+      localGroups.set(localAnnotation.field, ensureGroupId(localAnnotation));
+    }
+
+    logDebug('LABEL', 'Mappings label prepares', {
+      line: lineNumber,
+      labelKey: tokenKey,
+      localFieldCount: localGroups.size,
+      globalFieldCount: globalFieldEntries.length
+    });
+
+    const allGroupsForLabel = new Set(globalFieldEntries.map(entry => entry.group));
+    localGroups.forEach(group => allGroupsForLabel.add(group));
+    const groupsCsv = Array.from(allGroupsForLabel).join(',');
+    let isFirstOccurrence = true;
+
+    const labelBoundaryRe = buildFlexibleLabelBoundaryRegex(annotation.labelText);
+    logFlow('HL_LABEL', 'wrapTextMatches label appele', {
+      field: annotation.field,
+      labelText: annotation.labelText,
+      regexSource: labelBoundaryRe.source,
+      lineDivText: lineDiv.textContent?.slice(0, 80)
+    });
+    wrapTextMatches(lineDiv, labelBoundaryRe, matchText => {
+      const fragment = document.createDocumentFragment();
+      fragment.appendChild(createHighlightElement(
+        'span',
+        isFirstOccurrence ? `hl hl-label ${colorClass}` : `hl hl-label-ghost ${colorClass}`,
+        matchText,
+        {
+          'data-hl-id': payloadId >= 0 ? payloadId : undefined,
+          'data-hl-group': groupId,
+          'data-hl-groups': groupsCsv,
+          'data-hl-variant': variantIndex,
+          title: String(annotation.labelText || '').replace(/["<>]/g, '')
+        }
+      ));
+
+      if (globalFieldEntries.length >= 2) {
+        fragment.appendChild(createLabelBadgeCluster({
+          globalFieldEntries,
+          localGroups,
+          groupToValueId
+        }));
+      }
+
+      isFirstOccurrence = false;
+      return fragment;
+    });
+  }
+}
+
+function createMaskedTupleFragment({
+  text,
+  maskedTuple,
+  lineNumber,
+  wrapper,
+  ensureGroupId,
+  colorClassFor,
+  groupToVariant,
+  groupToValueId,
+  getVariantIndex
+}) {
+  const fragment = document.createDocumentFragment();
+  const selected = Array.isArray(maskedTuple.selectedIndices) ? new Set(maskedTuple.selectedIndices) : new Set();
+  const numRe = /\d+(?:[.,]\d+)?/g;
+  const groupId = ensureGroupId(maskedTuple);
+  const labelKey = String(maskedTuple.labelText || '').toLowerCase();
+  let lastIndex = 0;
+  let numericIndex = 0;
+  let numericMatch = numRe.exec(text);
+
+  while (numericMatch) {
+    if (numericMatch.index > lastIndex) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex, numericMatch.index)));
+    }
+
+    const rawValue = numericMatch[0];
+    if (selected.has(numericIndex)) {
+      const tupleRaw = maskedTuple.tupleRaw || text;
+      const payload = {
+        label: maskedTuple.label || maskedTuple.field,
+        field: maskedTuple.field,
+        role: (maskedTuple.role || '').toLowerCase(),
+        type: maskedTuple.type || 'numeric',
+        unit: maskedTuple.unit || '',
+        line: lineNumber,
+        raw: tupleRaw,
+        sourceRaw: tupleRaw,
+        tokenRaw: rawValue,
+        labelText: maskedTuple.labelText,
+        labelRange: maskedTuple.labelRange,
+        group: groupId,
+        tupleSize: typeof maskedTuple.size === 'number' ? maskedTuple.size : undefined
+      };
+      const payloadId = pushHighlightPayload(wrapper, payload, 'HL_MASKED_TUPLE_SELECTED_PUSH');
+      const variantIndex = getVariantIndex(labelKey, maskedTuple.field);
+      if (payloadId >= 0 && !groupToValueId.has(groupId)) {
+        groupToValueId.set(groupId, payloadId);
+        logDebug('G2VID', 'Mapping groupe vers valeur enregistre (masked tuple)', {
+          group: groupId,
+          payloadId,
+          line: lineNumber
+        });
+      }
+
+      fragment.appendChild(createHighlightElement('span', `hl ${colorClassFor(maskedTuple)}`, rawValue, {
+        'data-hl-id': payloadId >= 0 ? payloadId : undefined,
+        'data-hl-group': groupId,
+        'data-hl-variant': variantIndex,
+        title: String(payload.label || '').replace(/["<>]/g, '')
+      }));
+    } else {
+      const payload = {
+        kind: 'masked',
+        line: lineNumber,
+        raw: rawValue,
+        field: maskedTuple.field,
+        label: maskedTuple.label || maskedTuple.field,
+        type: 'numeric',
+        unit: '',
+        labelText: maskedTuple.labelText,
+        labelRange: maskedTuple.labelRange,
+        group: groupId,
+        tupleSize: typeof maskedTuple.size === 'number' ? maskedTuple.size : undefined
+      };
+      const payloadId = pushHighlightPayload(wrapper, payload, 'HL_MASKED_TUPLE_EXCLUDED_PUSH');
+      const variantIndex = groupToVariant.get(groupId) || getVariantIndex(labelKey, maskedTuple.field);
+      fragment.appendChild(createHighlightElement('span', 'hl hl-excl', rawValue, {
+        'data-hl-id': payloadId >= 0 ? payloadId : undefined,
+        'data-hl-group': groupId,
+        'data-hl-variant': variantIndex,
+        title: t('analysisMaskedBySelection')
+      }));
+    }
+
+    lastIndex = numericMatch.index + rawValue.length;
+    numericIndex += 1;
+    numericMatch = numRe.exec(text);
+  }
+
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+
+  return fragment;
+}
+
+function applyMaskedTupleHighlights({
+  lineDiv,
+  annotations,
+  lineNumber,
+  wrapper,
+  ensureGroupId,
+  colorClassFor,
+  groupToVariant,
+  groupToValueId,
+  getVariantIndex
+}) {
+  const maskedTuples = annotations.filter(annotation => annotation && annotation.kind === 'masked-tuple' && annotation.tupleRaw);
+  for (const maskedTuple of maskedTuples) {
+    wrapTextMatches(lineDiv, maskedTuple.tupleRaw, matchText => createMaskedTupleFragment({
+      text: matchText,
+      maskedTuple,
+      lineNumber,
+      wrapper,
+      ensureGroupId,
+      colorClassFor,
+      groupToVariant,
+      groupToValueId,
+      getVariantIndex
+    }), { firstOnly: true });
+  }
+}
+
+function buildValuePayload(annotation, lineNumber, groupId) {
+  const payload = {
+    label: annotation.label,
+    field: annotation.field,
+    role: annotation.role,
+    type: annotation.type,
+    unit: annotation.unit,
+    line: annotation.line,
+    raw: annotation.raw,
+    sourceRaw: annotation.sourceRaw,
+    labelText: annotation.labelText,
+    labelRange: annotation.labelRange,
+    group: groupId
+  };
+
+  try {
+    if (typeof annotation.__tupleSize === 'number' && annotation.__tupleSize >= 2) payload.tupleSize = annotation.__tupleSize;
+    else if (annotation.type !== 'text') {
+      const numbers = String(annotation.raw || '').match(/\d+(?:[.,]\d+)?/g);
+      if (numbers && numbers.length >= 2) payload.tupleSize = numbers.length;
+    }
+  } catch (error) {
+    logWarn('ANALYSE', 'Impossible d\'enrichir tupleSize du payload', error);
+  }
+
+  return payload;
+}
+
+function applyValueHighlights({ lineDiv, annotations, lineNumber, wrapper, colorClassFor, renderContext }) {
+  const sorted = [...annotations].sort((left, right) => (right.raw?.length || 0) - (left.raw?.length || 0));
+  for (const annotation of sorted) {
+    if (!annotation?.raw || annotation.onlyLabel || annotation.kind === 'masked-tuple') continue;
+    const matchText = annotation.sourceRaw || annotation.raw;
+    if (!matchText) continue;
+
+    const groupId = renderContext.ensureGroupId(annotation);
+    const payload = buildValuePayload(annotation, lineNumber, groupId);
+    const variantIndex = renderContext.groupToVariant.get(groupId)
+      || renderContext.getVariantIndex(String(annotation.labelText || '').toLowerCase(), annotation.field);
+
+    if (typeof payload.tupleSize === 'number' && payload.tupleSize >= 2) {
+      wrapTextMatches(lineDiv, matchText, matchedText => createMaskedTupleFragment({
+        text: matchedText,
+        maskedTuple: {
+          ...annotation,
+          size: payload.tupleSize,
+          tupleRaw: matchedText,
+          selectedIndices: Array.from({ length: payload.tupleSize }, (_, index) => index),
+          __hlGroupId: groupId
+        },
+        lineNumber,
+        wrapper,
+        ensureGroupId: renderContext.ensureGroupId,
+        colorClassFor,
+        groupToVariant: renderContext.groupToVariant,
+        groupToValueId: renderContext.groupToValueId,
+        getVariantIndex: renderContext.getVariantIndex
+      }), { firstOnly: true });
+      continue;
+    }
+
+    const payloadId = pushHighlightPayload(wrapper, payload, 'HL_VALUE_PUSH');
+
+    if (payloadId >= 0 && !renderContext.groupToValueId.has(groupId)) {
+      renderContext.groupToValueId.set(groupId, payloadId);
+      logDebug('G2VID', 'Mapping groupe vers valeur enregistre', {
+        group: groupId,
+        payloadId,
+        line: lineNumber,
+        field: annotation.field
+      });
+    }
+
+    const createValueSpan = (matchedText) => createHighlightElement('span', `hl ${colorClassFor(annotation)}`, matchedText, {
+      'data-hl-id': payloadId >= 0 ? payloadId : undefined,
+      'data-hl-group': groupId,
+      'data-hl-variant': variantIndex,
+      title: String(annotation.label || '').replace(/["<>]/g, '')
+    });
+
+    const wrapped = wrapTextMatches(lineDiv, matchText, createValueSpan, { firstOnly: true });
+
+    // For text fields: if the full raw wasn't found (DOM may be split by other highlights),
+    // try with just the first whitespace-delimited token of the value as a fallback.
+    if (!wrapped.length && annotation.type === 'text' && matchText.includes(' ')) {
+      const firstToken = matchText.split(/\s+/)[0].trim();
+      if (firstToken) wrapTextMatches(lineDiv, firstToken, createValueSpan, { firstOnly: true });
+    }
+  }
+}
+
+function renderHighlightedSourceLine({
+  line,
+  lineNumber,
+  annotations,
+  wrapper,
+  colorClassFor,
+  renderContext
+}) {
+  wrapper.appendChild(createSourceLineNumberCell({
+    lineNumber,
+    annotations,
+    wrapper,
+    lineIndex: lineNumber - 1
+  }));
+
+  const lineDiv = document.createElement('div');
+  lineDiv.className = 'src-text';
+  lineDiv.textContent = line;
+
+  if (renderContext.exclusionRegexes.length) {
+    applyExclusionHighlights(lineDiv, renderContext.exclusionRegexes, lineNumber, wrapper);
+  }
+
+  if (annotations.length) {
+    logDebug('RENDER', 'Annotations sur ligne', { line: lineNumber, annotationCount: annotations.length });
+    applyLabelHighlights({
+      lineDiv,
+      annotations,
+      lineNumber,
+      wrapper,
+      ensureGroupId: renderContext.ensureGroupId,
+      colorClassFor,
+      labelToFields: renderContext.labelToFields,
+      groupToValueId: renderContext.groupToValueId,
+      getVariantIndex: renderContext.getVariantIndex
+    });
+    applyMaskedTupleHighlights({
+      lineDiv,
+      annotations,
+      lineNumber,
+      wrapper,
+      ensureGroupId: renderContext.ensureGroupId,
+      colorClassFor,
+      groupToVariant: renderContext.groupToVariant,
+      groupToValueId: renderContext.groupToValueId,
+      getVariantIndex: renderContext.getVariantIndex
+    });
+    applyValueHighlights({
+      lineDiv,
+      annotations,
+      lineNumber,
+      wrapper,
+      colorClassFor,
+      renderContext
+    });
+  }
+
+  wrapper.appendChild(lineDiv);
+}
+
+export function renderSourceWithHighlights(sourceLines, byLine, wrapper, colorClassFor, exclusions) {
+  const renderContext = createHighlightRenderContext(byLine, exclusions);
+
+  sourceLines.forEach((line, index) => {
+    renderHighlightedSourceLine({
+      line,
+      lineNumber: index + 1,
+      annotations: byLine.get(index + 1) || [],
+      wrapper,
+      colorClassFor,
+      renderContext
+    });
+  });
+
+  linkBadgePayloadIds(wrapper, renderContext.groupToValueId);
+  enrichLabelPayloads(wrapper, renderContext.groupToValueId);
+}
+
+export function setupJumpSelect(matches, wrapper) {
+  const jump = document.getElementById('jump-select');
+  if (!jump) return;
+
+  jump.replaceChildren();
+  const placeholderOption = document.createElement('option');
+  placeholderOption.value = '';
+  placeholderOption.textContent = t('jumpSelectPlaceholderShort');
+  jump.appendChild(placeholderOption);
+  matches.forEach((match, index) => {
+    if (match && match.kind === 'masked-tuple') return;
+    const option = document.createElement('option');
+    option.value = String(index);
+    option.textContent = `${match.label || match.field} (L${match.line})`;
+    jump.appendChild(option);
+  });
+
+  const collapsible = document.getElementById('source-collapsible');
+  const open = collapsible?.classList.contains('open');
+  jump.style.display = matches.length && open ? 'inline-block' : 'none';
+  jump.onchange = () => {
+    const value = jump.value;
+    if (!value) return;
+    const match = matches[parseInt(value, 10)];
+    if (!match) return;
+
+    const cell = getSourceLineCell(wrapper, match.line);
+    if (cell) {
+      const previousLeft = wrapper.scrollLeft;
+      safeRun(() => cell.scrollIntoView({ block: 'center', inline: 'nearest' }), { context: 'JUMP_SCROLL' });
+      wrapper.scrollLeft = previousLeft;
+    }
+
+    const lineCell = getSourceLineCell(wrapper, match.line);
+    if (lineCell) {
+      const span = lineCell.querySelector('[data-hl-id]');
+      if (span && Array.isArray(wrapper.__hlMap)) {
+        span.click();
+      }
+    }
+  };
+}

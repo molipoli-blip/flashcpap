@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 import { getParameterProviderSiteKey } from './checkbox-orchestrator.js';
 import { refreshCheckboxUIs } from './checkbox-refresh.js';
 import { getCheckboxFormElements, resetCheckboxForm, setFavoriteButtonState, updateFamilySuggestionsList } from './checkbox-settings.js';
 import { hasValidProvider } from './domain/provider-rules.js';
 import { t } from './i18n.js';
+import { ensureProviderEntry, ensureSettingsObject } from './storage-guards.js';
 
 function getCheckboxFormState() {
   const { textInput, valueInput, familyInput, favoriteBtn } = getCheckboxFormElements();
@@ -49,8 +49,8 @@ export function setupCustomCheckboxManagement({
       return false;
     }
 
-    if (!settings.customCheckboxes) settings.customCheckboxes = {};
-    if (!settings.customCheckboxes[site]) settings.customCheckboxes[site] = [];
+    ensureSettingsObject(settings, 'customCheckboxes');
+    ensureProviderEntry(settings, 'customCheckboxes', site, []);
 
     let targetId = null;
     let existingCheckbox = null;
@@ -154,8 +154,8 @@ export function setupCustomCheckboxManagement({
       return;
     }
 
-    if (!settings.customCheckboxes) settings.customCheckboxes = {};
-    if (!settings.customCheckboxes[site]) settings.customCheckboxes[site] = [];
+    ensureSettingsObject(settings, 'customCheckboxes');
+    ensureProviderEntry(settings, 'customCheckboxes', site, []);
 
     await ensureCheckboxDraftSaved();
 

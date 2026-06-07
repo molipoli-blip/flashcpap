@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // Popup entry point.
 import { loadSettings, saveSettings, settings, addFamilyToSuggestions, updateFamilySuggestionsFromExistingCheckboxes } from './storage.js';
 import { logDebug } from './debug-logger.js';
@@ -13,7 +12,7 @@ import { renderOrganizationInterface } from './organization.js';
 import { getPageText } from './extraction.js';
 import { parseTextMeta, applySplitSeparators } from './parsing.js';
 import { setupDOMEventListeners, setupURLChangeMonitoring, updateSummaryDisplay, setLastAnalyzedUrl, setLastParsedData, setPinningInProgress, getLastAnalyzedUrl } from './events.js';
-import { setupHighlighting } from './highlighting.js';
+import { setupHighlighting } from './highlight-interactions.js';
 import { initFieldEditor } from './field-editor.js';
 import { renderSettingsUI } from './field-management.js';
 import { initDock } from './dock.js';

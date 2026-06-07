@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // Checkbox settings panel helpers.
 import { settings, saveSettings, getFamilySuggestions } from './storage.js';
 import { confirmInline, alertInline, createLockedMessage } from './ui-utils.js';
@@ -8,6 +7,7 @@ import { getParameterProviderSiteKey, updateCheckboxById } from './checkbox-orch
 import { refreshCheckboxUIs } from './checkbox-refresh.js';
 import { hasValidProvider } from './domain/provider-rules.js';
 import { t } from './i18n.js';
+import { ensureSettingsObject } from './storage-guards.js';
 import {
   isPhraseModePotActive,
   notifyPhrasePotBlocked,
@@ -125,7 +125,7 @@ export function renderCustomCheckboxSettings(site) {
   ensureCheckboxPhraseGroups(site);
   openPhraseManagementPanel(site);
 
-  if (!settings.customCheckboxes) settings.customCheckboxes = {};
+  ensureSettingsObject(settings, 'customCheckboxes');
   const customCheckboxes = settings.customCheckboxes[site] || [];
 
   if (customCheckboxes.length === 0) {

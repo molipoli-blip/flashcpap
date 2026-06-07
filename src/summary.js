@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/summary.js
 import { logDebug, logFlow, logWarn } from './debug-logger.js';
-import { getProviderConfig } from './domain/provider-rules.js';
+import { getProviderConfig, toProviderKey } from './domain/provider-rules.js';
 import { normalizePhraseGroupId } from './shared/id.js';
 
 function toHoursNumber(v) {
@@ -17,6 +16,172 @@ function toHoursNumber(v) {
   }
   const n = parseFloat(s);
   return isNaN(n) ? NaN : n;
+}
+
+function parseDecimalNumber(v) {
+  const n = parseFloat(String(v).replace(',', '.'));
+  return isNaN(n) ? NaN : n;
+}
+
+function normalizeLineText(value) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeComparableText(value) {
+  return normalizeLineText(value).toLowerCase();
+}
+
+const DEFAULT_INTERPRETATION_TEXTS = {
+  obs: { ge: 'bonne observance', lt: 'observance non satisfaisante' },
+  iah: { ge: 'non efficace', lt: 'efficace' },
+  fuites: { ge: 'fuites significatives', lt: 'pas de fuites' }
+};
+
+function parseOptionalFiniteNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function buildInterpretationConfig(settings) {
+  const interpSettings = settings?.interpretation || {};
+  const inputTexts = interpSettings.texts || {};
+
+  return {
+    thresholds: {
+      obsHours: parseOptionalFiniteNumber(interpSettings.obsHours),
+      iah: parseOptionalFiniteNumber(interpSettings.iah),
+      fuites: parseOptionalFiniteNumber(interpSettings.fuites)
+    },
+    texts: {
+      obs: {
+        ge: (inputTexts.obs?.ge || '').trim() || DEFAULT_INTERPRETATION_TEXTS.obs.ge,
+        lt: (inputTexts.obs?.lt || '').trim() || DEFAULT_INTERPRETATION_TEXTS.obs.lt
+      },
+      iah: {
+        ge: (inputTexts.iah?.ge || '').trim() || DEFAULT_INTERPRETATION_TEXTS.iah.ge,
+        lt: (inputTexts.iah?.lt || '').trim() || DEFAULT_INTERPRETATION_TEXTS.iah.lt
+      },
+      fuites: {
+        ge: (inputTexts.fuites?.ge || '').trim() || DEFAULT_INTERPRETATION_TEXTS.fuites.ge,
+        lt: (inputTexts.fuites?.lt || '').trim() || DEFAULT_INTERPRETATION_TEXTS.fuites.lt
+      }
+    }
+  };
+}
+
+function getFieldInterpretation(fieldName, value, fieldDef, thresholds, texts) {
+  const role = (fieldDef.role || fieldName).toLowerCase();
+  if (role === 'obs') {
+    if (thresholds.obsHours === null) return '';
+    const h = toHoursNumber(value);
+    return !isNaN(h) ? (h >= thresholds.obsHours ? (texts.obs?.ge || DEFAULT_INTERPRETATION_TEXTS.obs.ge) : (texts.obs?.lt || DEFAULT_INTERPRETATION_TEXTS.obs.lt)) : '';
+  }
+  if (role === 'iah') {
+    if (thresholds.iah === null) return '';
+    const n = parseDecimalNumber(value);
+    return !isNaN(n) ? (n >= thresholds.iah ? (texts.iah?.ge || DEFAULT_INTERPRETATION_TEXTS.iah.ge) : (texts.iah?.lt || DEFAULT_INTERPRETATION_TEXTS.iah.lt)) : '';
+  }
+  if (role === 'fuites') {
+    if (thresholds.fuites === null) return '';
+    const n = parseDecimalNumber(value);
+    return !isNaN(n) ? (n >= thresholds.fuites ? (texts.fuites?.ge || DEFAULT_INTERPRETATION_TEXTS.fuites.ge) : (texts.fuites?.lt || DEFAULT_INTERPRETATION_TEXTS.fuites.lt)) : '';
+  }
+  return '';
+}
+
+function getFieldLabel(fieldName, fieldDef) {
+  return fieldDef?.label || (fieldName === fieldName.toUpperCase() ? fieldName : (fieldName.replace(/([a-z])([A-Z])/g, '$1 $2'))).replace(/^./, c => c.toUpperCase());
+}
+
+function getDerivedTimeUnit(fieldDef) {
+  if (!fieldDef || fieldDef.type !== 'time') return '';
+  const display = String(fieldDef?.timeFormat?.display || '').trim().toLowerCase();
+  if (display === 'h (convertir)') return ' h';
+  if (display === 'min (convertir)') return ' min';
+  return '';
+}
+
+function getFieldUnit(value, fieldDef) {
+  const unit = fieldDef?.unit ? ` ${fieldDef.unit}` : getDerivedTimeUnit(fieldDef);
+  if (!unit || !value) return unit;
+
+  const valueText = String(value).trim().toLowerCase();
+  const unitText = unit.trim().toLowerCase();
+  if (valueText.endsWith(unitText)) return '';
+  if (unitText === 'h' && /^\d+h\s*\d+m?$/i.test(valueText)) return '';
+  return unit;
+}
+
+function formatExtractedFieldLine(fieldName, value, fieldDef, includeInterpretation, thresholds, texts, hasIncompleteTuple) {
+  const unit = getFieldUnit(value, fieldDef);
+  const label = getFieldLabel(fieldName, fieldDef);
+  let line;
+
+  if (label.trim() === '') {
+    line = `${value}${unit}`;
+  } else {
+    const separator = /\s$/.test(label) ? '' : ' ';
+    line = `${label}${separator}${value}${unit}`;
+  }
+
+  if (hasIncompleteTuple) line += ' (?)';
+
+  if (includeInterpretation && !hasIncompleteTuple) {
+    const interpretation = getFieldInterpretation(fieldName, value, fieldDef, thresholds, texts);
+    if (interpretation) line += ` (${interpretation})`;
+  }
+
+  return line;
+}
+
+function dedupeNormalizedLines(lines) {
+  const deduped = [];
+  const seenNorm = new Set();
+
+  for (const line of lines) {
+    const normalized = normalizeComparableText(line);
+    if (!normalized) {
+      deduped.push(line);
+      continue;
+    }
+    if (seenNorm.has(normalized)) continue;
+    seenNorm.add(normalized);
+    deduped.push(line);
+  }
+
+  return deduped;
+}
+
+function splitManualIntoSegments(text) {
+  if (!text) return [];
+  const parts = [];
+  // Treat each single line as a segment boundary even without punctuation
+  const lines = String(text).split(/\r?\n/);
+  const re = /([.;?!:])/; // strong punctuation, no comma
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li];
+    const trimmed = line.trim();
+    if (trimmed.length === 0) {
+      // preserve blank line as a dedicated manual break segment
+      parts.push('\n');
+      continue;
+    }
+    let buf = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      buf += ch;
+      if (re.test(ch)) {
+        const seg = buf.trim();
+        if (seg) parts.push(seg);
+        buf = '';
+      }
+    }
+    const tail = buf.trim();
+    if (tail) parts.push(tail);
+  }
+  // remove any accidental all-whitespace segments (except our explicit '\n')
+  return parts.filter(s => s === '\n' || String(s).trim().length > 0);
 }
 
 // Marker-based summary regeneration:
@@ -54,37 +219,12 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     includeRodap: !!includeRodap,
     previousLength: previousSummary.length
   });
-  const defaultThresholds = { obsHours: 4, iah: 5, fuites: 24 };
-  const defaultTexts = {
-    obs: { ge: 'bonne observance', lt: 'observance non satisfaisante' },
-    iah: { ge: 'non efficace', lt: 'efficace' },
-    fuites: { ge: 'fuites significatives', lt: 'pas de fuites' }
-  };
-  const interpSettings = settings?.interpretation || {};
-  const thresholds = {
-    obsHours: Number.isFinite(Number(interpSettings.obsHours)) ? Number(interpSettings.obsHours) : defaultThresholds.obsHours,
-    iah: Number.isFinite(Number(interpSettings.iah)) ? Number(interpSettings.iah) : defaultThresholds.iah,
-    fuites: Number.isFinite(Number(interpSettings.fuites)) ? Number(interpSettings.fuites) : defaultThresholds.fuites
-  };
-  const inputTexts = interpSettings.texts || {};
-  const texts = {
-    obs: {
-      ge: (inputTexts.obs?.ge || '').trim() || defaultTexts.obs.ge,
-      lt: (inputTexts.obs?.lt || '').trim() || defaultTexts.obs.lt
-    },
-    iah: {
-      ge: (inputTexts.iah?.ge || '').trim() || defaultTexts.iah.ge,
-      lt: (inputTexts.iah?.lt || '').trim() || defaultTexts.iah.lt
-    },
-    fuites: {
-      ge: (inputTexts.fuites?.ge || '').trim() || defaultTexts.fuites.ge,
-      lt: (inputTexts.fuites?.lt || '').trim() || defaultTexts.fuites.lt
-    }
-  };
+  const { thresholds, texts } = buildInterpretationConfig(settings);
   const fieldOrder = cfg.fieldOrder || Object.keys(cfg.fields || {});
+  const siteKey = toProviderKey(prestataire);
 
   // Préparer les checkboxes personnalisées (toutes, favoris inclus) sélectionnées
-  const customCheckboxes = (settings.customCheckboxes?.[prestataire.toLowerCase()]) || [];
+  const customCheckboxes = settings?.customCheckboxes?.[siteKey] || [];
   const activeCheckboxes = customCheckboxes.filter(cb => customCheckboxStates[cb.id]);
   const activeCheckboxById = new Map(activeCheckboxes.map(cb => [cb.id, cb]));
   const familiesMap = {};
@@ -104,7 +244,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
   const familiesList = Object.keys(familiesMap).sort();
 
   // Récupérer organizationOrder pour ce prestataire (peut être vide -> fallback)
-  const orgOrderByProvider = settings.organizationOrderByProvider || {};
+  const orgOrderByProvider = settings?.organizationOrderByProvider || {};
   const orgOrder = (orgOrderByProvider[prestataire] && orgOrderByProvider[prestataire].length) 
     ? orgOrderByProvider[prestataire] 
     : [];
@@ -131,7 +271,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       const v = data[f];
       if (!v || v === '?' || !cfg.fields[f]) continue;
       const fieldDef = cfg.fields[f];
-      let unit = fieldDef?.unit ? ` ${fieldDef.unit}` : '';
       const fieldMeta = data?.__fieldMeta?.[f] || null;
       const hasIncompleteTuple = !!fieldMeta?.tupleIncomplete;
       
@@ -141,68 +280,17 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         valueLength: String(v).length
       });
 
-      // Avoid double unit if value already ends with it
-      if (unit && v) {
-        const vStr = String(v).trim().toLowerCase();
-        const uStr = unit.trim().toLowerCase();
-        if (vStr.endsWith(uStr)) {
-          logDebug('SUMMARY', 'Unite supprimee car deja presente', { field: f });
-          unit = '';
-        } else if (uStr === 'h' && /^\d+h\s*\d+m?$/i.test(vStr)) {
-           // Special case: value is like "7h30" or "7h30m" and unit is "h" -> drop unit
-           logDebug('SUMMARY', 'Unite supprimee pour format horaire', { field: f });
-           unit = '';
-        }
-      }
-
-      const lbl = fieldDef?.label || (f === f.toUpperCase() ? f : (f.replace(/([a-z])([A-Z])/g, '$1 $2'))).replace(/^./, c => c.toUpperCase());
-      
-      let l;
-      // Check for "invisible" label (whitespace only)
-      if (lbl.trim() === '') {
-          l = `${v}${unit}`;
-      } else {
-          // Remove automatic colon separator.
-          // If label ends with whitespace, use it as is. Otherwise add a space.
-          const sep = /\s$/.test(lbl) ? '' : ' ';
-          l = `${lbl}${sep}${v}${unit}`;
-      }
-
-        if (hasIncompleteTuple) l += ' (?)';
-
-      if (includeInterpretation && !hasIncompleteTuple) {
-        let interp = '';
-        const role = (fieldDef.role || f).toLowerCase();
-        if (role === 'obs') {
-          const h = toHoursNumber(v);
-          if (!isNaN(h)) interp = h >= thresholds.obsHours ? (texts.obs?.ge || 'bonne observance') : (texts.obs?.lt || 'observance non satisfaisante');
-        } else if (role === 'iah') {
-          const n = parseFloat(String(v).replace(',', '.'));
-          if (!isNaN(n)) interp = n >= thresholds.iah ? (texts.iah?.ge || 'non efficace') : (texts.iah?.lt || 'efficace');
-        } else if (role === 'fuites') {
-          const n = parseFloat(String(v).replace(',', '.'));
-          if (!isNaN(n)) interp = n >= thresholds.fuites ? (texts.fuites?.ge || 'fuites significatives') : (texts.fuites?.lt || 'pas de fuites');
-        }
-        if (interp) l += ` (${interp})`;
-      }
+      const l = formatExtractedFieldLine(f, v, fieldDef, includeInterpretation, thresholds, texts, hasIncompleteTuple);
       block.push(l);
       currentFieldLineByKey.set(f, l);
       fieldKeysUsed.push(f);
       extractedCount++;
     }
     // Dédoublonnage défensif des lignes (observé: répétitions cumulatives)
-    const deduped = [];
-    const seenNorm = new Set();
-    const norm = s => String(s).replace(/\s+/g,' ').trim().toLowerCase();
-    for (const ln of block) {
-      const n = norm(ln);
-      if (!n) { deduped.push(ln); continue; }
-      if (seenNorm.has(n)) continue; // skip répétition exacte normalisée
-      seenNorm.add(n);
-      deduped.push(ln);
-    }
+    const deduped = dedupeNormalizedLines(block);
+
     // Check for compact mode setting
-    const isCompact = settings.compactFields && settings.compactFields[prestataire.toLowerCase()];
+    const isCompact = settings?.compactFields?.[siteKey];
     const defaultSeparator = isCompact ? '. ' : '\n';
     
     // Apply suffixes to fields
@@ -235,7 +323,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
   }
 
   // Préparer les groupes de phrases (pot câblage) par famille
-  const siteKey = prestataire.toLowerCase();
   const phraseGroupsAll = Array.isArray(settings?.checkboxPhrases?.[siteKey]) ? settings.checkboxPhrases[siteKey] : [];
   const phraseGroupsByFamily = new Map();
   phraseGroupsAll.forEach(g => {
@@ -374,15 +461,12 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     }
     logDebug('SUMMARY', 'organizationOrder applique');
   }
-  const note = settings.noteLibre[prestataire.toLowerCase()] || '';
+  const note = settings?.noteLibre?.[siteKey] || '';
   if (note.trim()) {
     const t = `\nNote libre : ${note}`;
     lines.push(t);
   }
-  if (includeRodap) {
-  // RO DAP removed
-    lines.push(t);
-  }
+  // RO DAP removed: keep includeRodap accepted for API compatibility, but do not add text.
   // (Les valeurs des checkboxes sont déjà ajoutées via favoris / familles)
   // --- Application du système de markers ---
   // Construire map des markers actuels (ordre logique actuel)
@@ -398,12 +482,10 @@ export function generateSummary(data, prestataire, includeInterpretation = false
 
   const freeLinesByIndex = new Map(); // preserve arbitrary manual lines inside fld_fields at given indices
   const fieldOverrideByKey = new Map(); // when user rewrites entire line (not just suffix), we override base line instead of appending
-  // Helper: normalize a line for duplication checks (collapse inner spaces, trim)
-  const normLine = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
   // Helper set of base fld_fields lines to filter duplicates when preserving free lines (normalized)
   const baseFld = (markers.find(m => m.id === 'fld_fields')?.text) || '';
   const baseFldLines = String(baseFld).split(/\r?\n/);
-  const baseFldNormSet = new Set(baseFldLines.map(s => normLine(s)).filter(Boolean));
+  const baseFldNormSet = new Set(baseFldLines.map(s => normalizeLineText(s)).filter(Boolean));
   logDebug('SUMMARY', 'Analyse du resume precedent', {
     previousLength: previousSummary.length,
     baseFieldCount: baseFldLines.length
@@ -422,48 +504,17 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     if (lower.startsWith('prestataire :') || lower.startsWith("l'observance est ") || lower.startsWith('données de télésuivi')) {
       return; // ne pas traiter comme free line
     }
-    const norm = normLine(t);
+    const norm = normalizeLineText(t);
     if (!norm) return;
     if (baseFldNormSet.has(norm)) return; // don't duplicate base auto lines (ignoring spacing)
     if (globalFreeLineNormSet.has(norm)) return; // already captured elsewhere
     const arr = freeLinesByIndex.get(idx) || [];
     // Avoid per-index duplicates as well
-    if (arr.some(x => normLine(x) === norm)) return;
+    if (arr.some(x => normalizeLineText(x) === norm)) return;
     arr.push(t);
     freeLinesByIndex.set(idx, arr);
     globalFreeLineNormSet.add(norm);
   }
-  function splitManualIntoSegments(text) {
-    if (!text) return [];
-    const parts = [];
-    // Treat each single line as a segment boundary even without punctuation
-    const lines = String(text).split(/\r?\n/);
-    const re = /([.;?!:])/; // strong punctuation, no comma
-    for (let li = 0; li < lines.length; li++) {
-      const line = lines[li];
-      const trimmed = line.trim();
-      if (trimmed.length === 0) {
-        // preserve blank line as a dedicated manual break segment
-        parts.push('\n');
-        continue;
-      }
-      let buf = '';
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        buf += ch;
-        if (re.test(ch)) {
-          const seg = buf.trim();
-          if (seg) parts.push(seg);
-          buf = '';
-        }
-      }
-      const tail = buf.trim();
-      if (tail) parts.push(tail);
-    }
-    // remove any accidental all-whitespace segments (except our explicit '\n')
-    return parts.filter(s => s === '\n' || String(s).trim().length > 0);
-  }
-
   if (previousSummary && typeof previousSummary === 'string') {
   // Accept hyphens in IDs too (group ids include dashes)
   const markerRegex = /<([a-z0-9_-]+)=(.*?)\/\/\1>/gis;
@@ -539,7 +590,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       prevFld = String(prevFld).replace(/\u000B/g,'\n');
       const rawLines = String(prevFld).split(/\r?\n/);
       const cleaned = [];
-      const norm = s => String(s).replace(/\s+/g,' ').trim().toLowerCase();
+      const norm = normalizeComparableText;
       let headerSeen = false;
       let prestataireSeen = false;
       let observanceSeen = false;
@@ -690,7 +741,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
 
         const prevClean = stripInterp(prevLine);
         const currClean = stripInterp(currLine);
-        const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const norm = normalizeComparableText;
 
         if (norm(prevClean) === norm(currClean)) {
           // Core content matches. Use the new system line (currLine) which respects the current includeInterpretation setting.
@@ -789,12 +840,12 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     indices.forEach(idx => {
       const arr = freeLinesByIndex.get(idx) || [];
       arr.forEach((ln, j) => {
-        const norm = normLine(ln);
+        const norm = normalizeLineText(ln);
         if (!norm) { skippedDupCount++; return; }
         if (baseFldNormSet.has(norm)) { skippedDupCount++; return; }
         if (insertedFreeNormSet.has(norm)) { skippedDupCount++; return; }
         // If a line with same normalized content already exists in composed content, skip to avoid duplicates across runs
-        if (composedLines.some(x => normLine(x) === norm)) { skippedDupCount++; return; }
+        if (composedLines.some(x => normalizeLineText(x) === norm)) { skippedDupCount++; return; }
         const insertAt = Math.min(idx + j, composedLines.length);
         composedLines.splice(insertAt, 0, ln);
         insertedFreeNormSet.add(norm);
@@ -826,9 +877,8 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     const final = [];
     const seenType = { header:false, prest:false, obs:false };
     const seenNormAll = new Set();
-    const norm2 = s => String(s).replace(/\s+/g,' ').trim().toLowerCase();
     for (const ln of composedLines) {
-      const n = norm2(ln);
+      const n = normalizeComparableText(ln);
       if (!n) { final.push(ln); continue; }
       if (n.startsWith('données de télésuivi')) { if (seenType.header) continue; seenType.header = true; final.push(ln); continue; }
       if (n.startsWith('prestataire :')) { if (seenType.prest) continue; seenType.prest = true; final.push(ln); continue; }
@@ -867,7 +917,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
   const autoBaseIdsOrdered = markers.map(m => m.id).filter(id => id === 'fld_fields' || id.startsWith('cb_'));
 
   function renderAutoBlock(id, outArr) {
-    const norm = (s) => String(s ?? '').replace(/\s+/g,' ').trim().toLowerCase();
+    const norm = normalizeComparableText;
     if (id === 'fld_fields') {
       const base = (baseById.get(id) || '').replace(/\u000B/g,'\n');
       const composed = composeFldWithFree(base);
@@ -896,7 +946,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       const suf = existingSuffixById.get(mxId);
       if (suf) {
         // Option C cleanup: skip suffix if already present in base content
-        const norm = (s) => String(s ?? '').replace(/\s+/g,' ').trim().toLowerCase();
         if (!norm(base).includes(norm(suf))) {
           logDebug('SUMMARY', 'Suffixe checkbox reinjecte', { id, suffixLength: suf.length });
           outArr.push(`<${id}=${base}//${id}> <${mxId}=${suf}//${mxId}>`);

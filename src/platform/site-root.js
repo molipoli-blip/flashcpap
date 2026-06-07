@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 
 import { getActiveNormalTab } from './active-tab.js';
 import { browserApi } from './browser-api.js';

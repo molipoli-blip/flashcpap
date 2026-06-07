@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/organization.js - Gestion de l'organisation des éléments dans le résumé
 import { settings, saveSettings } from './storage.js';
 import { hasValidProvider, pickProviderLabel } from './domain/provider-rules.js';
 import { createLockedMessage } from './ui-utils.js';
 import { t } from './i18n.js';
+import { safeRun } from './error-handling.js';
+import { ensureProviderEntry, ensureSettingsObject } from './storage-guards.js';
 
 /**
  * Initialise la structure de configuration des familles si elle n'existe pas encore.
@@ -104,13 +105,12 @@ export function renderOrganizationInterface() {
  * Ajoute les nouvelles familles manquantes à la fin de settings.organizationOrderByProvider[provider]
  */
 export function recalcOrganizationOrder(provider = '') {
-  if (!settings.organizationOrderByProvider) settings.organizationOrderByProvider = {};
-  if (!settings.organizationOrderByProvider[provider]) settings.organizationOrderByProvider[provider] = [];
+  const providerOrder = ensureProviderEntry(settings, 'organizationOrderByProvider', provider, []);
 
   // S'assurer qu'un élément 'fields' est toujours présent en tête (auto-réparation des données sauvegardées)
-  const hasFieldsItem = settings.organizationOrderByProvider[provider].some(item => item.type === 'fields');
+  const hasFieldsItem = providerOrder.some(item => item.type === 'fields');
   if (!hasFieldsItem) {
-    settings.organizationOrderByProvider[provider].unshift({
+    providerOrder.unshift({
       type: 'fields',
       id: 'extracted-fields',
       title: 'Champs extraits',
@@ -122,7 +122,7 @@ export function recalcOrganizationOrder(provider = '') {
 
   // Construire l'ensemble actuel des familles présentes dans organizationOrder de ce provider
   const existingFamilies = new Set(
-    settings.organizationOrderByProvider[provider]
+    providerOrder
       .filter(item => item.type === 'family' && item.familyName)
       .map(item => item.familyName.trim().toLowerCase())
   );
@@ -149,7 +149,7 @@ export function recalcOrganizationOrder(provider = '') {
         icon: '📁',
         familyName: fam
       };
-      settings.organizationOrderByProvider[provider].push(item);
+      providerOrder.push(item);
       toAdd.push(fam);
     }
   });
@@ -164,7 +164,7 @@ export function recalcOrganizationOrder(provider = '') {
  */
 function getOrganizationOrder(provider = '') {
   // Initialiser la structure par provider si elle n'existe pas
-  if (!settings.organizationOrderByProvider) settings.organizationOrderByProvider = {};
+  ensureSettingsObject(settings, 'organizationOrderByProvider');
   
   // Récupérer l'ordre sauvegardé pour ce provider ou créer un ordre par défaut
   if (settings.organizationOrderByProvider[provider] && settings.organizationOrderByProvider[provider].length > 0) {
@@ -208,6 +208,7 @@ function getOrganizationOrder(provider = '') {
   });
   
   // Sauvegarder l'ordre par défaut pour ce provider
+  ensureProviderEntry(settings, 'organizationOrderByProvider', provider, []);
   settings.organizationOrderByProvider[provider] = defaultOrder;
   saveSettings();
   try { console.log('[ORG][ORDER]', provider, '- Initialized default organizationOrder:', defaultOrder); } catch {}
@@ -331,12 +332,12 @@ function setupDragAndDrop(container, provider = '') {
       });
       
       // Sauvegarder le nouvel ordre pour ce provider
-      if (!settings.organizationOrderByProvider) settings.organizationOrderByProvider = {};
+      ensureSettingsObject(settings, 'organizationOrderByProvider');
       settings.organizationOrderByProvider[provider] = newOrder;
       saveSettings();
       
       console.log('Nouvel ordre d\'organisation pour', provider, 'sauvegardé:', newOrder);
-      try { console.log('[ORG][DROP]', provider, '- Saved new organizationOrder:', newOrder.map(o => o.id)); } catch {}
+      safeRun(() => console.log('[ORG][DROP]', provider, '- Saved new organizationOrder:', newOrder.map(o => o.id)), { context: 'ORG_DROP_LOG' });
     }
   });
 }

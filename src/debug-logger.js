@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 
 const DEBUG_FLAG_KEY = 'flashcpap_debug';
 const DEBUG_TRUE_VALUES = new Set(['1', 'true', 'yes', 'on', 'debug']);

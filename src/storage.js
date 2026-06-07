@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// FlashCPAP - https://github.com/molipoli-blip/flashcpap
 // src/storage.js
 import { generateUniqueId } from './shared/id.js';
 import { browserApi } from './platform/browser-api.js';
+import { ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
 
 export const STORAGE_KEY = 'ppc_analyzer_settings';
 
@@ -245,7 +245,7 @@ export function addFamilyToSuggestions(familyName) {
   const trimmedFamily = familyName.trim();
   if (trimmedFamily.length === 0) return;
 
-  if (!settings.checkboxFamilies) settings.checkboxFamilies = [];
+  ensureSettingsArray(settings, 'checkboxFamilies');
 
   const exists = settings.checkboxFamilies.some(family =>
     family.toLowerCase() === trimmedFamily.toLowerCase()
@@ -260,12 +260,12 @@ export function addFamilyToSuggestions(familyName) {
 }
 
 export function getFamilySuggestions() {
-  if (!settings.checkboxFamilies) settings.checkboxFamilies = [];
+  ensureSettingsArray(settings, 'checkboxFamilies');
   return settings.checkboxFamilies;
 }
 
 export function updateFamilySuggestionsFromExistingCheckboxes() {
-  if (!settings.customCheckboxes) return;
+  ensureSettingsObject(settings, 'customCheckboxes');
 
   const allFamilies = new Set();
 

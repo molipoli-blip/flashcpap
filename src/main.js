@@ -26,6 +26,7 @@ import { applyTranslations } from './i18n.js';
 import { initSupportersUI } from './supporters.js';
 import { buildCleanSummaryText } from './domain/summary-rules.js';
 import { browserApi } from './platform/browser-api.js';
+import { getActiveNormalTab } from './platform/active-tab.js';
 
 window.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
@@ -105,9 +106,9 @@ function setupCheckboxFeatures() {
   updateFamilySuggestionsList();
 }
 
-function setupAutoLockUrlToggle() {
+async function setupAutoLockUrlToggle() {
   const toggle = document.getElementById('autolock-url-toggle');
-  if (!toggle) return;
+  if (!toggle) return !!settings.autoLockUrl;
 
   const applyValue = value => {
     const normalized = !!value;
@@ -117,17 +118,38 @@ function setupAutoLockUrlToggle() {
 
   applyValue(settings.autoLockUrl);
 
-  browserApi.storage.local.get(['state_autolock-url-toggle']).then(result => {
+  try {
+    const result = await browserApi.storage.local.get(['state_autolock-url-toggle']);
     const stored = result['state_autolock-url-toggle'];
-    if (typeof stored !== 'boolean') return;
-    applyValue(stored);
-    saveSettings();
-  }).catch(() => {});
+    if (typeof stored === 'boolean') {
+      applyValue(stored);
+      saveSettings();
+    }
+  } catch {}
 
   toggle.addEventListener('change', () => {
     settings.autoLockUrl = !!toggle.checked;
     saveSettings();
   });
+
+  return !!settings.autoLockUrl;
+}
+
+async function applyAutoLockProviderOnInit() {
+  if (!settings.autoLockUrl) return;
+
+  try {
+    const tab = await getActiveNormalTab();
+    const currentUrl = tab?.url || '';
+    if (!currentUrl) return;
+
+    const detectedProvider = detectProviderFromUrl(currentUrl, settings);
+    if (detectedProvider) {
+      refreshProviderUi(detectedProvider);
+    }
+  } catch (error) {
+    console.warn('[AUTOLOCK][INIT] Impossible de detecter le prestataire au demarrage', error);
+  }
 }
 
 function setupActionFeatures(analysisSelect) {
@@ -157,7 +179,7 @@ function setupActionFeatures(analysisSelect) {
   }
 }
 
-function init() {
+async function init() {
   loadSettings();
   try {
     const manifest = browser.runtime.getManifest();
@@ -168,6 +190,7 @@ function init() {
   setupInterpretationAndProviderBindings();
   setupPdfFeedbackLogging();
   setupCheckboxFeatures();
-  setupAutoLockUrlToggle();
+  await setupAutoLockUrlToggle();
+  await applyAutoLockProviderOnInit();
   setupActionFeatures(analysisSelect);
 }

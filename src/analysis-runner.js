@@ -59,6 +59,7 @@ function prepareAnalysisText({
   text,
   isPdf,
   currentUrl,
+  providerSelect,
   settings,
   detectProviderFromText,
   detectProviderFromUrl,
@@ -86,9 +87,12 @@ function prepareAnalysisText({
     }
   }
 
+  const activeProvider = (providerSelect?.value || detectedProvider || '').trim();
+
   return {
     preparedText,
-    detectedProvider
+    detectedProvider,
+    activeProvider
   };
 }
 
@@ -275,11 +279,7 @@ export async function executeAnalysisRun({
   setPinningInProgress,
   updateSummaryDisplay
 }) {
-  const providerValue = providerSelect?.value || '';
-  if (!providerValue) {
-    logWarn('ANALYSE', 'Analyse ignoree: prestataire absent');
-    return;
-  }
+  let providerValue = providerSelect?.value || '';
 
   const analyseAlert = document.getElementById('analyse-alert');
   if (analyseAlert) analyseAlert.style.display = 'none';
@@ -292,16 +292,25 @@ export async function executeAnalysisRun({
   const rawResult = await getPageText();
   let { text, isPdf } = normalizePageTextResult(rawResult);
 
-  text = prepareAnalysisText({
+  const prepared = prepareAnalysisText({
     text,
     isPdf,
     currentUrl,
+    providerSelect,
     settings,
     detectProviderFromText,
     detectProviderFromUrl,
     refreshProviderUi,
     applySplitSeparatorsFn: applySplitSeparators
-  }).preparedText;
+  });
+
+  text = prepared.preparedText;
+  providerValue = prepared.activeProvider || providerSelect?.value || providerValue;
+
+  if (!providerValue) {
+    logWarn('ANALYSE', 'Analyse ignoree: prestataire absent');
+    return;
+  }
 
   const wrapper = document.getElementById('source-wrapper');
   if (!wrapper) {

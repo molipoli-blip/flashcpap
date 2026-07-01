@@ -22,7 +22,6 @@ function createDefaultSettings() {
   return {
     patterns: {},
     noteLibre: {},
-    autoLockUrl: false,
     customCheckboxes: {},
     checkboxFamilies: [],
     organizationOrder: [],
@@ -185,7 +184,6 @@ function normalizeSettings(target) {
   ensureObject(target, 'noteLibre');
   ensureArray(target, 'checkboxFamilies');
   ensureArray(target, 'organizationOrder');
-  if (typeof target.autoLockUrl !== 'boolean') target.autoLockUrl = false;
 
   normalizePinnedOptions(target);
   normalizeSummaryMeta(target);

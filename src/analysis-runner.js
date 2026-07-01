@@ -70,7 +70,7 @@ function prepareAnalysisText({
   let detectedProvider = null;
 
   if (isPdf) detectedProvider = detectProviderFromText(preparedText);
-  if (!detectedProvider && settings.autoLockUrl) {
+  if (!detectedProvider) {
     detectedProvider = detectProviderFromUrl(currentUrl || '', settings);
   }
 

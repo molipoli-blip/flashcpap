@@ -185,4 +185,3 @@ export function setLastAnalyzedUrl(u) {
   lastAnalyzedUrl = u;
   if (!u) hasActiveAnalysisSession = false;
 }
-

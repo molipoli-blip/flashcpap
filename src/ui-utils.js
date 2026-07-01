@@ -4,7 +4,6 @@
 import { t } from './i18n.js';
 import { safeRun } from './error-handling.js';
 
-// Show a transient toast notification.
 export function showToast(message, variant = 'info', timeout = 2200) {
   const existing = document.getElementById('toast-container');
   const container = existing || document.createElement('div');
@@ -31,10 +30,10 @@ export function showToast(message, variant = 'info', timeout = 2200) {
   });
   toast.textContent = message;
   container.appendChild(toast);
-  setTimeout(() => { 
+  setTimeout(() => {
     safeRun(() => {
-      toast.remove(); 
-      if (!container.children.length) container.remove(); 
+      toast.remove();
+      if (!container.children.length) container.remove();
     }, { context: 'UI_TOAST_CLEANUP' });
   }, timeout);
 }
@@ -151,16 +150,13 @@ export function showMiniCtaPopup({
   }
 }
 
-// Accessible blocking confirm dialog used instead of native confirm().
 export function confirmInline(anchorEl, message) {
   return new Promise((resolve) => {
-    // Remove any existing modals
     safeRun(() => document.querySelectorAll('.mini-confirm-overlay').forEach(n => n.remove()), { context: 'UI_CONFIRM_DEDUP' });
 
-    // Save currently focused element to restore later
+    // Restore focus when the dialog closes.
     const previouslyFocused = document.activeElement;
 
-    // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'mini-confirm-overlay';
     Object.assign(overlay.style, {
@@ -172,7 +168,6 @@ export function confirmInline(anchorEl, message) {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Create dialog
     const dialog = document.createElement('div');
     dialog.setAttribute('role', 'dialog');
     dialog.setAttribute('aria-modal', 'true');
@@ -249,7 +244,6 @@ export function confirmInline(anchorEl, message) {
       }
     };
 
-    // Event listeners
     overlay.addEventListener('keydown', handleKeydown);
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) cleanup(false);
@@ -262,13 +256,11 @@ export function confirmInline(anchorEl, message) {
 // Accessible blocking alert dialog sized for the extension popup.
 export function alertInline(message, variant = 'info') {
   return new Promise((resolve) => {
-    // Remove any existing alert modals
     safeRun(() => document.querySelectorAll('.mini-alert-overlay').forEach(n => n.remove()), { context: 'UI_ALERT_DEDUP' });
 
-    // Save currently focused element to restore later
+    // Restore focus when the dialog closes.
     const previouslyFocused = document.activeElement;
 
-    // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'mini-alert-overlay';
     Object.assign(overlay.style, {
@@ -280,13 +272,12 @@ export function alertInline(message, variant = 'info') {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Create dialog
     const dialog = document.createElement('div');
     dialog.setAttribute('role', 'alertdialog');
     dialog.setAttribute('aria-modal', 'true');
     dialog.className = 'mini-alert-dialog';
-    
-    // Variant colors
+
+
     const colors = {
       info: { bg: '#e3f2fd', border: '#2196f3', icon: 'ℹ️' },
       success: { bg: '#e8f5e9', border: '#4caf50', icon: '✓' },
@@ -294,38 +285,36 @@ export function alertInline(message, variant = 'info') {
       warning: { bg: '#fff3e0', border: '#ff9800', icon: '⚠️' }
     };
     const color = colors[variant] || colors.info;
-    
+
     Object.assign(dialog.style, {
       background: '#fff', border: `2px solid ${color.border}`, borderRadius: '8px',
       boxShadow: '0 12px 28px rgba(0,0,0,0.25)', padding: '16px 20px',
       width: 'min(380px, 90vw)', maxWidth: '90vw', color: '#333',
     });
 
-    // Icon + Message container
     const content = document.createElement('div');
-    Object.assign(content.style, { 
-      display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '14px' 
+    Object.assign(content.style, {
+      display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '14px'
     });
-    
+
     const icon = document.createElement('div');
     icon.textContent = color.icon;
     Object.assign(icon.style, { fontSize: '20px', lineHeight: '1' });
-    
+
     const msg = document.createElement('div');
     msg.textContent = message;
     Object.assign(msg.style, { fontSize: '13px', lineHeight: '1.5', flex: '1' });
-    
+
     content.appendChild(icon);
     content.appendChild(msg);
 
-    // OK Button
     const actions = document.createElement('div');
     Object.assign(actions.style, { display: 'flex', justifyContent: 'flex-end' });
 
     const btnOk = document.createElement('button');
     btnOk.textContent = t('ok');
-    Object.assign(btnOk.style, { 
-      padding: '7px 16px', background: color.border, color: '#fff', 
+    Object.assign(btnOk.style, {
+      padding: '7px 16px', background: color.border, color: '#fff',
       border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px',
       fontWeight: '500'
     });
@@ -336,7 +325,7 @@ export function alertInline(message, variant = 'info') {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Focus the OK button
+
     btnOk.focus();
 
     const cleanup = () => {
@@ -348,7 +337,6 @@ export function alertInline(message, variant = 'info') {
       resolve();
     };
 
-    // Handle keyboard events
     const handleKeydown = (e) => {
       if (e.key === 'Escape' || e.key === 'Enter') {
         e.preventDefault();
@@ -356,7 +344,6 @@ export function alertInline(message, variant = 'info') {
       }
     };
 
-    // Event listeners
     overlay.addEventListener('keydown', handleKeydown);
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) cleanup();
@@ -367,9 +354,8 @@ export function alertInline(message, variant = 'info') {
 
 // Inline provider creation form used instead of prompt().
 export function showProviderAddInlineForm(anchorEl, { onSubmit } = {}) {
-  // Close existing form if any
   safeRun(() => document.querySelectorAll('.mini-provider-form').forEach(n => n.remove()), { context: 'UI_PROVIDER_FORM_DEDUP' });
-  
+
   const form = document.createElement('div');
   form.className = 'mini-provider-form';
   Object.assign(form.style, {
@@ -378,35 +364,35 @@ export function showProviderAddInlineForm(anchorEl, { onSubmit } = {}) {
     display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap',
     width: 'min(420px, calc(100vw - 16px))', maxWidth: 'calc(100vw - 16px)', boxSizing: 'border-box'
   });
-  
-  const label = document.createElement('span'); 
+
+  const label = document.createElement('span');
   label.textContent = t('labelProviderName');
-  
-  const input = document.createElement('input'); 
-  input.type = 'text'; 
-  input.placeholder = t('placeholderProviderName'); 
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = t('placeholderProviderName');
   Object.assign(input.style, {
     padding: '4px 6px',
     flex: '1 1 160px',
     minWidth: '120px',
     boxSizing: 'border-box'
   });
-  
-  const cancel = document.createElement('button'); 
-  cancel.textContent = t('buttonCancel'); 
+
+  const cancel = document.createElement('button');
+  cancel.textContent = t('buttonCancel');
   cancel.style.padding = '4px 8px';
-  
-  const submit = document.createElement('button'); 
-  submit.textContent = t('buttonCreate'); 
-  submit.style.padding = '4px 8px'; 
-  submit.style.background = '#007acc'; 
-  submit.style.color = '#fff'; 
-  submit.style.border = 'none'; 
+
+  const submit = document.createElement('button');
+  submit.textContent = t('buttonCreate');
+  submit.style.padding = '4px 8px';
+  submit.style.background = '#007acc';
+  submit.style.color = '#fff';
+  submit.style.border = 'none';
   submit.style.borderRadius = '4px';
-  
+
   form.append(label, input, cancel, submit);
   document.body.appendChild(form);
-  
+
   const rect = anchorEl.getBoundingClientRect();
   const gap = 8;
   let left = Math.round(rect.left);
@@ -423,11 +409,11 @@ export function showProviderAddInlineForm(anchorEl, { onSubmit } = {}) {
 
   form.style.left = `${left}px`;
   form.style.top = `${top}px`;
-  
+
   const cleanup = () => { safeRun(() => form.remove(), { context: 'UI_PROVIDER_FORM_CLEANUP' }); };
-  
+
   cancel.onclick = (e) => { e.stopPropagation(); cleanup(); };
-  
+
   submit.onclick = async (e) => {
     e.stopPropagation();
     const name = (input.value || '').trim();
@@ -442,19 +428,18 @@ export function showProviderAddInlineForm(anchorEl, { onSubmit } = {}) {
       showToast(t('errorProviderCreate'), 'error');
     }
   };
-  
+
   setTimeout(() => input.focus(), 0);
-  
-  const onDoc = (ev) => { 
-    if (!form.contains(ev.target)) { 
-      document.removeEventListener('mousedown', onDoc, true); 
-      cleanup(); 
-    } 
+
+  const onDoc = (ev) => {
+    if (!form.contains(ev.target)) {
+      document.removeEventListener('mousedown', onDoc, true);
+      cleanup();
+    }
   };
   setTimeout(() => document.addEventListener('mousedown', onDoc, true), 0);
 }
 
-// Create a generic locked-state message.
 export function createLockedMessage(title, text) {
   const wrap = document.createElement('div');
   Object.assign(wrap.style, {
@@ -469,4 +454,3 @@ export function createLockedMessage(title, text) {
   wrap.append(h3, p);
   return wrap;
 }
-

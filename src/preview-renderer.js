@@ -1,21 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/preview-renderer.js - Summary preview panel rendering (editable rows, DnD, marker sync)
 import { logDebug, logFlow, logWarn } from './debug-logger.js';
 import { selectFirstPlaceholder, selectFirstPlaceholderInPreview } from './placeholder-navigation.js';
 import { t } from './i18n.js';
 
-/**
- * Renders the editable summary preview panel from raw marker text.
- * Parses markers, builds editable rows, wires DnD reordering, keyboard
- * navigation ([xxx] Tab cycling, Alt+N), and syncs edits back to textarea.
- * Also handles toggle-preview visibility switching.
- *
- * @param {HTMLElement} preview  - The #résumé-preview container element.
- * @param {HTMLElement|null} toggle - The #toggle-preview checkbox element (may be null).
- * @param {HTMLTextAreaElement} textarea - The #résumé textarea element.
- * @param {string} raw - The new auto-generated marker text already written to textarea.value.
- */
 export function renderSummaryPreview(preview, toggle, textarea, raw) {
 
     // Parse stored markers from the raw summary text.
@@ -53,7 +41,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
       row.dataset.type = type;
       if (id) row.dataset.id = id;
       if (base) row.dataset.base = base;
-      
+
   const contentSpan = document.createElement('span');
   contentSpan.className = 'pv-content';
   contentSpan.contentEditable = 'true';
@@ -67,7 +55,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
   } else {
     contentSpan.textContent = initial;
   }
-      
+
   const handle = document.createElement('span');
   handle.className = 'pv-handle';
   handle.title = t('previewMoveBlock');
@@ -78,7 +66,6 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
 
   row.appendChild(contentSpan);
 
-      // Keep the main extracted field block undeletable.
       if (type !== 'fld') {
         const del = document.createElement('button');
         del.type = 'button';
@@ -93,7 +80,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
         });
         row.appendChild(del);
       }
-      
+
       return row;
     }
 
@@ -102,7 +89,6 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
       if (t.type === 'marker') {
         const id = t.id;
         if (id === 'fld_fields') {
-          // Show only the base field block in preview.
           preview.appendChild(createRow('fld', 'fld_fields', t.inner));
         } else if (id.startsWith('cb_group_')) {
           preview.appendChild(createRow('cb', id, t.inner, t.inner));
@@ -155,7 +141,6 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
       }
     });
 
-    // Inject preview styles once.
     if (!document.getElementById('pv-row-style')) {
       const st = document.createElement('style');
       st.id = 'pv-row-style';
@@ -216,7 +201,6 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
       sel.addRange(range);
     }
 
-    // Clicking outside the editable span moves the caret to the row.
     preview.addEventListener('mousedown', (e) => {
       const row = e.target.closest('.pv-row');
       if (!row) return;
@@ -541,7 +525,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
           textLength: userText.length,
           textChangedFromBase: !!base && userText.trim() !== base.trim()
         });
-        
+
         if (type === 'cb' && base) {
           logDebug('SUMMARY', 'Edition checkbox preview', {
             id,
@@ -551,7 +535,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
           });
         }
       }
-      
+
       const span = e.target.classList && e.target.classList.contains('pv-content') ? e.target : null;
       if (span && span.dataset.ph !== undefined) {
         if (span.textContent.trim().length === 0) {
@@ -562,7 +546,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
       }
       debouncedRebuild();
     });
-    
+
     preview.addEventListener('blur', (e) => {
       const row = e.target.closest?.('.pv-row');
       logDebug('SUMMARY', 'Blur preview', {
@@ -582,7 +566,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
         e.preventDefault();
         const allSpans = Array.from(preview.querySelectorAll('.pv-content'));
         const matches = [];
-        
+
         for (const span of allSpans) {
           const text = span.textContent;
           let idx = text.indexOf('[xxx]');
@@ -597,10 +581,10 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
 
         const sel = window.getSelection();
         let currentMatchIndex = -1;
-        
+
         if (sel.rangeCount > 0) {
           const range = sel.getRangeAt(0);
-          
+
           for (let i = 0; i < matches.length; i++) {
             const m = matches[i];
             if (m.span.firstChild && range.startContainer === m.span.firstChild && range.startOffset === m.idx && range.endOffset === m.idx + 5) {
@@ -611,10 +595,10 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
         }
 
         let nextMatch = null;
-        
+
         const activeEl = document.activeElement;
         const activeSpan = activeEl && activeEl.classList.contains('pv-content') ? activeEl : null;
-        
+
         if (!activeSpan) {
           nextMatch = matches[0];
           logDebug('TAB', 'Aucun span actif, selection du premier placeholder');
@@ -628,7 +612,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
                matchRange.setStart(m.span.firstChild, m.idx);
                matchRange.setEnd(m.span.firstChild, m.idx + 5);
             } else {
-               continue; 
+               continue;
             }
 
             const cmp = range.compareBoundaryPoints(Range.START_TO_START, matchRange);
@@ -639,13 +623,13 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
               break;
             }
           }
-          
+
           if (!nextMatch) {
             nextMatch = matches[0];
             logDebug('TAB', 'Retour au premier placeholder');
           }
         }
-        
+
         if (nextMatch) {
            const m = nextMatch;
            const row = m.span.closest('.pv-row');
@@ -663,7 +647,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
            } catch(e) { logWarn('TAB', 'Erreur selection placeholder preview', e); }
         }
       }
-      
+
       if (e.altKey && (e.key === 'n' || e.key === 'N')) {
         e.preventDefault();
         const addBtn = preview.querySelector('.pv-add-btn');

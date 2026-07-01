@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/provider-management.js - Gestion des prestataires
 import { settings, saveSettings, loadSettings, DEFAULT_PROVIDER_FIELDS } from './storage.js';
 import { showToast, confirmInline, showProviderAddInlineForm } from './ui-utils.js';
 import { syncProviderSelects } from './provider-sync.js';
@@ -12,8 +11,6 @@ import { t } from './i18n.js';
 import { markProviderAsShared } from './copy-engagement.js';
 import { ensureProviderEntry, ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
 
-// Callback injecté depuis l'extérieur (ui-main.js) pour rafraîchir le panneau paramètres.
-// Évite toute dépendance directe vers field-management.js.
 let _onRefreshSettings = null;
 
 export function isValidProviderSelection(siteLabel) {
@@ -24,9 +21,6 @@ export function getFirstAvailableProviderLabel() {
   return getFirstAvailableProviderLabelFromRules(settings);
 }
 
-/**
- * Peuple les sélecteurs de prestataires (Analyse et Paramètres)
- */
 export function populatePrestataireSelects() {
   const A = document.getElementById('prestataire-select');
   const P = document.getElementById('prest-param');
@@ -53,9 +47,6 @@ export function populatePrestataireSelects() {
   });
 }
 
-/**
- * Configure les boutons d'ajout et suppression de prestataires
- */
 export function createProvider(providerName) {
   const name = (providerName || '').trim();
   if (!name) {
@@ -126,11 +117,6 @@ export function setupProviderButtons({ onProviderCreated, onRefreshSettings } = 
 
 
 
-/**
- * Tente de détecter le prestataire à partir du contenu texte (utile pour les PDF)
- * @param {string} text - Le texte complet extrait
- * @returns {string|null} - Le nom du prestataire détecté ou null
- */
 export function detectProviderFromText(text) {
   if (!text) return null;
   const lowerText = text.toLowerCase();
@@ -376,9 +362,6 @@ export async function shareProviderToCommunity(siteLabel) {
   return result;
 }
 
-/**
- * Exporte la configuration d'un prestataire vers un fichier JSON
- */
 export function exportProviderConfig(site) {
   const key = toProviderKey(site);
 
@@ -387,7 +370,7 @@ export function exportProviderConfig(site) {
     return;
   }
 
-  // Export prestataire aligné sur le schéma courant de l'extension.
+  // Export providers using the current extension schema.
   const exportData = buildProviderExportPayload(site);
 
   downloadJson(`${key}_config_${new Date().toISOString().slice(0, 10)}.json`, exportData);
@@ -403,9 +386,6 @@ export function exportProviderConfig(site) {
 
 }
 
-/**
- * Importe la configuration d'un prestataire depuis un fichier JSON
- */
 export function importProviderConfig(site, jsonData) {
   const key = toProviderKey(site);
 
@@ -418,7 +398,7 @@ export function importProviderConfig(site, jsonData) {
     const normalizedImport = normalizeProviderImportPayload(jsonData);
     applyImportedProviderPayload(site, normalizedImport);
     saveSettings();
-    loadSettings(); // ✅ Recharger pour normaliser les labels (incluant requireInline/requireNextLine)
+    loadSettings();
     showToast(t('providerImportSuccess', site), 'success');
     logDebug('IMPORT', 'Configuration prestataire importee', {
       provider: key,
@@ -428,7 +408,6 @@ export function importProviderConfig(site, jsonData) {
       organizationCount: normalizedImport.organizationOrder?.length || 0
     });
 
-    // Rafraîchir l'UI
     _onRefreshSettings?.(site);
 
     return true;
@@ -439,9 +418,6 @@ export function importProviderConfig(site, jsonData) {
   }
 }
 
-/**
- * Importe un prestataire depuis JSON en créant un nouveau provider
- */
 export function importProviderConfigAsNew(jsonData, options = {}) {
   try {
     const normalizedImport = normalizeProviderImportPayload(jsonData);
@@ -450,7 +426,6 @@ export function importProviderConfigAsNew(jsonData, options = {}) {
       throw new Error('Le fichier JSON doit contenir meta.name pour nommer le prestataire');
     }
 
-    // Déterminer un label de prestataire
     const baseLabel = (normalizedImport.providerLabel || 'Nouveau').toString();
     let label = baseLabel;
     const existing = new Set(Object.keys(settings.patterns).map(k => k.toLowerCase()));
@@ -461,7 +436,7 @@ export function importProviderConfigAsNew(jsonData, options = {}) {
       candidate = label.toLowerCase();
     }
 
-    const key = candidate; // lower-case key
+    const key = candidate;
 
     applyImportedProviderPayload(label, normalizedImport);
 
@@ -471,9 +446,8 @@ export function importProviderConfigAsNew(jsonData, options = {}) {
     ensureProviderEntry(settings, 'checkboxPhrases', key, []);
 
     saveSettings();
-    loadSettings(); // ✅ Recharger pour normaliser les labels (incluant requireInline/requireNextLine)
+    loadSettings();
 
-    // Rafraîchir UI et sélectionner le nouveau prestataire
     populatePrestataireSelects();
     const labelCap = toProviderLabel(label);
     syncProviderSelects(labelCap);
@@ -496,22 +470,18 @@ export function importProviderConfigAsNew(jsonData, options = {}) {
   }
 }
 
-/**
- * Configure l'UI pour Import (nouveau prestataire) et Export (prestataire courant)
- */
 export function setupImportExportUI({ onRefreshSettings } = {}) {
   if (onRefreshSettings) _onRefreshSettings = onRefreshSettings;
   const importBtn = document.getElementById('btn-import-provider');
   const importInput = document.getElementById('import-provider-input');
   const exportBtn = document.getElementById('btn-export-provider');
-  // New: checkbox-specific controls
   const importCbBtn = document.getElementById('btn-import-checkboxes');
   const importCbInput = document.getElementById('import-checkboxes-input');
   const exportCbBtn = document.getElementById('btn-export-checkboxes');
   const P = document.getElementById('prest-param');
   if (!P) return;
 
-  // Import: toujours visible (création d'un nouveau prestataire)
+  // Import stays visible because it creates a new provider.
   if (importBtn && importInput) {
     importBtn.onclick = () => importInput.click();
     importInput.onchange = async (e) => {
@@ -528,7 +498,7 @@ export function setupImportExportUI({ onRefreshSettings } = {}) {
     };
   }
 
-  // Export: seulement si un prestataire valide est selectionne
+  // Export is available only for a valid provider.
   if (exportBtn) {
     const site = P.value;
     const canExport = isValidProviderSelection(site);
@@ -536,17 +506,15 @@ export function setupImportExportUI({ onRefreshSettings } = {}) {
     exportBtn.onclick = () => { if (canExport) exportProviderConfig(site); };
   }
 
-  // Ajouter un bouton "Partager dans la bibliothèque" s'il n'existe pas encore
   let shareBtn = document.getElementById('btn-share-provider');
   if (!shareBtn) {
     shareBtn = document.createElement('button');
     shareBtn.id = 'btn-share-provider';
     shareBtn.textContent = t('providerShareButton');
     shareBtn.style.cssText = 'padding:6px 12px; background:#0ea5e9; color:#fff; border:none; border-radius:4px; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin-left:8px;';
-    // Insérer à côté du bouton export si possible
+    // Place it next to export when possible.
     exportBtn?.parentElement?.appendChild(shareBtn);
   }
-  // Afficher/Cacher selon la validite du prestataire
   {
     const site = P.value;
     shareBtn.style.display = isValidProviderSelection(site) ? 'inline-flex' : 'none';
@@ -592,9 +560,6 @@ export function setupImportExportUI({ onRefreshSettings } = {}) {
   }
 }
 
-/**
- * Exporte uniquement les checkboxes et règles d'association (groupes, familles, ordre) d'un prestataire
- */
 export function exportProviderCheckboxes(site) {
   const key = toProviderKey(site);
   if (!isValidProviderSelection(site)) { showToast(t('providerNoValidExport'), 'error'); return; }
@@ -609,7 +574,6 @@ export function exportProviderCheckboxes(site) {
     checkboxPhrases: settings.checkboxPhrases?.[key] || [],
     // Local families used by this provider
     checkboxFamilies: Array.from(new Set((settings.customCheckboxes?.[key] || []).map(cb => cb.family).filter(Boolean))),
-    // Organization items relevant to these checkboxes (families + checkbox items)
     organizationOrder: (settings.organizationOrder || []).filter(item => {
       if (item.type === 'family') {
         const checkboxes = settings.customCheckboxes?.[key] || [];
@@ -627,9 +591,6 @@ export function exportProviderCheckboxes(site) {
   showToast(t('checkboxExportSuccess', site), 'success');
 }
 
-/**
- * Importe uniquement les checkboxes et règles d'association pour le prestataire courant
- */
 export function importProviderCheckboxes(site, jsonData) {
   const key = toProviderKey(site);
   if (!isValidProviderSelection(site)) { showToast(t('checkboxImportSelectProvider'), 'error'); return false; }

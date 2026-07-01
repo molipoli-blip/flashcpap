@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/field-editor.js - Inline field editor functionality
 import { settings, saveSettings } from './storage.js';
 import { showToast } from './ui-utils.js';
 import { ensureProviderConfig, getProviderConfig, toProviderKey } from './domain/provider-rules.js';
@@ -17,7 +16,6 @@ let lastEditorContext = { siteLabel: null, fieldKey: null, mode: null };
 let modalState = { mode: 'create', siteLabel: '', originalKey: null };
 let renderSettingsUi = () => {};
 
-// Utility function to get global editor elements (with fallback)
 function getGlobalEditorElements() {
   return {
     name: document.getElementById('add-field-name'),
@@ -50,7 +48,6 @@ function getSlotEditorElements(fieldKey) {
   };
 }
 
-// Get appropriate editor elements based on context
 function getCurrentEditorElements() {
   // Try slot context first (from lastEditorContext)
   if (lastEditorContext.fieldKey) {
@@ -59,12 +56,10 @@ function getCurrentEditorElements() {
       return slotElements;
     }
   }
-  
-  // Fallback to global elements
+
   return getGlobalEditorElements();
 }
 
-// Utility function to handle type change (unit enable/disable)
 function setUnitEnabledFromType() {
   const elements = getGlobalEditorElements();
   const selected = Array.from(elements.typeRadios).find(r => r.checked)?.value || 'text';
@@ -83,16 +78,14 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
   inlineEditorBody = inlineEditor ? inlineEditor.children[1] : null;
   inlineEditorFooter = inlineEditor ? inlineEditor.children[2] : null;
 
-  // Get all global editor elements
   const elements = getGlobalEditorElements();
 
   elements.typeRadios.forEach(r => r.addEventListener('change', setUnitEnabledFromType));
   elements.cancel?.addEventListener('click', () => closeAddFieldModal());
   elements.close?.addEventListener('click', () => closeAddFieldModal());
 
-  // Wire global size->mask population
   if (elements.tupleSize) {
-    const sizeClone = elements.tupleSize; // populated after open
+    const sizeClone = elements.tupleSize;
     sizeClone.addEventListener('change', () => {
       populateMaskOptions(getGlobalEditorElements().tupleMask, sizeClone.value, '');
     });
@@ -105,7 +98,6 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
     const usingSlot = !!lastEditorContext.fieldKey && !!document.getElementById(`add-field-name-${lastEditorContext.fieldKey}`);
     const elements = getCurrentEditorElements();
 
-    // Debug logs for elements and their values
     safeRun(() => {
       console.log('[FE][submitAddField] Context source =', usingSlot ? 'slot' : 'global', 'key =', lastEditorContext.fieldKey);
       console.log('[FE][submitAddField] Elements found:', {
@@ -117,13 +109,12 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
         tupleSize: elements.tupleSize?.value, tupleMask: elements.tupleMask?.value,
       });
     }, { context: 'FE_SUBMIT_ELEMENTS_LOG' });
-    
+
     const values = readFieldEditorValues({
       elements,
       fieldKey: lastEditorContext.fieldKey
     });
 
-    // Debug label and core field values block
     safeRun(() => {
       console.log('[FE][submitAddField] Values snapshot', {
         context: usingSlot ? 'slot' : 'global', suffix: values.debugSuffix,
@@ -142,16 +133,16 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
         }
       });
     }, { context: 'FE_SUBMIT_VALUES_LOG' });
-    
-    if (!values.label) { 
+
+    if (!values.label) {
       safeRun(() => console.warn('[FE][submitAddField] Missing label, abort.'), { context: 'FE_SUBMIT_MISSING_LABEL_WARN' });
       safeRun(() => showToast(t('fieldEditorNameRequired'), 'error'), { context: 'FE_SUBMIT_MISSING_LABEL_TOAST' });
-      return; 
+      return;
     }
-    
+
     const site = toProviderKey(modalState.siteLabel);
     safeRun(() => console.log('[FE][submitAddField] Computed site =', site, 'mode =', modalState.mode, 'fieldKey =', modalState.originalKey), { context: 'FE_SUBMIT_SITE_LOG' });
-    
+
     const cfg = ensureProviderConfig(settings, site, { labels: {} });
     if (!cfg) {
       safeRun(() => showToast(t('fieldEditorProviderConfigMissing'), 'error'), { context: 'FE_SUBMIT_PROVIDER_MISSING_TOAST' });
@@ -172,17 +163,14 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
 
     saveSettings();
     safeRun(() => console.log('[FE][submitAddField] Saved. Now rendering settings for siteLabel =', modalState.siteLabel), { context: 'FE_SUBMIT_SAVED_LOG' });
-    
-    // Store current editor state before re-render
+
     const currentFieldKey = modalState.originalKey;
     const currentMode = modalState.mode;
     const currentSiteLabel = modalState.siteLabel;
-    
-    // Re-render and focus new/edited field
+
     renderSettingsUi(modalState.siteLabel);
     safeRun(() => console.log('[FE][submitAddField] After render, deciding post-save behavior…', { currentMode, currentFieldKey }), { context: 'FE_SUBMIT_POST_RENDER_LOG' });
 
-    // Post-save behavior: after CREATE, open the new field inline for editing
     if (currentMode === 'create' && currentFieldKey) {
       setTimeout(() => {
         try {
@@ -199,7 +187,6 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
     } else if (currentMode === 'edit' && currentFieldKey) {
       // Edit from slot: do NOT reopen editor; keep slot placeholder and confirm save
       safeRun(() => showToast(t('fieldEditorSavedChanges'), 'success'), { context: 'FE_SUBMIT_EDIT_SAVED_TOAST' });
-      // Ensure events are wired for future actions
       setTimeout(() => {
         safeRun(() => {
           if (typeof window.rewireFieldEditorEvents === 'function') window.rewireFieldEditorEvents();
@@ -210,8 +197,7 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
       ensureInlineEditorPosition();
       closeAddFieldModal();
     }
-    
-    // Focus the field group after render
+
     setTimeout(() => {
       const container = document.getElementById('patterns-container') || document.getElementById('settings-container');
       const groups = container?.querySelectorAll('.field-group');
@@ -220,7 +206,7 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
         target = Array.from(groups).find(g => g.dataset && g.dataset.fieldName === currentFieldKey);
       }
       if (target) {
-        const header = target.firstElementChild; // field header
+        const header = target.firstElementChild;
         safeRun(() => header?.click(), { context: 'FE_POST_SAVE_HEADER_CLICK' });
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
@@ -232,7 +218,6 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
   elements.submit?.addEventListener('click', submitAddField);
   elements.name?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitAddField(); } });
 
-  // Wire label-card toggle and dynamic title updates
   function wireAddLabelCard() {
     const header = document.getElementById('add-label-card-header');
     const body = document.getElementById('add-label-card-body');
@@ -243,7 +228,6 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
     const end = document.getElementById('add-label-end');
     if (!header || !body || !toggle || !title || !text || !start || !end) return;
     header.addEventListener('click', (e) => {
-      // Avoid toggling when clicking inputs inside header (none for now)
       const isOpen = body.style.display !== 'none';
       body.style.display = isOpen ? 'none' : 'block';
       toggle.textContent = isOpen ? '▼' : '▲';
@@ -257,51 +241,46 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
     text.addEventListener('input', updateTitle);
     start.addEventListener('input', updateTitle);
     end.addEventListener('input', updateTitle);
-    // Initialize once
     updateTitle();
   }
-  // Delay to ensure DOM moved inline is ready
   setTimeout(wireAddLabelCard, 0);
 
   // Expose modal opener globally for UI module hooks
   window.openAddFieldModal = openAddFieldModal;
-  
-  // Expose a function to re-wire events after DOM changes
+
   window.rewireFieldEditorEvents = function() {
     try {
       console.log('[FE][rewireFieldEditorEvents] Re-wiring global editor events after DOM change');
       const elements = getGlobalEditorElements();
-      
-      // Re-wire main buttons by cloning and replacing (removes old event listeners)
+
+      // Clone controls before binding to avoid stacked event listeners.
       if (elements.submit) {
         const newSubmit = elements.submit.cloneNode(true);
         elements.submit.parentNode.replaceChild(newSubmit, elements.submit);
         newSubmit.addEventListener('click', submitAddField);
       }
-      
+
       if (elements.cancel) {
         const newCancel = elements.cancel.cloneNode(true);
         elements.cancel.parentNode.replaceChild(newCancel, elements.cancel);
         newCancel.addEventListener('click', () => closeAddFieldModal());
       }
-      
+
       if (elements.close) {
         const newClose = elements.close.cloneNode(true);
         elements.close.parentNode.replaceChild(newClose, elements.close);
         newClose.addEventListener('click', () => closeAddFieldModal());
       }
-      
+
       if (elements.name) {
         const newName = elements.name.cloneNode(true);
         elements.name.parentNode.replaceChild(newName, elements.name);
         newName.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitAddField(); } });
       }
-      
-      // Re-wire type change handlers
+
       document.querySelectorAll('input[name="add-field-type"]').forEach(r => {
         r.addEventListener('change', setUnitEnabledFromType);
       });
-      // Re-wire size change and repopulate mask options
       const el = getGlobalEditorElements();
       if (el.tupleSize) {
         const newSize = el.tupleSize.cloneNode(true);
@@ -309,14 +288,12 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
         newSize.addEventListener('change', () => {
           populateMaskOptions(getGlobalEditorElements().tupleMask, newSize.value, '');
         });
-        // Initialize once using current values (keep current mask if any)
         if (!newSize.value) newSize.value = '1';
         populateMaskOptions(getGlobalEditorElements().tupleMask, newSize.value, el.tupleMask?.value || '');
       }
-      
-      // Re-wire label card
+
       wireAddLabelCard();
-      
+
     } catch (err) {
       console.warn('[FE][rewireFieldEditorEvents] Error re-wiring events:', err);
     }
@@ -328,14 +305,14 @@ export function initFieldEditor({ renderSettingsUi: renderSettingsUiArg } = {}) 
 function mountInlineFieldEditor() {
   const patterns = document.getElementById('patterns-container');
   if (!patterns) return null;
-  let mount = document.getElementById('field-editor-anchor') || patterns; // stable anchor just under patterns
+  let mount = document.getElementById('field-editor-anchor') || patterns;
   const modal = document.getElementById('add-field-modal');
   if (!modal) return null;
   const inline = document.createElement('div');
   inline.id = 'inline-field-editor';
   inline.style.marginTop = '10px';
   inline.style.maxWidth = '100%';
-  inline.style.display = 'none'; // hidden by default; shown when opening editor
+  inline.style.display = 'none';
   // Move all children of modal into inline (header, body, footer)
   while (modal.firstChild) inline.appendChild(modal.firstChild);
   mount.appendChild(inline);
@@ -356,7 +333,6 @@ function getFieldGroupByKey(fieldKey) {
 function getFieldContentByKey(fieldKey) {
   const g = getFieldGroupByKey(fieldKey);
   if (!g) return null;
-  // field structure: [header, content]
   return g.children && g.children[1] ? g.children[1] : null;
 }
 
@@ -379,7 +355,7 @@ function getPermanentEditorSlotContent(fieldKey) {
   if (!mode) return null;
   const slotContent = mode.querySelector('.inline-editor-slot-content');
   if (!slotContent) return null;
-  // We now have two zones inside slotContent: .slot-placeholder (default UI) and .editor-content-zone (target for global editor)
+  // Slot content has a placeholder zone plus an editor zone for the shared editor body.
   const editorZone = slotContent.querySelector('.editor-content-zone');
   return editorZone || slotContent;
 }
@@ -391,7 +367,6 @@ function ensureEditorSlotLi(fieldKey) {
   if (!li) {
     li = document.createElement('li');
     li.id = 'inline-field-editor-li';
-    // Match label item look & feel
     li.style.marginBottom = '10px';
     li.style.border = '1px solid #ddd';
     li.style.borderRadius = '4px';
@@ -404,31 +379,29 @@ function ensureEditorSlotLi(fieldKey) {
 
 function moveEditorBodyIntoField(fieldKey) {
   if (!inlineEditorBody) return;
-  
-  // First clean up any existing duplication in this field's slot
+
+  // Clean existing slot duplication before moving the shared editor body.
   cleanupSlotDuplication(fieldKey);
-  
+
   const editorZone = getPermanentEditorSlotContent(fieldKey);
   const slot = getPermanentEditorSlot(fieldKey);
   const slotContent = slot ? slot.querySelector('.inline-editor-slot-content') : null;
   const placeholder = slotContent ? slotContent.querySelector('.slot-placeholder') : null;
   if (!editorZone) return;
-  
-  // Check if editor body is already in the correct location to avoid duplication
+
+  // Avoid moving the shared editor body when it is already in the slot.
   if (inlineEditorBody.parentNode === editorZone) {
     safeRun(() => console.log('[FE][moveEditorBodyIntoField] Editor body already in editor zone for', fieldKey), { context: 'FE_MOVE_BODY_ALREADY_LOG' });
-    // Ensure visibility states are correct
     safeRun(() => { if (placeholder) placeholder.style.display = 'none'; }, { context: 'FE_SLOT_HIDE_PLACEHOLDER_ALREADY_MOVED' });
     safeRun(() => { editorZone.style.display = 'block'; }, { context: 'FE_SLOT_SHOW_EDITOR_ZONE_ALREADY_MOVED' });
     return;
   }
-  
+
   // Ensure slot content is visible
   safeRun(() => { if (placeholder) placeholder.style.display = 'none'; }, { context: 'FE_SLOT_HIDE_PLACEHOLDER' });
   safeRun(() => { editorZone.style.display = 'block'; }, { context: 'FE_SLOT_SHOW_EDITOR_ZONE' });
-  
-  // Move editor body only if it's not already there
-  try { 
+
+  try {
     editorZone.appendChild(inlineEditorBody);
     safeRun(() => {
       const parentId = inlineEditorBody.parentNode && inlineEditorBody.parentNode.className;
@@ -437,8 +410,7 @@ function moveEditorBodyIntoField(fieldKey) {
   } catch (err) {
     safeRun(() => console.warn('[FE][moveEditorBodyIntoField] Error moving editor body:', err), { context: 'FE_MOVE_BODY_WARN' });
   }
-  
-  // Also ensure the overall field content panel is open
+
   safeRun(() => {
     const fieldContent = getFieldContentByKey(fieldKey);
     if (fieldContent) fieldContent.style.display = 'block';
@@ -446,15 +418,14 @@ function moveEditorBodyIntoField(fieldKey) {
 }
 
 function cleanupSlotDuplication(fieldKey) {
-  // Clean up any global editor content that might have been duplicated in this specific slot
+  // Remove duplicated global editor controls from this slot.
   const slot = getPermanentEditorSlot(fieldKey);
   if (!slot) return;
-  
+
   try {
-    // Look for global editor inputs (without field suffix) that shouldn't be in this slot
+    // Global inputs without the field suffix do not belong in a permanent slot.
     const globalInputs = slot.querySelectorAll('#add-field-name:not([id$="-' + fieldKey + '"]), #add-field-unit:not([id$="-' + fieldKey + '"]), #add-field-role:not([id$="-' + fieldKey + '"])');
     globalInputs.forEach(input => {
-      // Find the parent container of this global input and remove it
       let parentContainer = input;
       while (parentContainer && !parentContainer.style?.padding) {
         parentContainer = parentContainer.parentNode;
@@ -473,21 +444,20 @@ function cleanupSlotDuplication(fieldKey) {
 
 function restoreEditorBodyToInline() {
   if (!inlineEditor || !inlineEditorBody) return;
-  
-  // Check if editor body is already in the inline editor to avoid duplication
+
+  // Avoid moving the shared editor body when it is already inline.
   if (inlineEditorBody.parentNode === inlineEditor) {
     safeRun(() => console.log('[FE][restoreEditorBodyToInline] Editor body already in inline editor'), { context: 'FE_RESTORE_ALREADY_LOG' });
     return;
   }
-  
-  // Reinsert between header and footer for original order
-  try { 
-    inlineEditor.insertBefore(inlineEditorBody, inlineEditorFooter || null); 
+
+  try {
+    inlineEditor.insertBefore(inlineEditorBody, inlineEditorFooter || null);
     safeRun(() => console.log('[FE][restoreEditorBodyToInline] Restored editor body to inline editor'), { context: 'FE_RESTORE_DONE_LOG' });
   } catch (err) {
     safeRun(() => console.warn('[FE][restoreEditorBodyToInline] Error restoring editor body:', err), { context: 'FE_RESTORE_BODY_WARN' });
   }
-  // When restoring to inline container, any open slot should show its placeholder and hide editor zone
+  // Restoring inline should leave any open slot back on its placeholder view.
   try {
     if (lastEditorContext.fieldKey) {
       const slot = getPermanentEditorSlot(lastEditorContext.fieldKey);
@@ -514,14 +484,14 @@ function positionInlineEditorFor(siteLabel, fieldKey, mode) {
     targetGroup = groups.find(g => (g.dataset && g.dataset.fieldName === fieldKey)) || null;
   }
   if (!targetGroup) {
-    // Fallback: park at anchor
+    // Park the editor at the stable anchor when no field target exists.
     restoreEditorBodyToInline();
     if (anchor && inlineEditor.parentNode !== anchor) {
       safeRun(() => anchor.appendChild(inlineEditor), { context: 'FE_POSITION_APPEND_ANCHOR' });
     }
     return;
   }
-  // For edit mode: move only the editor body inside the group's content panel
+  // Edit mode moves only the shared editor body into the field panel.
   moveEditorBodyIntoField(fieldKey);
 }
 
@@ -531,8 +501,7 @@ function ensureInlineEditorPosition() {
   if (isOpen && (lastEditorContext.mode || lastEditorContext.fieldKey || lastEditorContext.siteLabel)) {
     positionInlineEditorFor(lastEditorContext.siteLabel, lastEditorContext.fieldKey, lastEditorContext.mode);
   } else {
-    // When closed or without context, keep the body in its last slot (if any) but hide the inline editor container
-    // For create mode or no context at all, restore to anchor so the UI remains reachable
+    // In create mode, restore to the anchor so the editor remains reachable.
     if (!lastEditorContext.fieldKey || lastEditorContext.mode === 'create') {
       restoreEditorBodyToInline();
       const anchor = document.getElementById('field-editor-anchor') || document.getElementById('patterns-container');
@@ -544,19 +513,18 @@ function ensureInlineEditorPosition() {
 }
 
 function cleanupDuplicatedEditorContent() {
-  // Remove any duplicated editor body elements that might exist in slots
+  // Remove duplicated shared editor bodies from slots.
   if (!inlineEditorBody) return;
-  
+
   try {
-    // Find all slot contents that might contain the global editor body
+
     const slotContents = document.querySelectorAll('.inline-editor-slot-content');
-    
+
     slotContents.forEach(slotContent => {
-      // Look for the global editor content (without field suffix) inside this slot
+      // Global editor content without a field suffix is duplicated slot content.
       const globalEditorContent = slotContent.querySelector('#add-field-name:not([id$="-observance"]):not([id$="-iah"]):not([id$="-fuites"])');
       if (globalEditorContent) {
         // Found global editor content in a slot - this is likely a duplication
-        // Find the parent div that contains the global editor and remove it
         let parentToRemove = globalEditorContent;
         while (parentToRemove && parentToRemove.parentNode !== slotContent) {
           parentToRemove = parentToRemove.parentNode;
@@ -569,8 +537,7 @@ function cleanupDuplicatedEditorContent() {
         }
       }
     });
-    
-    // Also ensure the editor body is in the right place
+
     if (inlineEditorBody && !inlineEditorBody.parentNode) {
       restoreEditorBodyToInline();
     }
@@ -581,13 +548,12 @@ function cleanupDuplicatedEditorContent() {
 
 function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } = {}) {
   safeRun(() => console.log('[FE][openAddFieldModal] ENTER', { mode, siteLabel, fieldKey }), { context: 'FE_OPEN_ENTER_LOG' });
-  
+
   // Clean up any duplicated editor content first
   cleanupDuplicatedEditorContent();
-  
+
   modalState = { mode, siteLabel, originalKey: fieldKey };
-  
-  // Get global editor elements and ensure they're available
+
   let elements = getGlobalEditorElements();
   safeRun(() => console.log('[FE][openAddFieldModal] Global elements snapshot', {
     name: !!elements.name,
@@ -595,9 +561,9 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
     unit: !!elements.unit,
     role: !!elements.role
   }), { context: 'FE_OPEN_GLOBAL_ELEMENTS_LOG' });
-  // If we're editing and the body is already in the right slot, skip any restore attempts
+  // Slot edit mode uses per-field inputs and leaves the shared body untouched.
   if (mode === 'edit' && fieldKey) {
-    // Per-slot edit path: do not move global editor body; operate on slot inputs only
+    // Per-slot edit path: operate on slot inputs only.
     lastEditorContext = { siteLabel, fieldKey, mode };
     safeRun(() => {
       const slot = getPermanentEditorSlot(fieldKey);
@@ -615,7 +581,6 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
       console.log('[FE][openAddFieldModal] Edit-mode: using slot inputs, showing placeholder and hiding editor zone for', fieldKey);
     }, { context: 'FE_OPEN_EDIT_SLOT_SETUP' });
     if (inlineEditor) inlineEditor.style.display = 'none';
-    // Ensure main editor events are wired (submit button handler)
     if (typeof window.rewireFieldEditorEvents === 'function') {
       safeRun(() => window.rewireFieldEditorEvents(), { context: 'FE_EDIT_REWIRE_EVENTS' });
     }
@@ -625,15 +590,14 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
     }, 0);
     return;
   }
-  
-  // If global editor elements are missing, try restoring the editor body to inline container (only if it's not already there)
+
+  // Restore the shared editor body if global controls are temporarily missing.
   if (!elements.name || !elements.typeRadios.length) {
     try {
       console.log('[FE][openAddFieldModal] Global editor elements not found yet, attempting inline restore');
       if (inlineEditorBody && inlineEditor && inlineEditorBody.parentNode !== inlineEditor) {
         restoreEditorBodyToInline();
       }
-      // Re-query after potential restoration
       elements = getGlobalEditorElements();
       safeRun(() => console.log('[FE][openAddFieldModal] After restore, global elements snapshot', {
         name: !!elements.name, typeRadios: elements.typeRadios?.length, unit: !!elements.unit, role: !!elements.role
@@ -642,19 +606,18 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
       safeRun(() => console.warn('[FE][openAddFieldModal] Error restoring global editor:', err), { context: 'FE_OPEN_RESTORE_GLOBAL_WARN' });
     }
   }
-  
-  // Remember desired context and position editor (create-mode or no field)
+
   lastEditorContext = { siteLabel, fieldKey, mode };
-  try { console.log('[FE][openAddFieldModal] Positioning inline editor for', { siteLabel, fieldKey, mode }); positionInlineEditorFor(siteLabel, fieldKey, mode); } catch (err) { 
-    safeRun(() => console.warn('[FE][openAddFieldModal] positionInlineEditorFor error:', err), { context: 'FE_OPEN_POSITION_WARN' }); 
+  try { console.log('[FE][openAddFieldModal] Positioning inline editor for', { siteLabel, fieldKey, mode }); positionInlineEditorFor(siteLabel, fieldKey, mode); } catch (err) {
+    safeRun(() => console.warn('[FE][openAddFieldModal] positionInlineEditorFor error:', err), { context: 'FE_OPEN_POSITION_WARN' });
   }
-  
+
   // Set default values for create/edit mode
   let type = 'text';
   let unit = '';
   let role = '';
   let tupleExtraction = null;
-  
+
   // Only prefill in edit mode, keep placeholders for create mode
   if (mode === 'edit' && siteLabel && fieldKey) {
     const site = toProviderKey(siteLabel);
@@ -662,8 +625,7 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
     const def = cfg?.fields?.[fieldKey];
     safeRun(() => console.log('[FE][openAddFieldModal] Prefill lookup', { site, fieldKey, hasCfg: !!cfg, hasDef: !!def }), { context: 'FE_OPEN_PREFILL_LOOKUP_LOG' });
     if (def) {
-      // Prefill field data
-      const friendly = fieldKey === fieldKey.toUpperCase() ? fieldKey : 
+      const friendly = fieldKey === fieldKey.toUpperCase() ? fieldKey :
         (fieldKey.replace(/([a-z])([A-Z])/g, '$1 $2')).replace(/^./, c => c.toUpperCase());
       safeRun(() => console.log('[FE][openAddFieldModal] Prefilling field UI', { label: def.label, type: def.type, unit: def.unit, role: def.role }), { context: 'FE_OPEN_PREFILL_FIELD_LOG' });
       if (elements.name) elements.name.value = def.label || friendly;
@@ -671,17 +633,14 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
       unit = def.unit || '';
       role = def.role || '';
       tupleExtraction = def.tupleExtraction || null;
-      
-      // Prefill tuple fields
+
       if (elements.tupleSize) elements.tupleSize.value = (tupleExtraction?.size && tupleExtraction.size >=1 && tupleExtraction.size <=7) ? String(tupleExtraction.size) : '1';
       if (elements.tupleMask) elements.tupleMask.value = tupleExtraction?.mask || '';
-      // Populate mask options based on current size/mask
       if (elements.tupleSize) {
         populateGlobalMaskOptions(elements.tupleSize.value, elements.tupleMask?.value || '');
       }
       if (elements.tupleDrop) elements.tupleDrop.checked = !!(tupleExtraction && tupleExtraction.dropOriginal);
-      
-      // Prefill label fields if there's a first label
+
       if (def.labels && def.labels.length > 0) {
         const firstLabel = def.labels[0];
         safeRun(() => console.log('[FE][openAddFieldModal] Prefilling label UI', firstLabel), { context: 'FE_OPEN_PREFILL_LABEL_LOG' });
@@ -702,48 +661,43 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
       }
     }
   }
-  
-  // Apply field values to UI
+
   if (elements.name && mode === 'create') elements.name.value = '';
   elements.typeRadios.forEach(r => r.checked = (r.value === type));
   if (elements.unit) elements.unit.value = unit;
   if (elements.role) elements.role.value = role || '';
   safeRun(() => console.log('[FE][openAddFieldModal] Applied UI values', { type, unit, role, mode }), { context: 'FE_OPEN_APPLIED_VALUES_LOG' });
-  
+
   // Clear fields in create mode
   if (mode === 'create') {
     safeRun(() => console.log('[FE][openAddFieldModal] Clearing UI for CREATE mode'), { context: 'FE_OPEN_CREATE_CLEAR_LOG' });
   if (elements.tupleSize) elements.tupleSize.value = '1';
   if (elements.tupleMask) elements.tupleMask.value = '';
-  // Initialize mask options for size=1 (disabled X)
   populateGlobalMaskOptions('1', '');
     if (elements.tupleDrop) elements.tupleDrop.checked = false;
-    
-    // Clear all label fields
+
     const lblElements = ['add-label-text', 'add-label-start', 'add-label-end', 'add-label-label-exclude', 'add-label-exclude', 'add-label-priority'];
     lblElements.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = (id.includes('start') ? '1' : id.includes('end') ? '999' : '');
     });
-    
-    // Reset label card title to default
+
     const titleEl = document.getElementById('add-label-card-title');
     if (titleEl) titleEl.textContent = t('fieldEditorCardTitle', [t('fieldEditorEmptyKeyword'), '1', '999']);
-    
+
     safeRun(() => console.log('[FE][openAddFieldModal] CREATE mode: cleared all fields for blank template'), { context: 'FE_OPEN_CREATE_CLEARED_LOG' });
   }
-  
+
   setUnitEnabledFromType();
   safeRun(() => console.log('[FE][openAddFieldModal] setUnitEnabledFromType applied'), { context: 'FE_OPEN_SET_UNIT_LOG' });
-  
-  // Ensure all events are properly wired
+
   if (typeof window.rewireFieldEditorEvents === 'function') {
     window.rewireFieldEditorEvents();
     safeRun(() => console.log('[FE][openAddFieldModal] rewireFieldEditorEvents done'), { context: 'FE_OPEN_REWIRE_DONE_LOG' });
   }
-  
+
   if (inlineEditor) {
-    // In edit mode, the body is inside the slot: keep the outer inline container hidden to avoid #inline-field-editor showing
+    // In edit mode, hide the outer inline container because the body lives in the slot.
     if (mode === 'edit' && fieldKey) {
       inlineEditor.style.display = 'none';
       safeRun(() => console.log('[FE][openAddFieldModal] Hiding inline container in EDIT mode'), { context: 'FE_OPEN_HIDE_INLINE_LOG' });
@@ -756,11 +710,9 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
       if (mode === 'edit' && fieldKey) {
         const slot = getPermanentEditorSlot(fieldKey);
         const headerSpan = slot ? slot.querySelector('.inline-editor-slot-header span:nth-child(2)') : null;
-        // Ensure the whole mode wrapper is visible (open the wrapper)
         const mode = slot ? slot.querySelector(`#inline-editor-slot-mode-${CSS.escape(fieldKey)}`) : null;
         if (mode && mode.style.display === 'none') {
           mode.style.display = 'block';
-          // Update toggle icon to reflect open state
           const toggle = slot ? slot.querySelector('.inline-editor-slot-header span:nth-child(2)') : null;
           if (toggle) toggle.textContent = '▲';
         }
@@ -783,7 +735,6 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
       safeRun(() => console.warn('[FE][openAddFieldModal] scroll to editor failed', error), { context: 'FE_OPEN_SCROLL_WARN' });
     }
   }
-  // Focus correct input per mode
   setTimeout(() => {
     safeRun(() => {
       if (mode === 'edit' && fieldKey) {
@@ -799,7 +750,7 @@ function openAddFieldModal({ mode = 'create', siteLabel = '', fieldKey = null } 
 function closeAddFieldModal() {
   safeRun(() => console.log('[FE][closeAddFieldModal] ENTER', { modalState, lastEditorContext }), { context: 'FE_CLOSE_ENTER_LOG' });
   // Restore body back into inline container and hide
-  safeRun(() => { /* Keep the body in-place inside its slot to preserve structure; do not move back unless in create mode */
+  safeRun(() => { /* Preserve slot structure; only move the body back in create mode. */
     if (!lastEditorContext.fieldKey || lastEditorContext.mode === 'create') restoreEditorBodyToInline();
   }, { context: 'FE_CLOSE_RESTORE_BODY' });
   if (inlineEditor) inlineEditor.style.display = 'none';

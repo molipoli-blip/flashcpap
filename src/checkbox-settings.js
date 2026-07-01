@@ -285,29 +285,29 @@ export function cancelEdit() {
 // Load an existing checkbox into the form for editing.
 export function editCheckboxInForm(checkbox, site, index) {
   const { textInput, valueInput, familyInput, addBtn, cancelBtn } = getCheckboxFormElements();
-  
+
   if (!textInput || !valueInput || !familyInput || !addBtn || !cancelBtn) {
     console.warn('[EditCheckbox] Required form elements not found');
     return;
   }
-  
+
   editingState = {
     isEditing: true,
     editingCheckbox: { ...checkbox },
     editingIndex: index,
     editingSite: site
   };
-  
+
   textInput.value = checkbox.text || '';
   valueInput.value = checkbox.value || '';
   familyInput.value = checkbox.family || '';
   setFavoriteButtonState(!!checkbox.favorite);
-  
+
   if (addBtn) {
     addBtn.textContent = t('checkboxButtonValidateEdit');
     addBtn.classList.add('submit-btn-editing');
   }
-  
+
   if (cancelBtn) {
     cancelBtn.style.display = 'block';
   }
@@ -322,18 +322,18 @@ export function editCheckboxInForm(checkbox, site, index) {
 export function lockCustomCheckboxControls() {
   try {
     const currentProvider = getParameterProviderSiteKey();
-    
+
     const isNoProvider = !hasValidProvider(settings, currentProvider);
     const { textInput, valueInput, familyInput, favoriteBtn, addBtn, cancelBtn } = getCheckboxFormElements();
-    
+
     const controlsContainer = document.querySelector('.custom-checkbox-controls');
-    
+
     if (isNoProvider) {
       [textInput, valueInput, familyInput].forEach(el => setElementEnabled(el, false));
       setElementEnabled(favoriteBtn, false, { disabledCursor: 'not-allowed', disabledPointerEvents: 'none' });
       setElementEnabled(addBtn, false);
       setElementEnabled(cancelBtn, false);
-      
+
       if (controlsContainer) {
         let lockMsg = document.getElementById('checkbox-controls-lock-message');
         if (!lockMsg) {
@@ -361,7 +361,7 @@ export function lockCustomCheckboxControls() {
       setElementEnabled(favoriteBtn, true, { enabledCursor: 'pointer', enabledPointerEvents: '' });
       setElementEnabled(addBtn, true, { enabledCursor: 'pointer' });
       setElementEnabled(cancelBtn, true, { enabledCursor: 'pointer' });
-      
+
       const lockMsg = document.getElementById('checkbox-controls-lock-message');
       if (lockMsg) lockMsg.remove();
     }

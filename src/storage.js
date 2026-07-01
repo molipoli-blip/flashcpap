@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/storage.js
 import { generateUniqueId } from './shared/id.js';
 import { browserApi } from './platform/browser-api.js';
 import { ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
@@ -23,7 +22,6 @@ function createDefaultSettings() {
   return {
     patterns: {},
     noteLibre: {},
-    autoLockUrl: false,
     customCheckboxes: {},
     checkboxFamilies: [],
     organizationOrder: [],
@@ -186,7 +184,6 @@ function normalizeSettings(target) {
   ensureObject(target, 'noteLibre');
   ensureArray(target, 'checkboxFamilies');
   ensureArray(target, 'organizationOrder');
-  if (typeof target.autoLockUrl !== 'boolean') target.autoLockUrl = false;
 
   normalizePinnedOptions(target);
   normalizeSummaryMeta(target);
@@ -238,7 +235,7 @@ export function loadSettings() {
   }
 }
 
-// Gestion des familles de checkboxes
+// Checkbox family suggestions.
 export function addFamilyToSuggestions(familyName) {
   if (!familyName || typeof familyName !== 'string') return;
 

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/summary.js
 import { logDebug, logFlow, logWarn } from './debug-logger.js';
 import { getProviderConfig, toProviderKey } from './domain/provider-rules.js';
 import { normalizePhraseGroupId } from './shared/id.js';
@@ -156,14 +155,13 @@ function dedupeNormalizedLines(lines) {
 function splitManualIntoSegments(text) {
   if (!text) return [];
   const parts = [];
-  // Treat each single line as a segment boundary even without punctuation
   const lines = String(text).split(/\r?\n/);
-  const re = /([.;?!:])/; // strong punctuation, no comma
+  const re = /([.;?!:])/;
   for (let li = 0; li < lines.length; li++) {
     const line = lines[li];
     const trimmed = line.trim();
     if (trimmed.length === 0) {
-      // preserve blank line as a dedicated manual break segment
+      // Preserve blank lines as manual break segments.
       parts.push('\n');
       continue;
     }
@@ -180,23 +178,18 @@ function splitManualIntoSegments(text) {
     const tail = buf.trim();
     if (tail) parts.push(tail);
   }
-  // remove any accidental all-whitespace segments (except our explicit '\n')
   return parts.filter(s => s === '\n' || String(s).trim().length > 0);
 }
 
-// Marker-based summary regeneration:
-// Chaque ligne auto (champ ou checkbox) est encapsulée sous forme <id=CONTENU//id>
-// id pour un champ: fld_<fieldName>, pour une checkbox: cb_<checkboxId>
-// Lors d'une nouvelle génération, si un marker existe encore et que son id est toujours pertinent, on le conserve tel quel (contenu utilisateur inclus).
-// Si un id n'est plus actif (checkbox décochée par ex) on supprime son marker.
-// Les nouveaux ids sont ajoutés en fin (après le reste du texte manuel existant).
-// Le texte manuel hors markers est préservé exactement (y compris placement relatif).
+// Marker-based summary regeneration.
+// Auto lines use <id=CONTENT//id> markers (fields: fld_*, checkboxes: cb_*).
+// Active markers are preserved, inactive ones are removed, and manual text stays stable.
 export function generateSummary(data, prestataire, includeInterpretation = false, includeRodap = false, customCheckboxStates = {}, settings, previousSummary = '') {
   const cfg = getProviderConfig(settings, prestataire) || { fields: {} };
-  const lines = []; // lignes auto générées (avant transformation en markers)
-  const markers = []; // { id, text } : contiendra notamment fld_fields (bloc champs) + cb_*
-  
-  // Normaliser les séparateurs internes (vertical tab utilisés dans le preview) -> vrais retours ligne
+  const lines = [];
+  const markers = [];
+
+  // Normalize legacy vertical-tab separators used by preview rendering.
   if (previousSummary && previousSummary.includes('\u000B')) {
     previousSummary = previousSummary.replace(/\u000B/g, '\n');
   }
@@ -223,7 +216,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
   const fieldOrder = cfg.fieldOrder || Object.keys(cfg.fields || {});
   const siteKey = toProviderKey(prestataire);
 
-  // Préparer les checkboxes personnalisées (toutes, favoris inclus) sélectionnées
   const customCheckboxes = settings?.customCheckboxes?.[siteKey] || [];
   const activeCheckboxes = customCheckboxes.filter(cb => customCheckboxStates[cb.id]);
   const activeCheckboxById = new Map(activeCheckboxes.map(cb => [cb.id, cb]));
@@ -234,29 +226,25 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     familiesMap[fam].push(cb);
   });
 
-  // Log initial state
   logDebug('SUMMARY', 'Etat initial generation', {
     fieldCount: fieldOrder.length,
     activeFamilyCount: Object.keys(familiesMap).length
   });
 
-  // Liste triée des familles actives
   const familiesList = Object.keys(familiesMap).sort();
 
-  // Récupérer organizationOrder pour ce prestataire (peut être vide -> fallback)
   const orgOrderByProvider = settings?.organizationOrderByProvider || {};
-  const orgOrder = (orgOrderByProvider[prestataire] && orgOrderByProvider[prestataire].length) 
-    ? orgOrderByProvider[prestataire] 
+  const orgOrder = (orgOrderByProvider[prestataire] && orgOrderByProvider[prestataire].length)
+    ? orgOrderByProvider[prestataire]
     : [];
   logDebug('SUMMARY', 'Ordre organisation charge', {
     provider: prestataire,
     organizationCount: orgOrder.length
   });
 
-  // Fonction utilitaire: ajouter bloc champs extraits
   let fieldKeysUsed = [];
   const currentFieldLineByKey = new Map();
-  let _appendedFieldsBlock = false; // garde pour éviter doublons si appelé plusieurs fois
+  let _appendedFieldsBlock = false;
   function appendExtractedFields() {
     if (_appendedFieldsBlock) {
       logWarn('SUMMARY', 'appendExtractedFields ignore car deja execute');
@@ -265,7 +253,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     const block = [];
     block.push('Données de télésuivi :');
     block.push(`Prestataire : ${prestataire}`);
-    // block.push(''); // Removed newline
     let extractedCount = 0;
     for (let f of fieldOrder) {
       const v = data[f];
@@ -273,7 +260,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       const fieldDef = cfg.fields[f];
       const fieldMeta = data?.__fieldMeta?.[f] || null;
       const hasIncompleteTuple = !!fieldMeta?.tupleIncomplete;
-      
+
       logDebug('SUMMARY', 'Champ prepare pour le bloc extrait', {
         field: f,
         hasUnit: !!fieldDef?.unit,
@@ -286,19 +273,13 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       fieldKeysUsed.push(f);
       extractedCount++;
     }
-    // Dédoublonnage défensif des lignes (observé: répétitions cumulatives)
     const deduped = dedupeNormalizedLines(block);
 
-    // Check for compact mode setting
     const isCompact = settings?.compactFields?.[siteKey];
     const defaultSeparator = isCompact ? '. ' : '\n';
-    
-    // Apply suffixes to fields
+
+
     const processedBlock = deduped.map(line => {
-        // If line corresponds to a field, use its suffix if defined
-        // We need to find which field generated this line.
-        // Since deduped might have reordered or filtered, we iterate fieldOrder again? No.
-        // We can check if the line matches one of the generated field lines.
         let suffix = defaultSeparator;
         for (let [key, val] of currentFieldLineByKey) {
             if (val === line) {
@@ -309,7 +290,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
                 break;
             }
         }
-        // Special case for headers (first 2 lines usually)
         if (line.startsWith('Données de télésuivi :') || line.startsWith('Prestataire :')) {
              suffix = '\n';
         }
@@ -322,7 +302,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     logFlow('SUMMARY', 'Bloc champs extraits ajoute', { extractedCount });
   }
 
-  // Préparer les groupes de phrases (pot câblage) par famille
   const phraseGroupsAll = Array.isArray(settings?.checkboxPhrases?.[siteKey]) ? settings.checkboxPhrases[siteKey] : [];
   const phraseGroupsByFamily = new Map();
   phraseGroupsAll.forEach(g => {
@@ -335,7 +314,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     familyCount: phraseGroupsByFamily.size
   });
 
-  // Global set to track used checkboxes across all families (handles cross-family groups)
   const globalUsedIds = new Set();
   const emittedPhraseGroupIds = new Set();
   const eligiblePhraseGroups = phraseGroupsAll.map(grp => {
@@ -363,12 +341,10 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     entry.orderedActive.forEach(cb => groupedCheckboxIds.add(cb.id));
   });
 
-  // Fonction utilitaire: ajouter une famille de checkboxes avec prise en compte des groupes de phrases
   function appendFamily(familyName) {
     const cbs = familiesMap[familyName];
     if (!cbs || !cbs.length) return;
 
-    // 1) Générer les lignes de groupes si applicables
     const famGroups = eligiblePhraseGroups.filter(entry => entry.anchorFamily === familyName && !emittedPhraseGroupIds.has(entry.grp.id));
 
     famGroups.forEach(({ grp, orderedActive, safeGroupId }) => {
@@ -379,12 +355,10 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         activeCount: count,
         configuredCount: (grp.order || []).length
       });
-      // Règle: produire une phrase si au moins 2 cases du groupe sont cochées; sinon laisser les lignes individuelles
       if (count >= 2) {
-        // Marquer ces IDs comme utilisés pour ne pas produire les lignes individuelles en doublon
+        // Mark grouped IDs as consumed to avoid duplicate individual lines.
         orderedActive.forEach(cb => globalUsedIds.add(cb.id));
         emittedPhraseGroupIds.add(grp.id);
-        // Composer la phrase en utilisant les paramètres de mise en forme
         const prefix = grp.prefix ?? '';
         const connector = grp.connector ?? ' + ';
         const lastConnector = (grp.lastConnector ?? grp.connector ?? ' + ');
@@ -400,15 +374,14 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         }
   // Do not trim to preserve intentional spaces in prefix/suffix and connectors
   const phraseText = `${prefix}${core}${suffix}`;
-        const markerId = `cb_group_${safeGroupId}`; // reste traité comme 'cb_' pour le système de markers
+        const markerId = `cb_group_${safeGroupId}`;
         markers.push({ id: markerId, text: phraseText });
         logDebug('SUMMARY', 'Phrase groupe emise', { markerId, textLength: phraseText.length });
       }
     });
 
-    // 2) Ajouter les checkboxes restantes (non couvertes par un groupe produit)
     cbs.forEach(cb => {
-      if (groupedCheckboxIds.has(cb.id) || globalUsedIds.has(cb.id)) return; // déjà couvert par une phrase
+      if (groupedCheckboxIds.has(cb.id) || globalUsedIds.has(cb.id)) return;
       markers.push({ id: `cb_${cb.id}`, text: cb.value });
     });
 
@@ -420,10 +393,8 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     });
   }
 
-  // Plus de priorité spéciale pour les favoris : ils suivront simplement leur famille.
 
   if (!orgOrder.length) {
-    // Fallback : champs extraits puis chaque famille triée
   appendExtractedFields();
   familiesList.forEach(fam => appendFamily(fam));
   logFlow('FALLBACK', 'Resume genere sans organizationOrder', {
@@ -432,21 +403,17 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     fieldCount: fieldOrder.length
   });
   } else {
-    // Suivre l'ordre défini
     orgOrder.forEach(item => {
       if (item.type === 'fields') {
         appendExtractedFields();
       } else if (item.type === 'family') {
-        // Retrouver la vraie famille (stockée dans .familyName)
         if (item.familyName) appendFamily(item.familyName);
         else {
-          // Essayer de déduire du titre si nécessaire
           const m = item.title && item.title.startsWith('Famille:') ? item.title.split(':').slice(1).join(':').trim() : null;
             if (m) appendFamily(m);
         }
       }
     });
-    // Ajouter ensuite les familles actives manquantes
     const activeFamiliesSet = new Set(familiesList);
     const familiesInOrder = new Set(orgOrder.filter(i=>i.type==='family').map(i=> (i.familyName||'').trim()));
     const missingFamilies = [...activeFamiliesSet].filter(f => !familiesInOrder.has(f));
@@ -454,7 +421,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       logDebug('SUMMARY', 'Familles absentes de organizationOrder ajoutees en fin', { count: missingFamilies.length });
       missingFamilies.sort().forEach(fam => appendFamily(fam));
     }
-    // Filet de sécurité: si aucun item 'fields' n'était présent dans orgOrder, émettre quand même le bloc
     if (!_appendedFieldsBlock) {
       logDebug('SUMMARY', 'Bloc champs absent de organizationOrder, ajout en tete');
       appendExtractedFields();
@@ -466,23 +432,20 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     const t = `\nNote libre : ${note}`;
     lines.push(t);
   }
-  // RO DAP removed: keep includeRodap accepted for API compatibility, but do not add text.
-  // (Les valeurs des checkboxes sont déjà ajoutées via favoris / familles)
-  // --- Application du système de markers ---
-  // Construire map des markers actuels (ordre logique actuel)
+  // RO DAP text removed; keep includeRodap for API compatibility.
   const currentIds = markers.map(m => m.id);
   const baseById = new Map(markers.map(m => [m.id, m.text]));
 
-  // Parser previousSummary pour récupérer la séquence (markers + texte manuel)
-  // On transforme le texte manuel en pseudo-markers manual_* en le segmentant à la ponctuation forte . ; ? ! : (pas la virgule)
-  const tokens = []; // [{type:'marker', id, inner} | {type:'manual', text}]
+  // Parse previous summary into marker/manual token sequence.
+  // Manual text is segmented into manual_* pseudo-markers using strong punctuation.
+  const tokens = [];
   const existingContentById = new Map();
-  const existingSuffixById = new Map(); // ids: mx_fld_fields_<i>, mx_cb_<id>
-  const headerOverrideByIndex = new Map(); // for fld_fields header lines (0,1)
+  const existingSuffixById = new Map();
+  const headerOverrideByIndex = new Map();
 
-  const freeLinesByIndex = new Map(); // preserve arbitrary manual lines inside fld_fields at given indices
-  const fieldOverrideByKey = new Map(); // when user rewrites entire line (not just suffix), we override base line instead of appending
-  // Helper set of base fld_fields lines to filter duplicates when preserving free lines (normalized)
+  const freeLinesByIndex = new Map();
+  const fieldOverrideByKey = new Map();
+  // Base fld_fields lines used to filter duplicates.
   const baseFld = (markers.find(m => m.id === 'fld_fields')?.text) || '';
   const baseFldLines = String(baseFld).split(/\r?\n/);
   const baseFldNormSet = new Set(baseFldLines.map(s => normalizeLineText(s)).filter(Boolean));
@@ -490,26 +453,24 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     previousLength: previousSummary.length,
     baseFieldCount: baseFldLines.length
   });
-  // Track global free lines to avoid re-adding the same manual line multiple times across indices (normalized)
+  // Track free lines globally to avoid duplicate reinsertion.
   const globalFreeLineNormSet = new Set();
   function addFreeLineAtIndex(idx, rawLine) {
     if (rawLine == null) return;
     const t = String(rawLine);
     const trimmed = t.trim();
-    if (!trimmed) return; // ignore empty
-    // Protection anti-doublons spécifiques: ne jamais réinsérer les lignes d'en-tête ou les lignes de champs de base récurrentes
-    // Cas observé: "Prestataire : XYZ" et "L'observance est à" pouvaient être re-capturées comme contenu libre
-    // lorsqu'une réorganisation ou ajout de checkbox re-générait le bloc, entraînant duplication cumulative.
+    if (!trimmed) return;
+    // Do not treat known auto/header lines as free manual content.
     const lower = trimmed.toLowerCase();
     if (lower.startsWith('prestataire :') || lower.startsWith("l'observance est ") || lower.startsWith('données de télésuivi')) {
-      return; // ne pas traiter comme free line
+      return;
     }
     const norm = normalizeLineText(t);
     if (!norm) return;
-    if (baseFldNormSet.has(norm)) return; // don't duplicate base auto lines (ignoring spacing)
-    if (globalFreeLineNormSet.has(norm)) return; // already captured elsewhere
+    if (baseFldNormSet.has(norm)) return;
+    if (globalFreeLineNormSet.has(norm)) return;
     const arr = freeLinesByIndex.get(idx) || [];
-    // Avoid per-index duplicates as well
+    // Also avoid per-index duplicates.
     if (arr.some(x => normalizeLineText(x) === norm)) return;
     arr.push(t);
     freeLinesByIndex.set(idx, arr);
@@ -529,17 +490,16 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       }
       const id = match[1];
       const inner = match[2];
-      
+
       if (id.startsWith('mx_')) {
         logDebug('SUMMARY', 'Suffixe manuel retrouve', { id, textLength: inner.length });
         existingSuffixById.set(id, inner);
       } else if (id.startsWith('manual_')) {
-        // Filtrer les blocs manuels qui contiennent des markers auto pour éviter doublons
+        // Filter manual blocks that contain auto markers to avoid duplicates.
         const innerTrimmed = String(inner || '').trim();
         const hasAutoMarker = /<(fld_fields|cb_group_[a-z0-9_-]+|cb_[a-z0-9_-]+)=.*?\/\/\1>/is.test(innerTrimmed);
         if (hasAutoMarker) {
           logDebug('SUMMARY', 'Marker manuel ignore car contient un marker auto', { id });
-          // Ne pas ajouter ce token, il sera régénéré comme auto
         } else {
           logDebug('SUMMARY', 'Marker manuel conserve', { id, textLength: inner.length });
           tokens.push({ type: 'marker', id, inner });
@@ -557,17 +517,16 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       logDebug('SUMMARY', 'Texte libre detecte en fin de resume precedent', { textLength: tail.trim().length });
       splitManualIntoSegments(tail).forEach(seg => tokens.push({ type: 'manual', text: seg }));
     }
-    
+
     logDebug('SUMMARY', 'Analyse du resume precedent terminee', {
       tokenCount: tokens.length,
       suffixCount: existingSuffixById.size
     });
   }
 
-  // Derive suffixes from previous base markers when dedicated mx_ markers don't exist
+  // Derive suffixes from previous base markers when mx_* markers are missing.
   const splitAtLastPunct = (s) => {
     if (!s || typeof s !== 'string') return { base: s || '', suffix: '' };
-    // Find last non-comma punctuation among . ; ? ! :
     const chars = ['.', ';', '?', '!', ':'];
     for (let i = s.length - 1; i >= 0; i--) {
       const ch = s[i];
@@ -581,12 +540,12 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     return { base: s, suffix: '' };
   };
 
-  // For fld_fields: compute per-field-key suffix using robust prefix comparison only
+  // For fld_fields, compute per-field suffixes using robust prefix comparison.
   let prevFld = existingContentById.get('fld_fields');
-  // Sanitize previous fld_fields content: collapse repeated header + prestataire + blank + observance patterns
+  // Sanitize previous fld_fields by collapsing repeated header/provider/observance patterns.
   if (prevFld) {
     try {
-      // Normaliser éventuels séparateurs verticaux restants
+      // Normalize any remaining vertical-tab separators.
       prevFld = String(prevFld).replace(/\u000B/g,'\n');
       const rawLines = String(prevFld).split(/\r?\n/);
       const cleaned = [];
@@ -594,7 +553,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       let headerSeen = false;
       let prestataireSeen = false;
       let observanceSeen = false;
-      // We allow only first occurrence of each of these canonical lines; other lines kept but we later dedup again
+      // Keep the first canonical header lines; later passes handle remaining duplicates.
       for (let i=0;i<rawLines.length;i++) {
         const ln = rawLines[i];
         const n = norm(ln);
@@ -602,10 +561,8 @@ export function generateSummary(data, prestataire, includeInterpretation = false
           if (headerSeen) { continue; } else { headerSeen = true; }
         }
         if (n.startsWith('prestataire :')) {
-          // keep only first prestataire header appearing directly after main header group
           if (prestataireSeen) {
-            // skip if already kept a prestataire and the next non-empty line starts with l'observance est
-            // this matches the duplication pattern observed
+            // Skip repeated provider headers before an observance line.
             continue;
           } else {
             prestataireSeen = true;
@@ -620,7 +577,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         }
         cleaned.push(ln);
       }
-      // Additional collapse of consecutive repeating 'Prestataire :' + blank + "L'observance est" groups
+      // Collapse repeated provider/blank/observance triplets.
       function collapsePattern(lines) {
         const out = [];
         let i=0;
@@ -629,18 +586,16 @@ export function generateSummary(data, prestataire, includeInterpretation = false
           const b = norm(lines[i+1]||'');
             const c = norm(lines[i+2]||'');
           if (a.startsWith('prestataire :') && (b==='') && c.startsWith("l'observance est ")) {
-            // look ahead to see if same triplet repeats immediately again -> skip duplicates
             out.push(lines[i]);
             out.push(lines[i+1]);
             out.push(lines[i+2]);
-            // Skip any further identical repeating triplets
             let j = i+3;
             while (true) {
               const a2 = norm(lines[j]);
               const b2 = norm(lines[j+1]||'');
               const c2 = norm(lines[j+2]||'');
               if (a2.startsWith('prestataire :') && (b2==='') && c2.startsWith("l'observance est ")) {
-                j += 3; // drop duplicate triplet
+                j += 3;
               } else break;
             }
             i = j;
@@ -652,7 +607,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         return out;
       }
       const collapsed = collapsePattern(cleaned);
-      // Aggressive final pass: supprimer toute répétition restante d'observance dispersée
+      // Final strict pass: remove remaining dispersed observance duplicates.
       const finalOnce = [];
       const seenLineType = { header:false, prest:false, obs:false };
       collapsed.forEach(l => {
@@ -662,7 +617,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         else if (n.startsWith("l'observance est ")) { if (seenLineType.obs) return; seenLineType.obs = true; }
         finalOnce.push(l);
       });
-      // Si plusieurs observance détectées initialement -> journaliser reset agressif
+      // Log when multiple observance lines required aggressive cleanup.
       const obsCountOriginal = rawLines.filter(l=>norm(l).startsWith("l'observance est ")).length;
       if (obsCountOriginal > 1) {
         logWarn('SUMMARY', 'Reduction agressive du bloc fld_fields', { observanceCount: obsCountOriginal });
@@ -676,8 +631,8 @@ export function generateSummary(data, prestataire, includeInterpretation = false
   }
   if (prevFld) {
     const linesPrev = String(prevFld).split(/\r?\n/);
-    const baseIndexOffset = 2; // headers (no blank line)
-    // Capture possible header overrides (user modified header lines)
+    const baseIndexOffset = 2;
+    // Capture potential user header overrides.
     try {
       const currentFldBase = (markers.find(m => m.id === 'fld_fields')?.text) || '';
       const currBaseLines = currentFldBase.split(/\r?\n/);
@@ -688,7 +643,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         }
       });
     } catch {}
-    // Prepare interpretation texts for cleanup check
+    // Prepare interpretation text set for cleanup checks.
     const allInterpTexts = new Set();
     if (texts) {
       Object.values(texts).forEach(t => {
@@ -698,16 +653,12 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     }
     logDebug('SUMMARY', 'Textes interpretation connus charges', { count: allInterpTexts.size });
 
-    // Build regex for robust stripping
+    // Build regex for robust interpretation stripping.
     const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const interpPatterns = Array.from(allInterpTexts).map(t => escapeRegExp(t)).join('|');
-    // Matches: optional whitespace, (, optional whitespace, one of the texts, optional whitespace, ), optional whitespace, end of string
     const interpRegex = interpPatterns ? new RegExp(`\\s*\\(\\s*(?:${interpPatterns})\\s*\\)\\s*$`, 'i') : null;
 
-    // Check for structure mismatch (e.g. compact mode or deleted lines)
-    // If the number of lines in previous content is significantly less than expected fields,
-    // we assume the structure is broken/compact and we should NOT try to map lines by index.
-    // Instead, we skip the override logic and let the block regenerate fully.
+    // Skip index-based override mapping if structure is compact/broken.
     if (linesPrev.length < fieldKeysUsed.length + baseIndexOffset) {
       logFlow('SUMMARY', 'Structure mismatch detecte, preservation des lignes ignoree', {
         previousLines: linesPrev.length,
@@ -718,19 +669,19 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         const idx = baseIndexOffset + i;
         const prevLine = linesPrev[idx] || '';
         const currLine = currentFieldLineByKey.get(key) || '';
-        
+
         if (!currLine) return;
         if (!prevLine.trim()) return;
 
-        // Helper to strip known interpretation suffixes
+        // Strip known interpretation suffixes.
         const stripInterp = (line) => {
           let s = String(line || '');
-          // Remove XML-like tags if any remain from previous versions
+          // Remove legacy XML-like tags if present.
           s = s.replace(/<i_[a-zA-Z0-9_]+>.*?<\/i_[a-zA-Z0-9_]+>/g, '');
-          
-          // Also try to remove plain text interpretation if tags are missing (legacy fallback)
+
+          // Also remove plain-text interpretation as a fallback.
           if (interpRegex) {
-            // Try to match at end of string, allowing for optional punctuation
+            // Match interpretation at end, allowing optional punctuation.
             const match = s.match(new RegExp(`(\\s*\\(\\s*(?:${interpPatterns})\\s*\\)\\s*[.,;]?)\\s*$`, 'i'));
             if (match) {
               s = s.slice(0, match.index).trim() + (match[0].match(/[.,;]$/) ? match[0].match(/[.,;]$/)[0] : '');
@@ -744,34 +695,26 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         const norm = normalizeComparableText;
 
         if (norm(prevClean) === norm(currClean)) {
-          // Core content matches. Use the new system line (currLine) which respects the current includeInterpretation setting.
-          // If includeInterpretation is ON, currLine has interp.
-          // If includeInterpretation is OFF, currLine has no interp.
-          // So we don't need to override anything, just let the system use currLine.
           return;
         }
 
-        // Mismatch: User modified the core content. We must preserve prevLine (user's version).
-        // But we need to handle interpretation based on current setting.
-        
-        let newLine = prevClean; // Start with cleaned user content
+        // Core mismatch: preserve user content and re-apply interpretation policy.
+
+        let newLine = prevClean;
 
         if (includeInterpretation) {
-            // User wants interpretation ON.
-            // Extract interpretation from currLine (which has it if ON)
-            // Check for tags first
+            // Interpretation ON: extract interpretation from current system line.
             const tagMatch = currLine.match(/<i_([a-zA-Z0-9_]+)>(.*?)<\/i_\1>/);
             if (tagMatch) {
-              // Found tag in current system line, append it to user line
               newLine = newLine + ' ' + tagMatch[0];
             } else {
-              // Fallback to plain text extraction
+              // Fallback to plain-text interpretation extraction.
               let interpToAdd = '';
               const normCurr = norm(currLine);
               for (const interp of allInterpTexts) {
                   const suffix = `(${interp})`;
-                  if (normCurr.includes(suffix)) { // relaxed check
-                      interpToAdd = suffix; 
+                  if (normCurr.includes(suffix)) {
+                      interpToAdd = suffix;
                       break;
                   }
               }
@@ -780,7 +723,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
               }
             }
         }
-        // If !includeInterpretation, newLine is just prevClean (no interp), which is correct.
+        // If interpretation is OFF, keep cleaned user line only.
 
         if (newLine !== currLine) {
             fieldOverrideByKey.set(key, newLine);
@@ -788,24 +731,21 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         }
       });
     }
-    // Also scan indices outside mapped fields for free manual lines (e.g., inserted between headers and first field)
+    // Scan indices outside mapped fields for manual free lines.
     for (let i = 0; i < linesPrev.length; i++) {
-      // Skip header lines
       if (i === 0 || i === 1) continue;
-      // For field indices already processed above, skip if matched or suffix captured
       const rel = i - baseIndexOffset;
       if (rel >= 0 && rel < fieldKeysUsed.length) continue;
-      // If beyond known fields and non-empty, treat as trailing manual content within block
+      // Treat remaining non-empty lines as trailing manual content.
       if (linesPrev[i] && linesPrev[i].trim()) {
         addFreeLineAtIndex(i, linesPrev[i]);
       }
     }
   }
 
-  // For cb_* markers: detect overrides vs suffix additions
+  // For cb_* markers, detect full overrides vs suffix-only extensions.
   for (const [id, inner] of existingContentById.entries()) {
     if (id.startsWith('cb_')) {
-      // Les groupes de phrases doivent toujours utiliser la valeur recalculee (jamais overridee)
       if (id.startsWith('cb_group_')) continue;
       const mxId = `mx_${id}`;
       const base = baseById.get(id) || '';
@@ -813,7 +753,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
 
       if (inner && inner !== base) {
         if (inner.startsWith(base)) {
-          // Pure extension -> treat as suffix
+          // Pure extension: store as suffix.
           const suf = inner.slice(base.length).trim();
           if (suf) {
             existingSuffixById.set(mxId, suf);
@@ -821,16 +761,15 @@ export function generateSummary(data, prestataire, includeInterpretation = false
           }
           continue;
         }
-        // Internal modification / truncation / rewrite -> override whole line
+        // Internal rewrite/truncation: override full line.
         baseById.set(id, inner);
         logDebug('SUMMARY', 'Override total checkbox applique', { id, textLength: inner.length });
         continue;
       }
-      // inner === base (unchanged) -> nothing
     }
   }
 
-  // Helper to compose fld_fields content by reinserting preserved free lines with de-duplication
+  // Compose fld_fields by reinserting preserved free lines with de-duplication.
   function composeFldWithFree(baseText) {
     let composedLines = String(baseText).split(/\r?\n/);
     const insertedFreeNormSet = new Set();
@@ -844,7 +783,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         if (!norm) { skippedDupCount++; return; }
         if (baseFldNormSet.has(norm)) { skippedDupCount++; return; }
         if (insertedFreeNormSet.has(norm)) { skippedDupCount++; return; }
-        // If a line with same normalized content already exists in composed content, skip to avoid duplicates across runs
         if (composedLines.some(x => normalizeLineText(x) === norm)) { skippedDupCount++; return; }
         const insertAt = Math.min(idx + j, composedLines.length);
         composedLines.splice(insertAt, 0, ln);
@@ -853,7 +791,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       });
     });
     logDebug('SUMMARY', 'Lignes libres fld_fields reinjectees', { insertedCount, skippedDupCount });
-    // Apply per-field overrides (after reinserting free lines, so indices still align: baseIndexOffset + i)
+    // Apply per-field overrides after free-line reinsertion.
     if (fieldOverrideByKey.size) {
       const baseIndexOffset = 2;
       fieldKeysUsed.forEach((key, i) => {
@@ -866,14 +804,14 @@ export function generateSummary(data, prestataire, includeInterpretation = false
         }
       });
     }
-    // Apply header overrides (indices 0 and 1) if captured
+    // Apply captured header overrides (indices 0 and 1).
     headerOverrideByIndex.forEach((val, idx) => {
       if (idx < composedLines.length) {
         logDebug('SUMMARY', 'Override header applique', { headerIndex: idx });
         composedLines[idx] = val;
       }
     });
-    // Passe finale stricte: ne garder qu'une seule occurrence globale des lignes header / prestataire / observance
+    // Final strict pass: keep only one global header/provider/observance occurrence.
     const final = [];
     const seenType = { header:false, prest:false, obs:false };
     const seenNormAll = new Set();
@@ -883,7 +821,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       if (n.startsWith('données de télésuivi')) { if (seenType.header) continue; seenType.header = true; final.push(ln); continue; }
       if (n.startsWith('prestataire :')) { if (seenType.prest) continue; seenType.prest = true; final.push(ln); continue; }
       if (n.startsWith("l'observance est ")) { if (seenType.obs) continue; seenType.obs = true; final.push(ln); continue; }
-      if (seenNormAll.has(n)) continue; // éliminer toute répétition ailleurs
+      if (seenNormAll.has(n)) continue;
       seenNormAll.add(n);
       final.push(ln);
     }
@@ -891,11 +829,9 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     return composedLines.join('\n');
   }
 
-  // Construire nouvelle séquence de markers: on conserve ceux encore actifs (ordre précédent), puis on ajoute les nouveaux.
-  // Nouvelle stratégie: respecter l'ordre hiérarchique courant des autos tout en conservant
-  // la position relative originale des segments manuels.
-  // 1) Analyser l'ancien ordre pour compter les autos vus avant chaque segment manuel.
-  const manualTokens = []; // {token, autosBefore}
+  // Build new marker sequence while preserving manual token relative placement.
+  // 1) Analyze previous order and count autos seen before each manual token.
+  const manualTokens = [];
   let autosSeen = 0;
   const activeAutoSet = new Set(currentIds.filter(id => id === 'fld_fields' || id.startsWith('cb_')));
   for (const token of tokens) {
@@ -904,7 +840,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       if ((id === 'fld_fields' || id.startsWith('cb_')) && activeAutoSet.has(id)) {
         autosSeen++;
       } else if (id.startsWith('manual') || (!id.startsWith('mx_') && id !== 'fld_fields' && !id.startsWith('cb_'))) {
-        // Traiter markers non-auto comme manuel pour la stabilité
+        // Treat non-auto markers as manual tokens for stability.
         manualTokens.push({ token: { type: 'marker', id, inner: token.inner }, autosBefore: autosSeen });
       }
     } else if (token.type === 'manual') {
@@ -912,8 +848,6 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     }
   }
 
-  // 2) Générer la nouvelle liste d'autos dans l'ordre hiérarchique actuel (organizationOrder déjà appliqué plus haut).
-  //    markers contient déjà fld_fields + cb_* dans l'ordre voulu.
   const autoBaseIdsOrdered = markers.map(m => m.id).filter(id => id === 'fld_fields' || id.startsWith('cb_'));
 
   function renderAutoBlock(id, outArr) {
@@ -960,10 +894,10 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     }
   }
 
-  // 3) Recomposer en insérant les segments manuels selon leur ratio autosBefore.
+  // 3) Recompose by reinserting manual segments based on autosBefore.
   const outputMarkers = [];
-  const totalOriginalAutos = Math.max(1, autosSeen); // éviter division par zéro
-  // Pré-indexer les manuels par autosBefore
+  const totalOriginalAutos = Math.max(1, autosSeen);
+  // Pre-index manual tokens by autosBefore.
   const manualsByCount = new Map();
   manualTokens.forEach(mt => {
     const key = mt.autosBefore;
@@ -971,13 +905,11 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     manualsByCount.get(key).push(mt.token);
   });
 
-  // Ajouter manuels qui étaient avant tout auto (autosBefore = 0)
+  // Add manuals that were before any auto block (autosBefore = 0).
   if (manualsByCount.has(0)) {
     manualsByCount.get(0).forEach(tok => {
       if (tok.type === 'manual') {
-        // générer un id stable si déjà manual_ sinon nouveau
-        // Re-créer un manual_N séquentiel à la fin (on renumérote toujours)
-        // Renumérotation: on différera jusqu'à la fin -> stocker placeholder
+        // Keep placeholder and assign sequential manual_N IDs later.
         outputMarkers.push(tok.__placeholder || `__MANUAL_PLACEHOLDER__::${tok.text}`);
       } else {
         outputMarkers.push(`<${tok.id}=${tok.inner}//${tok.id}>`);
@@ -985,7 +917,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     });
   }
 
-  // Génération des autos avec insertion des manuels qui suivaient chacun dans l'ancien flux.
+  // Emit autos and insert manuals that followed each auto in previous flow.
   let manualSeq = 0;
   function emitManualToken(tok, arr) {
     manualSeq++;
@@ -997,19 +929,18 @@ export function generateSummary(data, prestataire, includeInterpretation = false
   }
   autoBaseIdsOrdered.forEach((id, idx) => {
     renderAutoBlock(id, outputMarkers);
-    const afterCount = idx + 1; // manuels qui avaient autosBefore == afterCount
+    const afterCount = idx + 1;
     if (manualsByCount.has(afterCount)) {
       manualsByCount.get(afterCount).forEach(tok => emitManualToken(tok, outputMarkers));
     }
   });
 
-  // Ajouter tout manuel avec autosBefore > nombre d'autos originels (sécurité) ou > autoBaseIdsOrdered.length
+  // Append manuals with autosBefore beyond current auto count.
   const overflowKeys = [...manualsByCount.keys()].filter(k => k > autoBaseIdsOrdered.length);
   overflowKeys.sort((a,b)=>a-b).forEach(k => {
     manualsByCount.get(k).forEach(tok => emitManualToken(tok, outputMarkers));
   });
 
-  // Composition finale : en-têtes (premières lignes non marker) + markers + note/rodap + texte manuel résiduel
   const headerLines = [];
   if (lines.length) {
     if (lines[0].startsWith('Données de télésuivi')) headerLines.push(lines[0]);
@@ -1022,7 +953,7 @@ export function generateSummary(data, prestataire, includeInterpretation = false
   });
 
   const assembled = [];
-  // Respecter strictement l'ordre déjà calculé (organizationOrder) : ne pas forcer fld_fields en premier.
+  // Keep computed order (organizationOrder); do not force fld_fields first.
   assembled.push(...outputMarkers);
   if (otherStatic.length) {
     assembled.push('');
@@ -1034,9 +965,9 @@ export function generateSummary(data, prestataire, includeInterpretation = false
     resultLength: result.length,
     manualSuffixCount: existingSuffixById.size
   });
-  
+
   const reused = Array.from(existingSuffixById.keys()).length;
   logDebug('SUMMARY', 'Generation markers terminee', { totalMarkers: outputMarkers.length, suffixReused: reused });
-  
+
   return result;
 }

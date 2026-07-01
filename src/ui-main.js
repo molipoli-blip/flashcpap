@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/ui-main.js - Point d'entrée principal pour le système UI modulaire
-// Ce fichier orchestre l'initialisation de l'interface modulaire.
 
 import { setupTabNavigation } from './navigation.js';
 import { renderSettingsUI } from './field-management.js';
@@ -40,10 +38,6 @@ function ensureProviderOrganizationState(providerLabel) {
   recalcOrganizationOrder(providerLabel);
 }
 
-/**
- * Applique l'état activé/verrouillé des contrôles principaux selon la validité du prestataire.
- * Isole les règles UI de verrouillage hors de la fonction de mise à jour générale.
- */
 function applyProviderButtonState(isNoProvider) {
   const btnAnalyse = byId('btn-analyse');
   const cbInterpret = byId('cb-interpret');
@@ -83,17 +77,12 @@ export function renderParameterViews(providerKey, { forceOrganization = false } 
   return provider;
 }
 
-/**
- * Fonction principale d'initialisation de l'interface utilisateur
- */
 export function initializeUI() {
   console.log('[UI][initializeUI] Initializing modular UI system...');
-  
+
   try {
-    // 1. Configuration de l'organisation des familles
     setupFamilyOrganization();
-    
-    // 2. Configuration de la navigation principale
+
     setupTabNavigation({
       onMainTabActivated: tabName => {
         if (tabName === 'param') {
@@ -106,8 +95,7 @@ export function initializeUI() {
         }
       }
     });
-    
-    // 3. Configuration des boutons de gestion des prestataires
+
     setupProviderButtons({
       onProviderCreated: labelName => refreshProviderUi(labelName, { renderSettings: true }),
       onRefreshSettings: provider => refreshProviderUi(provider, {
@@ -115,28 +103,22 @@ export function initializeUI() {
         renderOrganization: isOrganizationSubTabActive()
       })
     });
-    
-    // 4. Population initiale des selects (inclut Organisation maintenant)
+
     populatePrestataireSelects();
     syncProviderSelects(resolveProviderLabel(getCurrentProviderSelection(), settings, { fallbackToFirstAvailable: true }));
-    
-    // 5. Affichage de l'interface par défaut
+
     displayDefaultInterface();
-    
+
   console.log('[UI][initializeUI] Modular UI system initialized successfully');
-    
+
   } catch (error) {
     console.error('[UI][initializeUI] Error initializing UI:', error);
     showToast(t('uiInitError'), 'error');
   }
 }
 
-/**
- * Affiche l'interface par défaut (onglet Analyse)
- */
 function displayDefaultInterface() {
   try {
-    // S'assurer que l'onglet Analyse est activé par défaut
     const analyseTab = document.querySelector('button[data-tab="analyse"]');
     if (analyseTab) {
       analyseTab.click();
@@ -146,10 +128,6 @@ function displayDefaultInterface() {
   }
 }
 
-/**
- * Fonction de mise à jour de l'interface quand le prestataire change
- * Appelée depuis les event listeners de sélection de prestataire
- */
 export function updateUIForProvider(providerKey) {
   try {
     const prov = normalizeProvider(providerKey);
@@ -210,9 +188,6 @@ export function refreshProviderUi(providerKey, { renderSettings = false, renderO
   return activeProvider;
 }
 
-/**
- * Fonction utilitaire pour obtenir le prestataire actuellement sélectionné
- */
 export function getCurrentProvider() {
   try {
     return getCurrentProviderSelection();

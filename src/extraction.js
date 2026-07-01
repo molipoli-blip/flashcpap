@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// src/extraction.js
 import { extractTextFromPDF } from '../lib/pdf-parser.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
@@ -8,10 +7,10 @@ import { browserApi } from './platform/browser-api.js';
 export async function getPageText() {
   const tab = await getActiveNormalTab();
   if (!tab) return '';
-  
-  // Mode PDF : extraction depuis fichier uploadé si présent
+
+  // PDF mode: extract from the uploaded file when present.
   const pdfFileInput = document.getElementById('pdf-file-input');
-  
+
   if (pdfFileInput?.files?.length > 0) {
     const file = pdfFileInput.files[0];
 
@@ -24,9 +23,8 @@ export async function getPageText() {
       return { text: `ERREUR: Impossible de lire le fichier PDF.\n\n${error.message}`, isPdf: true };
     }
   }
-  
-  // Extraction HTML classique
-  // Modification pour autoriser les fichiers locaux (file://) pour les tests
+
+  // HTML mode also allows local file URLs for tests.
   if (!/^(https?|file):/.test(tab.url)) return { text: '', isPdf: false };
 
   try {

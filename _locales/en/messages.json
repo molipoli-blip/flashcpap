@@ -32,9 +32,6 @@
   "labelProvider": {
     "message": "Provider:"
   },
-  "toggleAutoLockUrl": {
-    "message": "Autolock URL"
-  },
   "buttonAnalyzePage": {
     "message": "Analyze page"
   },

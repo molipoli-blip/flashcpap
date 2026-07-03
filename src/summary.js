@@ -30,12 +30,6 @@ function normalizeComparableText(value) {
   return normalizeLineText(value).toLowerCase();
 }
 
-const DEFAULT_INTERPRETATION_TEXTS = {
-  obs: { ge: 'bonne observance', lt: 'observance non satisfaisante' },
-  iah: { ge: 'non efficace', lt: 'efficace' },
-  fuites: { ge: 'fuites significatives', lt: 'pas de fuites' }
-};
-
 function parseOptionalFiniteNumber(value) {
   if (value === null || value === undefined || value === '') return null;
   const number = Number(value);
@@ -54,16 +48,16 @@ function buildInterpretationConfig(settings) {
     },
     texts: {
       obs: {
-        ge: (inputTexts.obs?.ge || '').trim() || DEFAULT_INTERPRETATION_TEXTS.obs.ge,
-        lt: (inputTexts.obs?.lt || '').trim() || DEFAULT_INTERPRETATION_TEXTS.obs.lt
+        ge: (inputTexts.obs?.ge || '').trim(),
+        lt: (inputTexts.obs?.lt || '').trim()
       },
       iah: {
-        ge: (inputTexts.iah?.ge || '').trim() || DEFAULT_INTERPRETATION_TEXTS.iah.ge,
-        lt: (inputTexts.iah?.lt || '').trim() || DEFAULT_INTERPRETATION_TEXTS.iah.lt
+        ge: (inputTexts.iah?.ge || '').trim(),
+        lt: (inputTexts.iah?.lt || '').trim()
       },
       fuites: {
-        ge: (inputTexts.fuites?.ge || '').trim() || DEFAULT_INTERPRETATION_TEXTS.fuites.ge,
-        lt: (inputTexts.fuites?.lt || '').trim() || DEFAULT_INTERPRETATION_TEXTS.fuites.lt
+        ge: (inputTexts.fuites?.ge || '').trim(),
+        lt: (inputTexts.fuites?.lt || '').trim()
       }
     }
   };
@@ -71,20 +65,21 @@ function buildInterpretationConfig(settings) {
 
 function getFieldInterpretation(fieldName, value, fieldDef, thresholds, texts) {
   const role = (fieldDef.role || fieldName).toLowerCase();
+  const missingThresholdMessage = 'seuil non renseigné dans interprétation';
   if (role === 'obs') {
-    if (thresholds.obsHours === null) return '';
+    if (thresholds.obsHours === null) return missingThresholdMessage;
     const h = toHoursNumber(value);
-    return !isNaN(h) ? (h >= thresholds.obsHours ? (texts.obs?.ge || DEFAULT_INTERPRETATION_TEXTS.obs.ge) : (texts.obs?.lt || DEFAULT_INTERPRETATION_TEXTS.obs.lt)) : '';
+    return !isNaN(h) ? (h >= thresholds.obsHours ? (texts.obs?.ge || '') : (texts.obs?.lt || '')) : '';
   }
   if (role === 'iah') {
-    if (thresholds.iah === null) return '';
+    if (thresholds.iah === null) return missingThresholdMessage;
     const n = parseDecimalNumber(value);
-    return !isNaN(n) ? (n >= thresholds.iah ? (texts.iah?.ge || DEFAULT_INTERPRETATION_TEXTS.iah.ge) : (texts.iah?.lt || DEFAULT_INTERPRETATION_TEXTS.iah.lt)) : '';
+    return !isNaN(n) ? (n >= thresholds.iah ? (texts.iah?.ge || '') : (texts.iah?.lt || '')) : '';
   }
   if (role === 'fuites') {
-    if (thresholds.fuites === null) return '';
+    if (thresholds.fuites === null) return missingThresholdMessage;
     const n = parseDecimalNumber(value);
-    return !isNaN(n) ? (n >= thresholds.fuites ? (texts.fuites?.ge || DEFAULT_INTERPRETATION_TEXTS.fuites.ge) : (texts.fuites?.lt || DEFAULT_INTERPRETATION_TEXTS.fuites.lt)) : '';
+    return !isNaN(n) ? (n >= thresholds.fuites ? (texts.fuites?.ge || '') : (texts.fuites?.lt || '')) : '';
   }
   return '';
 }

@@ -291,6 +291,7 @@ export function buildInlineFieldEditorMarkup({ fieldKey, siteLabel, initialState
         ${renderRoleAndSuffixSection({ fieldKey, roleInitial, suffixInitial })}
         <div id="add-field-error-${fieldKey}" style="display:none; color:#b00020; font-weight:bold; font-size:12px; margin-bottom:6px;"></div>
         <div class="inline-actions" style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
+          <button id="inline-submit-${fieldKey}" style="padding:6px 10px;">${t('buttonValidate')}</button>
           <button id="inline-cancel-${fieldKey}" style="padding:6px 10px;">${t('buttonCancel')}</button>
         </div>
       </div>`;

@@ -776,8 +776,17 @@
   "interpretationObsThresholdLabel": {
     "message": "Observance ≥"
   },
+  "interpretationObsThresholdPlaceholder": {
+    "message": "exemple 6.8"
+  },
+  "interpretationIahThresholdPlaceholder": {
+    "message": "exemple 4.2"
+  },
   "interpretationLeaksThresholdLabel": {
     "message": "Fuites ≥"
+  },
+  "interpretationLeaksThresholdPlaceholder": {
+    "message": "exemple 88.6"
   },
   "interpretationObsTitle": {
     "message": "Observance"

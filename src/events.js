@@ -12,6 +12,7 @@ import { browserApi } from './platform/browser-api.js';
 import { toProviderKey } from './domain/provider-rules.js';
 import { t } from './i18n.js';
 import { ensureSettingsObject } from './storage-guards.js';
+import { getCustomCheckboxes } from './custom-checkbox-store.js';
 
 let lastParsedData = null;
 let lastSelectedPrestataire = null;
@@ -53,7 +54,7 @@ export async function updateSummaryDisplay() {
 
     const customCheckboxStates = {};
     ensureSettingsObject(settings, 'customCheckboxes');
-    const customCheckboxes = settings.customCheckboxes[toProviderKey(lastSelectedPrestataire)] || [];
+    const customCheckboxes = getCustomCheckboxes(settings, toProviderKey(lastSelectedPrestataire));
     let checkedCustomCount = 0;
 
     for (const checkbox of customCheckboxes) {

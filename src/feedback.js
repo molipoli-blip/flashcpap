@@ -6,6 +6,7 @@ import { buildCleanSummaryText } from './domain/summary-rules.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
 import { t } from './i18n.js';
+import { getCustomCheckboxes } from './custom-checkbox-store.js';
 
 const errorBuffer = [];
 const MAX_ERRORS = 50;
@@ -118,7 +119,7 @@ function snapshotSettings(provider) {
   const key = (provider || '').toLowerCase();
   return {
     hasProviderPatterns: !!settings.patterns?.[key],
-    customCheckboxesCount: settings.customCheckboxes?.[key]?.length || 0,
+    customCheckboxesCount: getCustomCheckboxes(settings, key).length,
     pinnedOptions: settings.pinnedOptions?.[key] || null,
     compactFields: !!settings.compactFields?.[key]
   };

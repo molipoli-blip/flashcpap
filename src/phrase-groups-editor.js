@@ -6,6 +6,7 @@ import { alertInline, confirmInline } from './ui-utils.js';
 import { createPhraseGroupId, normalizePhraseGroupId } from './shared/id.js';
 import { t } from './i18n.js';
 import { ensureProviderEntry, ensureSettingsObject } from './storage-guards.js';
+import { getCustomCheckboxes } from './custom-checkbox-store.js';
 
 // Shared selection-mode state.
 let phrasePotState = { active: false, family: '', orderIds: [] };
@@ -227,7 +228,7 @@ export function openPhraseManagementPanel(site) {
 
   function renderCheckboxesForPot() {
     checkboxGrid.innerHTML = '';
-    const customCheckboxes = settings.customCheckboxes[site] || [];
+    const customCheckboxes = getCustomCheckboxes(settings, site);
     const byFamily = new Map();
 
     customCheckboxes.forEach(checkbox => {
@@ -351,8 +352,9 @@ export function openPhraseManagementPanel(site) {
         align-items: center; justify-content: space-between;
       `;
 
+      const siteCheckboxes = getCustomCheckboxes(settings, site);
       const checkboxValues = (group.order || []).map(id => {
-        const checkbox = (settings.customCheckboxes[site] || []).find(item => item.id === id);
+        const checkbox = siteCheckboxes.find(item => item.id === id);
         return checkbox ? checkbox.value : `[${id}]`;
       });
 

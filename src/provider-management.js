@@ -10,6 +10,7 @@ import { ensureProviderConfig, getAvailableProviderLabels, getFirstAvailableProv
 import { t } from './i18n.js';
 import { markProviderAsShared } from './copy-engagement.js';
 import { ensureProviderEntry, ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
+import { getCustomCheckboxes, linkCustomCheckboxesForProvider } from './custom-checkbox-store.js';
 
 let _onRefreshSettings = null;
 
@@ -61,14 +62,13 @@ export function createProvider(providerName) {
   }
 
   ensureProviderConfig(settings, key, {
-    urls: [],
+    urls: ['<all_urls>'],
     fields: JSON.parse(JSON.stringify(DEFAULT_PROVIDER_FIELDS)),
     fieldOrder: Object.keys(DEFAULT_PROVIDER_FIELDS)
   });
   ensureSettingsObject(settings, 'noteLibre');
-  ensureSettingsObject(settings, 'customCheckboxes');
   settings.noteLibre[key] = '';
-  ensureProviderEntry(settings, 'customCheckboxes', key, []);
+  linkCustomCheckboxesForProvider(settings, key);
   saveSettings();
   populatePrestataireSelects();
 
@@ -249,8 +249,9 @@ function applyImportedProviderPayload(siteLabel, normalizedPayload) {
   }
 
   if (normalizedPayload.customCheckboxes !== undefined) {
-    ensureSettingsObject(settings, 'customCheckboxes');
-    settings.customCheckboxes[key] = normalizedPayload.customCheckboxes;
+    const customCheckboxes = getCustomCheckboxes(settings, key);
+    customCheckboxes.splice(0, customCheckboxes.length, ...normalizedPayload.customCheckboxes);
+    linkCustomCheckboxesForProvider(settings, key);
   }
 
   if (normalizedPayload.checkboxPhrases !== undefined) {
@@ -296,7 +297,7 @@ function buildProviderExportPayload(site) {
       settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || [],
       []
     ),
-    customCheckboxes: cloneJsonData(settings.customCheckboxes?.[key] || [], []),
+    customCheckboxes: cloneJsonData(getCustomCheckboxes(settings, key), []),
     checkboxPhrases: cloneJsonData(settings.checkboxPhrases?.[key] || [], []),
     exclusions: cloneJsonData(settings.exclusionsByProvider?.[key] || [], []),
     globalSeparators: patterns.globalSeparators || [],
@@ -327,7 +328,7 @@ export async function shareProviderToCommunity(siteLabel) {
       version: 2,
       meta: { name: site, vendor, model },
       patterns: patterns,
-      customCheckboxes: settings.customCheckboxes?.[key] || [],
+      customCheckboxes: getCustomCheckboxes(settings, key),
       checkboxPhrases: settings.checkboxPhrases?.[key] || [],
       noteLibre: settings.noteLibre?.[key] || '',
       compactFields: settings.compactFields?.[key] || false,
@@ -343,7 +344,7 @@ export async function shareProviderToCommunity(siteLabel) {
     vendor,
     model,
     fieldCount: Object.keys(patterns.fields || {}).length,
-    checkboxCount: (settings.customCheckboxes?.[key] || []).length,
+    checkboxCount: getCustomCheckboxes(settings, key).length,
     phraseCount: (settings.checkboxPhrases?.[key] || []).length,
     organizationCount: (settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || []).length,
     exclusionCount: (settings.exclusionsByProvider?.[key] || []).length,
@@ -440,8 +441,7 @@ export function importProviderConfigAsNew(jsonData, options = {}) {
 
     applyImportedProviderPayload(label, normalizedImport);
 
-    ensureSettingsObject(settings, 'customCheckboxes');
-    ensureProviderEntry(settings, 'customCheckboxes', key, []);
+    linkCustomCheckboxesForProvider(settings, key);
     ensureSettingsObject(settings, 'checkboxPhrases');
     ensureProviderEntry(settings, 'checkboxPhrases', key, []);
 
@@ -563,6 +563,7 @@ export function setupImportExportUI({ onRefreshSettings } = {}) {
 export function exportProviderCheckboxes(site) {
   const key = toProviderKey(site);
   if (!isValidProviderSelection(site)) { showToast(t('providerNoValidExport'), 'error'); return; }
+  const customCheckboxes = getCustomCheckboxes(settings, key);
 
   // Build minimal, dedicated payload
   const exportData = {
@@ -570,18 +571,16 @@ export function exportProviderCheckboxes(site) {
     type: 'checkboxes',
     provider: site,
     exportDate: new Date().toISOString(),
-    customCheckboxes: settings.customCheckboxes?.[key] || [],
+    customCheckboxes,
     checkboxPhrases: settings.checkboxPhrases?.[key] || [],
     // Local families used by this provider
-    checkboxFamilies: Array.from(new Set((settings.customCheckboxes?.[key] || []).map(cb => cb.family).filter(Boolean))),
+    checkboxFamilies: Array.from(new Set(customCheckboxes.map(cb => cb.family).filter(Boolean))),
     organizationOrder: (settings.organizationOrder || []).filter(item => {
       if (item.type === 'family') {
-        const checkboxes = settings.customCheckboxes?.[key] || [];
-        return checkboxes.some(cb => cb.family === item.id);
+        return customCheckboxes.some(cb => cb.family === item.id);
       }
       if (item.type === 'checkbox') {
-        const checkboxes = settings.customCheckboxes?.[key] || [];
-        return checkboxes.some(cb => cb.id === item.id);
+        return customCheckboxes.some(cb => cb.id === item.id);
       }
       return false;
     })
@@ -602,8 +601,9 @@ export function importProviderCheckboxes(site, jsonData) {
     const org = Array.isArray(jsonData.organizationOrder) ? jsonData.organizationOrder : [];
     const families = Array.isArray(jsonData.checkboxFamilies) ? jsonData.checkboxFamilies : [];
 
-    ensureSettingsObject(settings, 'customCheckboxes');
-    settings.customCheckboxes[key] = cbList;
+    const customCheckboxes = getCustomCheckboxes(settings, key);
+    customCheckboxes.splice(0, customCheckboxes.length, ...cbList);
+    linkCustomCheckboxesForProvider(settings, key);
     ensureSettingsObject(settings, 'checkboxPhrases');
     settings.checkboxPhrases[key] = phrases;
 

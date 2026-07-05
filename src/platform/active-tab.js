@@ -3,44 +3,15 @@
 
 import { browserApi } from './browser-api.js';
 
-function getSourceTabIdFromLocation() {
-  try {
-    const tabId = new URL(window.location.href).searchParams.get('sourceTabId');
-    return tabId ? Number(tabId) : null;
-  } catch {
-    return null;
-  }
-}
-
-function getSourceWindowIdFromLocation() {
-  try {
-    const windowId = new URL(window.location.href).searchParams.get('sourceWindowId');
-    return windowId ? Number(windowId) : null;
-  } catch {
-    return null;
-  }
-}
-
 export async function getActiveNormalTab() {
-  const sourceWindowId = getSourceWindowIdFromLocation();
-  if (Number.isInteger(sourceWindowId) && sourceWindowId >= 0) {
-    try {
-      const sourceTabs = await browserApi.tabs.query({ active: true, windowId: sourceWindowId });
-      if (sourceTabs?.[0]) return sourceTabs[0];
-    } catch {}
-  }
-
-  const sourceTabId = getSourceTabIdFromLocation();
-  if (Number.isInteger(sourceTabId) && sourceTabId >= 0) {
-    try {
-      return await browserApi.tabs.get(sourceTabId);
-    } catch {}
-  }
-
+  // Prefer the normal browser window currently focused by the user.
+  // This avoids keeping analysis pinned to the first source window when the popup stays open.
   try {
     const win = await browserApi.windows.getLastFocused({ windowTypes: ['normal'] });
-    const tabs = await browserApi.tabs.query({ active: true, windowId: win.id });
-    if (tabs?.[0]) return tabs[0];
+    if (win?.id != null) {
+      const tabs = await browserApi.tabs.query({ active: true, windowId: win.id });
+      if (tabs?.[0]) return tabs[0];
+    }
   } catch {}
 
   const currentWindowTabs = await browserApi.tabs.query({ active: true, currentWindow: true });

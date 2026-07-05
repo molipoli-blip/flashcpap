@@ -5,7 +5,8 @@ import { refreshCheckboxUIs } from './checkbox-refresh.js';
 import { getCheckboxFormElements, resetCheckboxForm, setFavoriteButtonState, updateFamilySuggestionsList } from './checkbox-settings.js';
 import { hasValidProvider } from './domain/provider-rules.js';
 import { t } from './i18n.js';
-import { ensureProviderEntry, ensureSettingsObject } from './storage-guards.js';
+import { ensureSettingsObject } from './storage-guards.js';
+import { getCustomCheckboxes } from './custom-checkbox-store.js';
 
 function getCheckboxFormState() {
   const { textInput, valueInput, familyInput, favoriteBtn } = getCheckboxFormElements();
@@ -50,7 +51,7 @@ export function setupCustomCheckboxManagement({
     }
 
     ensureSettingsObject(settings, 'customCheckboxes');
-    ensureProviderEntry(settings, 'customCheckboxes', site, []);
+    const customCheckboxes = getCustomCheckboxes(settings, site);
 
     let targetId = null;
     let existingCheckbox = null;
@@ -58,17 +59,17 @@ export function setupCustomCheckboxManagement({
     if (isEditing()) {
       const editInfo = getEditingInfo();
       targetId = editInfo?.checkbox?.id || null;
-      existingCheckbox = settings.customCheckboxes[site].find(checkbox => checkbox.id === targetId) || editInfo?.checkbox || null;
+      existingCheckbox = customCheckboxes.find(checkbox => checkbox.id === targetId) || editInfo?.checkbox || null;
     } else {
       const sameSiteDraft = draftCheckboxId && draftSite === site;
       existingCheckbox = sameSiteDraft
-        ? settings.customCheckboxes[site].find(checkbox => checkbox.id === draftCheckboxId) || null
+        ? customCheckboxes.find(checkbox => checkbox.id === draftCheckboxId) || null
         : null;
 
       if (!existingCheckbox) {
         targetId = generateUniqueId();
         existingCheckbox = { id: targetId, pinned: false };
-        settings.customCheckboxes[site].push(existingCheckbox);
+        customCheckboxes.push(existingCheckbox);
         draftCheckboxId = targetId;
         draftSite = site;
       } else {
@@ -86,9 +87,9 @@ export function setupCustomCheckboxManagement({
       pinned: existingCheckbox?.pinned || false
     };
 
-    const index = settings.customCheckboxes[site].findIndex(checkbox => checkbox.id === targetId);
-    if (index === -1) settings.customCheckboxes[site].push(nextCheckbox);
-    else settings.customCheckboxes[site][index] = nextCheckbox;
+    const index = customCheckboxes.findIndex(checkbox => checkbox.id === targetId);
+    if (index === -1) customCheckboxes.push(nextCheckbox);
+    else customCheckboxes[index] = nextCheckbox;
 
     if (family) {
       addFamilyToSuggestions(family);
@@ -155,7 +156,7 @@ export function setupCustomCheckboxManagement({
     }
 
     ensureSettingsObject(settings, 'customCheckboxes');
-    ensureProviderEntry(settings, 'customCheckboxes', site, []);
+    getCustomCheckboxes(settings, site);
 
     await ensureCheckboxDraftSaved();
 

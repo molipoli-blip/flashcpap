@@ -6,6 +6,7 @@ import { createLockedMessage } from './ui-utils.js';
 import { t } from './i18n.js';
 import { safeRun } from './error-handling.js';
 import { ensureProviderEntry, ensureSettingsObject } from './storage-guards.js';
+import { getCustomCheckboxes } from './custom-checkbox-store.js';
 
 export function setupFamilyOrganization() {
   try { console.log('[ORG][setupFamilyOrganization] Initializing family settings'); } catch {}
@@ -110,13 +111,11 @@ export function recalcOrganizationOrder(provider = '') {
 
   const discoveredFamilies = new Set();
   const siteKey = provider.toLowerCase();
-  if (settings.customCheckboxes && settings.customCheckboxes[siteKey]) {
-    (settings.customCheckboxes[siteKey] || []).forEach(cb => {
-      if (cb.family && cb.family.trim()) {
-        discoveredFamilies.add(cb.family.trim());
-      }
-    });
-  }
+  getCustomCheckboxes(settings, siteKey).forEach(cb => {
+    if (cb.family && cb.family.trim()) {
+      discoveredFamilies.add(cb.family.trim());
+    }
+  });
 
   const toAdd = [];
   Array.from(discoveredFamilies).sort().forEach(fam => {
@@ -160,13 +159,11 @@ function getOrganizationOrder(provider = '') {
   const allFamilies = new Set();
   const siteKey = provider.toLowerCase();
 
-  if (settings.customCheckboxes && settings.customCheckboxes[siteKey]) {
-    settings.customCheckboxes[siteKey].forEach(cb => {
-      if (cb.family && cb.family.trim()) {
-        allFamilies.add(cb.family.trim());
-      }
-    });
-  }
+  getCustomCheckboxes(settings, siteKey).forEach(cb => {
+    if (cb.family && cb.family.trim()) {
+      allFamilies.add(cb.family.trim());
+    }
+  });
 
   Array.from(allFamilies).sort().forEach(family => {
     defaultOrder.push({

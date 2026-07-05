@@ -26,6 +26,7 @@ import { applyTranslations } from './i18n.js';
 import { initSupportersUI } from './supporters.js';
 import { buildCleanSummaryText } from './domain/summary-rules.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
+import { browserApi } from './platform/browser-api.js';
 
 window.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
@@ -150,7 +151,9 @@ function setupActionFeatures(analysisSelect) {
 async function init() {
   loadSettings();
   try {
-    const manifest = browser.runtime.getManifest();
+    const manifest = browserApi.runtime.getManifest();
+    const baseTitle = (document.title || '').trim() || 'FlashCPAP';
+    document.title = `${baseTitle} v${manifest.version}`;
     console.log(`[INIT] FlashCPAP v${manifest.version}`);
     console.log('[INIT] Settings loaded. Families:', settings.checkboxFamilies, 'OrgOrder length:', (settings.organizationOrder||[]).length);
   } catch {}

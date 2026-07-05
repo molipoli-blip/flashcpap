@@ -10,6 +10,7 @@ import { safeRun } from './error-handling.js';
 import { ensureSettingsObject } from './storage-guards.js';
 import { getActiveTabContext, normalizePageTextResult } from './analysis-flow-utils.js';
 import { renderSourceWithHighlights, setupJumpSelect } from './analysis-highlight-renderer.js';
+import { getCustomCheckboxes } from './custom-checkbox-store.js';
 
 function setCheckedState(input, checked, { bubbles = false } = {}) {
   if (!input || input.checked === checked) return false;
@@ -39,7 +40,7 @@ function ensureInterpretationPinned(settings, { bubbles = false } = {}) {
 }
 
 function syncPinnedCustomCheckboxes(siteKey, settings, { resetFirst = false, bubbles = false } = {}) {
-  const customCheckboxes = settings.customCheckboxes?.[siteKey] || [];
+  const customCheckboxes = getCustomCheckboxes(settings, siteKey);
 
   if (resetFirst) {
     customCheckboxes.forEach(checkbox => {
@@ -330,6 +331,7 @@ export async function executeAnalysisRun({
   });
 
   setLastParsedData(data, providerValue);
+  setLastAnalyzedUrl(currentUrl);
 
   await finalizeAnalysisState({
     provider: providerValue,

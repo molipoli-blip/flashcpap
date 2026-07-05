@@ -19,6 +19,44 @@ function getMutablePatterns(source) {
   return typeof source === 'object' ? source : null;
 }
 
+function escapeRegex(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isGlobalUrlPattern(raw) {
+  const value = String(raw || '').trim().toLowerCase();
+  return value === '<all_urls>' || value === '*://*/*' || value === 'http://*/*' || value === 'https://*/*';
+}
+
+function matchesPattern(urlObj, rawPattern) {
+  const raw = String(rawPattern || '').trim();
+  if (!raw) return false;
+
+  const rawLower = raw.toLowerCase();
+  const href = (urlObj?.href || '').toLowerCase();
+
+  if (isGlobalUrlPattern(rawLower)) return true;
+
+  if (urlObj?.protocol === 'file:') {
+    return href.includes(rawLower);
+  }
+
+  if (rawLower.includes('://') && rawLower.includes('*')) {
+    const wildcardPattern = `^${escapeRegex(rawLower).replace(/\\\*/g, '.*')}$`;
+    return new RegExp(wildcardPattern).test(href);
+  }
+
+  let patternHost;
+  try {
+    patternHost = new URL(raw).hostname.toLowerCase();
+  } catch {
+    patternHost = rawLower;
+  }
+
+  const host = (urlObj?.hostname || '').toLowerCase();
+  return !!patternHost && host.includes(patternHost);
+}
+
 export function normalizeProviderLabel(providerLabel) {
   return typeof providerLabel === 'string' ? providerLabel.trim() : '';
 }
@@ -105,41 +143,34 @@ export function pickProviderLabel(candidates, source, { fallbackToFirstAvailable
 export function detectProviderFromUrl(url, source) {
   console.log('🔍 [Detection] URL:', url);
   let detected = null;
+  const globalCandidates = [];
 
   try {
     const urlObj = new URL(url);
-    const isFile = urlObj.protocol === 'file:';
-    const host = urlObj.hostname.toLowerCase();
-    const href = urlObj.href.toLowerCase();
     const patterns = getPatterns(source);
 
     for (const site of Object.keys(patterns || {})) {
       for (const raw of patterns[site].urls || []) {
-        const rawLower = String(raw || '').toLowerCase();
-        if (!rawLower) continue;
+        if (!matchesPattern(urlObj, raw)) continue;
 
-        if (isFile) {
-          if (href.includes(rawLower)) {
-            detected = toProviderLabel(site);
-            break;
-          }
+        if (isGlobalUrlPattern(raw)) {
+          globalCandidates.push(toProviderLabel(site));
           continue;
         }
 
-        let patternHost;
-        try {
-          patternHost = new URL(raw).hostname.toLowerCase();
-        } catch {
-          patternHost = rawLower;
-        }
-
-        if (patternHost && host.includes(patternHost)) {
-          detected = toProviderLabel(site);
-          break;
-        }
+        detected = toProviderLabel(site);
+        break;
       }
 
       if (detected) break;
+    }
+
+    if (!detected && globalCandidates.length === 1) {
+      detected = globalCandidates[0];
+    }
+
+    if (!detected && globalCandidates.length > 1) {
+      console.warn('[Detection] Plusieurs prestataires avec <all_urls>, detection auto ignoree');
     }
   } catch (error) {
     console.error('Detection error', error);

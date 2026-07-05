@@ -4,6 +4,7 @@
 import { getProviderSelects } from './provider-sync.js';
 import { settings, saveSettings } from './storage.js';
 import { toProviderKey } from './domain/provider-rules.js';
+import { getCustomCheckboxes } from './custom-checkbox-store.js';
 
 export function normalizeProviderSiteKey(value) {
   return toProviderKey(value);
@@ -44,7 +45,7 @@ export function isAnalyseProviderSite(siteKey) {
 
 function getCheckboxList(siteKey) {
   const normalizedSiteKey = normalizeProviderSiteKey(siteKey);
-  return settings.customCheckboxes?.[normalizedSiteKey] || [];
+  return getCustomCheckboxes(settings, normalizedSiteKey);
 }
 
 export function updateCheckboxById(siteKey, checkboxId, updater) {

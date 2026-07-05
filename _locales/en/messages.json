@@ -776,8 +776,17 @@
   "interpretationObsThresholdLabel": {
     "message": "Compliance ≥"
   },
+  "interpretationObsThresholdPlaceholder": {
+    "message": "example 6.8"
+  },
+  "interpretationIahThresholdPlaceholder": {
+    "message": "example 4.2"
+  },
   "interpretationLeaksThresholdLabel": {
     "message": "Leaks ≥"
+  },
+  "interpretationLeaksThresholdPlaceholder": {
+    "message": "example 88.6"
   },
   "interpretationObsTitle": {
     "message": "Compliance"

@@ -8,6 +8,7 @@ import { refreshCheckboxUIs } from './checkbox-refresh.js';
 import { hasValidProvider } from './domain/provider-rules.js';
 import { t } from './i18n.js';
 import { ensureSettingsObject } from './storage-guards.js';
+import { getCustomCheckboxes } from './custom-checkbox-store.js';
 import {
   isPhraseModePotActive,
   notifyPhrasePotBlocked,
@@ -126,7 +127,7 @@ export function renderCustomCheckboxSettings(site) {
   openPhraseManagementPanel(site);
 
   ensureSettingsObject(settings, 'customCheckboxes');
-  const customCheckboxes = settings.customCheckboxes[site] || [];
+  const customCheckboxes = getCustomCheckboxes(settings, site);
 
   if (customCheckboxes.length === 0) {
     const emptyMessage = document.createElement('div');
@@ -226,7 +227,7 @@ export function renderCustomCheckboxSettings(site) {
 
         const index = customCheckboxes.indexOf(checkbox);
         if (index !== -1) {
-          settings.customCheckboxes[site].splice(index, 1);
+          customCheckboxes.splice(index, 1);
           await saveCheckboxSettingsAndRefresh(site, { refreshSummary: true });
         }
       });

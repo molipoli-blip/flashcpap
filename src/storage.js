@@ -3,6 +3,7 @@
 import { generateUniqueId } from './shared/id.js';
 import { browserApi } from './platform/browser-api.js';
 import { ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
+import { linkCustomCheckboxesForProvider, migrateCustomCheckboxesToGlobal } from './custom-checkbox-store.js';
 
 export const STORAGE_KEY = 'ppc_analyzer_settings';
 
@@ -112,6 +113,15 @@ function normalizeProviderPatterns(target) {
 
     const normalizedPattern = target.patterns[site];
     if (!Array.isArray(normalizedPattern.urls)) normalizedPattern.urls = [];
+    const normalizedUrls = normalizedPattern.urls
+      .map(url => String(url || '').trim())
+      .filter(Boolean);
+    const hasLegacyGlobalPair = normalizedUrls.includes('http://*/*') && normalizedUrls.includes('https://*/*');
+    if (normalizedUrls.length === 0 || hasLegacyGlobalPair || normalizedUrls.includes('*://*/*') || normalizedUrls.includes('<all_urls>')) {
+      normalizedPattern.urls = ['<all_urls>'];
+    } else {
+      normalizedPattern.urls = normalizedUrls;
+    }
     if (!isObject(normalizedPattern.fields)) normalizedPattern.fields = {};
     if (!normalizedPattern.fieldOrder) normalizedPattern.fieldOrder = Object.keys(normalizedPattern.fields || {});
 
@@ -158,10 +168,10 @@ function normalizeSummaryMeta(target) {
 function normalizeCustomCheckboxes(target) {
   ensureObject(target, 'customCheckboxes');
 
-  for (let site in target.patterns) {
-    if (!Array.isArray(target.customCheckboxes[site])) target.customCheckboxes[site] = [];
+  for (const [key, value] of Object.entries(target.customCheckboxes)) {
+    if (!Array.isArray(value)) continue;
 
-    target.customCheckboxes[site] = target.customCheckboxes[site].map(checkbox => {
+    target.customCheckboxes[key] = value.map(checkbox => {
       if (isObject(checkbox) && checkbox.text && checkbox.value) {
         return {
           id: checkbox.id || generateUniqueId(),
@@ -174,6 +184,15 @@ function normalizeCustomCheckboxes(target) {
       }
       return checkbox;
     });
+  }
+
+  const globalCustomCheckboxes = migrateCustomCheckboxesToGlobal(target);
+  for (const site of Object.keys(target.patterns || {})) {
+    linkCustomCheckboxesForProvider(target, site);
+  }
+
+  if (!Array.isArray(globalCustomCheckboxes)) {
+    target.customCheckboxes = { __global__: [] };
   }
 }
 

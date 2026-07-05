@@ -296,6 +296,7 @@ function setupInlineEditorActions({
 }) {
   const AUTOSAVE_DELAY_MS = 500;
   const safeFieldKey = CSS.escape(fieldKey);
+  const inlineSubmit = contentWrap.querySelector(`#inline-submit-${safeFieldKey}`);
   const inlineCancel = contentWrap.querySelector(`#inline-cancel-${safeFieldKey}`);
   let autosaveTimer = null;
   let lastSavedSnapshot = '';
@@ -304,7 +305,10 @@ function setupInlineEditorActions({
   const persistState = ({ rerender, toast } = { rerender: false, toast: false }) => {
     const state = readInlineEditorFormState(contentWrap, fieldKey);
     const snapshot = buildSnapshot(state);
-    if (!rerender && snapshot === lastSavedSnapshot) return true;
+    if (!rerender && snapshot === lastSavedSnapshot) {
+      try { if (unsavedIndicator) unsavedIndicator.style.display = 'none'; } catch {}
+      return true;
+    }
 
     const labelsWanted = buildInlineLabels(fieldKey, state, { silent: !rerender });
     const saved = onSave?.({
@@ -343,7 +347,30 @@ function setupInlineEditorActions({
     });
   }
 
+  if (inlineSubmit) {
+    inlineSubmit.addEventListener('click', (event) => {
+      event.stopPropagation();
+      clearTimeout(autosaveTimer);
+      const saved = persistState({ rerender: true, toast: true });
+      if (!saved) return;
+      modeWrap.style.display = 'none';
+      toggle.textContent = '▼';
+      requestAnimationFrame(() => {
+        const card = modeWrap.closest('.field-group');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+  }
+
   const markUnsaved = () => {
+    try {
+      const snapshot = buildSnapshot(readInlineEditorFormState(contentWrap, fieldKey));
+      if (snapshot === lastSavedSnapshot) {
+        clearTimeout(autosaveTimer);
+        if (unsavedIndicator) unsavedIndicator.style.display = 'none';
+        return;
+      }
+    } catch {}
     try { if (unsavedIndicator) unsavedIndicator.style.display = ''; } catch {}
     scheduleAutosave();
   };

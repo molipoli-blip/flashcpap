@@ -5,7 +5,6 @@
 const _browser = (typeof globalThis.browser !== 'undefined') ? globalThis.browser : globalThis.chrome;
 
 const ANALYZER_WINDOW_ID_KEY = 'analyzerWindowId';
-const ANALYZER_SOURCE_TAB_KEY = 'analyzerSourceTabId';
 const TAG = '[FlashCPAP][BG]';
 
 console.log(TAG, 'Service worker démarré');
@@ -40,32 +39,6 @@ async function clearStoredAnalyzerWindowId() {
   }
 }
 
-async function getStoredSourceTabId() {
-  try {
-    const stored = await _browser.storage.local.get({ [ANALYZER_SOURCE_TAB_KEY]: null });
-    const id = Number.isInteger(stored?.[ANALYZER_SOURCE_TAB_KEY]) ? stored[ANALYZER_SOURCE_TAB_KEY] : null;
-    return id;
-  } catch {
-    return null;
-  }
-}
-
-async function setStoredSourceTabId(tabId) {
-  try {
-    await _browser.storage.local.set({ [ANALYZER_SOURCE_TAB_KEY]: tabId });
-  } catch (err) {
-    console.warn(TAG, 'setStoredSourceTabId erreur', err);
-  }
-}
-
-async function clearStoredSourceTabId() {
-  try {
-    await _browser.storage.local.remove(ANALYZER_SOURCE_TAB_KEY);
-  } catch (err) {
-    console.warn(TAG, 'clearStoredSourceTabId erreur', err);
-  }
-}
-
 async function getSourceTab() {
   const tabs = await _browser.tabs.query({ active: true, currentWindow: true });
   const tab = tabs?.[0] || null;
@@ -73,18 +46,10 @@ async function getSourceTab() {
   return tab;
 }
 
-function buildPopupUrl(sourceTab) {
-  const popupUrl = new URL(_browser.runtime.getURL('popup.html'));
-
-  if (sourceTab?.id != null) {
-    popupUrl.searchParams.set('sourceTabId', String(sourceTab.id));
-  }
-  if (sourceTab?.windowId != null) {
-    popupUrl.searchParams.set('sourceWindowId', String(sourceTab.windowId));
-  }
-
-  console.log(TAG, 'buildPopupUrl ->', popupUrl.toString());
-  return popupUrl.toString();
+function buildPopupUrl() {
+  const popupUrl = _browser.runtime.getURL('popup.html');
+  console.log(TAG, 'buildPopupUrl ->', popupUrl);
+  return popupUrl;
 }
 
 _browser.action.onClicked.addListener(async () => {
@@ -94,34 +59,16 @@ _browser.action.onClicked.addListener(async () => {
   if (analyzerWindowId !== null) {
     console.log(TAG, 'tentative focus fenêtre existante', analyzerWindowId);
     try {
-      const sourceTab = await getSourceTab();
-      const storedSourceTabId = await getStoredSourceTabId();
-
-      if (sourceTab?.id != null && sourceTab.id !== storedSourceTabId) {
-        // Active tab changed: reload the popup for the new source tab.
-        console.log(TAG, 'nouvel onglet détecté, rechargement popup', storedSourceTabId, '->', sourceTab.id);
-        const newPopupUrl = buildPopupUrl(sourceTab);
-        const popupTabs = await _browser.tabs.query({ windowId: analyzerWindowId });
-        if (popupTabs?.[0]?.id != null) {
-          await _browser.tabs.update(popupTabs[0].id, { url: newPopupUrl });
-        }
-        await _browser.windows.update(analyzerWindowId, { focused: true });
-        await setStoredSourceTabId(sourceTab.id);
-      } else {
-        // Same source tab: focus the existing popup window.
-        await _browser.windows.update(analyzerWindowId, { focused: true });
-        console.log(TAG, 'fenêtre existante refocalisée', analyzerWindowId);
-      }
+      await _browser.windows.update(analyzerWindowId, { focused: true });
+      console.log(TAG, 'fenêtre existante refocalisée', analyzerWindowId);
       return;
     } catch (err) {
       console.warn(TAG, 'fenêtre introuvable (fermée?), réinitialisation ->', err?.message || err);
       await clearStoredAnalyzerWindowId();
-      await clearStoredSourceTabId();
     }
   }
 
-  const sourceTab = await getSourceTab();
-  const popupUrl = buildPopupUrl(sourceTab);
+  const popupUrl = buildPopupUrl();
 
   console.log(TAG, 'création nouvelle fenêtre popup');
   const createdWindow = await _browser.windows.create({
@@ -134,9 +81,6 @@ _browser.action.onClicked.addListener(async () => {
   if (createdWindow?.id != null) {
     console.log(TAG, 'fenêtre créée id=', createdWindow.id);
     await setStoredAnalyzerWindowId(createdWindow.id);
-    if (sourceTab?.id != null) {
-      await setStoredSourceTabId(sourceTab.id);
-    }
   } else {
     console.error(TAG, 'windows.create n\'a pas retourné d\'id valide', createdWindow);
   }
@@ -147,6 +91,5 @@ _browser.windows.onRemoved.addListener(async windowId => {
   if (windowId === analyzerWindowId) {
     console.log(TAG, 'fenêtre analyzer fermée id=', windowId, ', nettoyage storage');
     await clearStoredAnalyzerWindowId();
-    await clearStoredSourceTabId();
   }
 });

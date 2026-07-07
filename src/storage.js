@@ -144,9 +144,17 @@ function normalizeProviderPatterns(target) {
 
 function normalizeInterpretationSettings(target) {
   const interpretation = ensureObject(target, 'interpretation', { obsHours: null, iah: null, fuites: null, texts: {} });
-  if (interpretation.obsHours === undefined) interpretation.obsHours = null;
-  if (interpretation.iah === undefined) interpretation.iah = null;
-  if (interpretation.fuites === undefined) interpretation.fuites = null;
+  const normalizeThresholdValue = value => {
+    if (value === undefined || value === null) return null;
+    const normalized = String(value).trim().replace(',', '.');
+    if (!normalized) return null;
+    const number = Number(normalized);
+    return Number.isFinite(number) ? number : null;
+  };
+
+  interpretation.obsHours = normalizeThresholdValue(interpretation.obsHours);
+  interpretation.iah = normalizeThresholdValue(interpretation.iah);
+  interpretation.fuites = normalizeThresholdValue(interpretation.fuites);
 
   const texts = ensureObject(interpretation, 'texts');
   if (!isObject(texts.obs)) texts.obs = { ge: '', lt: '' };

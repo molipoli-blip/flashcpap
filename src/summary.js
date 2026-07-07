@@ -31,8 +31,10 @@ function normalizeComparableText(value) {
 }
 
 function parseOptionalFiniteNumber(value) {
-  if (value === null || value === undefined || value === '') return null;
-  const number = Number(value);
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim().replace(',', '.');
+  if (!normalized) return null;
+  const number = Number(normalized);
   return Number.isFinite(number) ? number : null;
 }
 

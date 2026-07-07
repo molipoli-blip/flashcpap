@@ -3,6 +3,7 @@
 
 import { hasValidProvider, toProviderKey } from './domain/provider-rules.js';
 import { t } from './i18n.js';
+import { settings as liveSettings } from './storage.js';
 
 function getInterpretationElements() {
   return {
@@ -71,12 +72,43 @@ function updateInterpretationLockMessage(enabled) {
 export function updateInterpretationControlsState({ settings, providerKey } = {}) {
   const providerSelect = document.getElementById('prest-param');
   const currentProvider = toProviderKey(providerKey || providerSelect?.value || '');
-  const hasValidSelection = hasValidProvider(settings, currentProvider);
+  const effectiveSettings = settings || liveSettings;
+  const hasValidSelection = hasValidProvider(effectiveSettings, currentProvider);
 
   setInterpretationInputsEnabled(hasValidSelection);
   updateInterpretationLockMessage(hasValidSelection);
+  refreshInterpretationInputValues();
 
   return hasValidSelection;
+}
+
+function refreshInterpretationInputValues() {
+  const { thObs, thIah, thFuites, txtObsGe, txtObsLt, txtIahGe, txtIahLt, txtFuitesGe, txtFuitesLt } = getInterpretationElements();
+  if (!thObs || !thIah || !thFuites) return;
+
+  const parseMaybeNumber = rawValue => {
+    const normalized = String(rawValue ?? '').replace(',', '.').trim();
+    if (!normalized) return null;
+    const value = Number(normalized);
+    return Number.isFinite(value) ? value : null;
+  };
+
+  try {
+    const interp = liveSettings.interpretation || {};
+    const obsThreshold = parseMaybeNumber(interp.obsHours);
+    const iahThreshold = parseMaybeNumber(interp.iah);
+    const fuitesThreshold = parseMaybeNumber(interp.fuites);
+    thObs.value = obsThreshold === null ? '' : String(obsThreshold);
+    thIah.value = iahThreshold === null ? '' : String(iahThreshold);
+    thFuites.value = fuitesThreshold === null ? '' : String(fuitesThreshold);
+    const T = interp.texts || {};
+    if (txtObsGe) txtObsGe.value = T.obs?.ge ?? '';
+    if (txtObsLt) txtObsLt.value = T.obs?.lt ?? '';
+    if (txtIahGe) txtIahGe.value = T.iah?.ge ?? '';
+    if (txtIahLt) txtIahLt.value = T.iah?.lt ?? '';
+    if (txtFuitesGe) txtFuitesGe.value = T.fuites?.ge ?? '';
+    if (txtFuitesLt) txtFuitesLt.value = T.fuites?.lt ?? '';
+  } catch {}
 }
 
 export function setupInterpretationThresholds({ settings, saveSettings, updateSummaryDisplay }) {
@@ -145,6 +177,7 @@ export function setupInterpretationThresholds({ settings, saveSettings, updateSu
       if (serialized === lastSerializedPayload) return;
 
       settings.interpretation = payload;
+      liveSettings.interpretation = payload;
       saveSettings();
       lastSerializedPayload = serialized;
 
@@ -166,9 +199,12 @@ export function setupInterpretationThresholds({ settings, saveSettings, updateSu
   };
 
   try {
-    thObs.value = Number.isFinite(Number(settings.interpretation?.obsHours)) ? String(settings.interpretation?.obsHours) : '';
-    thIah.value = Number.isFinite(Number(settings.interpretation?.iah)) ? String(settings.interpretation?.iah) : '';
-    thFuites.value = Number.isFinite(Number(settings.interpretation?.fuites)) ? String(settings.interpretation?.fuites) : '';
+    const obsThreshold = parseMaybeNumber(settings.interpretation?.obsHours);
+    const iahThreshold = parseMaybeNumber(settings.interpretation?.iah);
+    const fuitesThreshold = parseMaybeNumber(settings.interpretation?.fuites);
+    thObs.value = obsThreshold === null ? '' : String(obsThreshold);
+    thIah.value = iahThreshold === null ? '' : String(iahThreshold);
+    thFuites.value = fuitesThreshold === null ? '' : String(fuitesThreshold);
     thObs.placeholder = t('interpretationObsThresholdPlaceholder');
     thIah.placeholder = t('interpretationIahThresholdPlaceholder');
     thFuites.placeholder = t('interpretationLeaksThresholdPlaceholder');

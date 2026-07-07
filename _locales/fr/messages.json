@@ -11,6 +11,33 @@
   "popupTitle": {
     "message": "FlashCPAP"
   },
+  "updateBannerTitle": {
+    "message": "Mise à jour de FlashCPAP v$1"
+  },
+  "updateBannerSectionTitle1": {
+    "message": "Analyse sur plusieurs onglets"
+  },
+  "updateBannerSectionBody1": {
+    "message": "L’analyse peut désormais être lancée depuis n’importe quel onglet, quel que soit l’onglet dans lequel l’extension a été ouverte. \n\nAuparavant, elle ne fonctionnait que sur la page d’ouverture de l’extension. \n\nVous pouvez maintenant analyser un onglet, puis passer à un autre onglet et relancer l’analyse sans avoir à fermer et rouvrir l’extension, améliorant ainsi la fluidité entre plusieurs onglets de prestataires ouverts."
+  },
+  "updateBannerSectionTitle2": {
+    "message": "Amélioration des checkboxes"
+  },
+  "updateBannerSectionBody2": {
+    "message": "Affichage optimisé pour les familles de checkboxes et ajout de checkboxes personnalisées par défaut."
+  },
+  "updateBannerSectionTitle3": {
+    "message": "Corrections de bugs et amélioration de l'interface visuelle"
+  },
+  "updateBannerSectionBody3": {
+    "message": "Correction de comportements de rafraichissement dans le popup et amélioration de l'interface visuelle."
+  },
+  "updateBannerClose": {
+    "message": "Fermer"
+  },
+  "updateBannerCloseTitle": {
+    "message": "Masquer ce message"
+  },
   "tabAnalyze": {
     "message": "🧪 Analyse"
   },
@@ -61,6 +88,33 @@
   },
   "labelAnalyzePdf": {
     "message": "📄 Analyser un fichier PDF (optionnel) :"
+  },
+  "pdfPanelCompactTitle": {
+    "message": "📄 PDF (optionnel)"
+  },
+  "pdfNoFileSelected": {
+    "message": "Aucun fichier choisi"
+  },
+  "pdfModeOff": {
+    "message": "Analyse en cours : page web"
+  },
+  "pdfModeOn": {
+    "message": "Analyse en cours : fichier PDF"
+  },
+  "pdfModePrefix": {
+    "message": "Vous analysez :"
+  },
+  "pdfModeValueWeb": {
+    "message": "page web"
+  },
+  "pdfModeValueFile": {
+    "message": "fichier PDF"
+  },
+  "pdfChooseFileCta": {
+    "message": "Ajouter un fichier à analyser"
+  },
+  "pdfClearToAnalyzeTab": {
+    "message": "⚠️ PDF chargé : cliquez sur \"Vider\" pour analyser un nouvel onglet."
   },
   "hintAnalyzePdf": {
     "message": "💡 Si un fichier est sélectionné, il sera analysé à la place de la page web."

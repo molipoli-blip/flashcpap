@@ -11,6 +11,54 @@
   "popupTitle": {
     "message": "FlashCPAP"
   },
+  "updateBannerTitle": {
+    "message": "FlashCPAP v$1 is now available"
+  },
+  "updateBannerBody": {
+    "message": "Your extension was updated with improvements to analysis, interface clarity, and overall stability. Open the Settings tab to review what's new."
+  },
+  "updateBannerSectionTitle1": {
+    "message": "More reliable analysis"
+  },
+  "updateBannerSectionBody1": {
+    "message": "Improved content detection and better overall stability during analysis."
+  },
+  "updateBannerSectionTitle2": {
+    "message": "Clearer interface"
+  },
+  "updateBannerSectionBody2": {
+    "message": "Optimized display for checkbox families with a more compact and readable organization."
+  },
+  "updateBannerSectionTitle3": {
+    "message": "Important fixes"
+  },
+  "updateBannerSectionBody3": {
+    "message": "Fixed popup refresh edge cases and improved day-to-day usability."
+  },
+  "updateBannerClose": {
+    "message": "Close"
+  },
+  "updateBannerCloseTitle": {
+    "message": "Hide this message"
+  },
+  "updateBannerExampleTitle1": {
+    "message": "New version available: FlashCPAP v$1"
+  },
+  "updateBannerExampleBody1": {
+    "message": "This update improves analysis speed and readability of custom checkboxes."
+  },
+  "updateBannerExampleTitle2": {
+    "message": "Update completed"
+  },
+  "updateBannerExampleBody2": {
+    "message": "We fixed multiple bugs and improved compatibility with complex pages."
+  },
+  "updateBannerExampleTitle3": {
+    "message": "What's new in version $1"
+  },
+  "updateBannerExampleBody3": {
+    "message": "Discover the new dynamic family layout for checkboxes and popup usability refinements."
+  },
   "tabAnalyze": {
     "message": "🧪 Analyze"
   },
@@ -61,6 +109,33 @@
   },
   "labelAnalyzePdf": {
     "message": "📄 Analyze a PDF file (optional):"
+  },
+  "pdfPanelCompactTitle": {
+    "message": "📄 PDF (optional)"
+  },
+  "pdfNoFileSelected": {
+    "message": "No file selected"
+  },
+  "pdfModeOff": {
+    "message": "Current analysis: web page"
+  },
+  "pdfModeOn": {
+    "message": "Current analysis: PDF file"
+  },
+  "pdfModePrefix": {
+    "message": "You are analyzing:"
+  },
+  "pdfModeValueWeb": {
+    "message": "web page"
+  },
+  "pdfModeValueFile": {
+    "message": "PDF file"
+  },
+  "pdfChooseFileCta": {
+    "message": "Add a file to analyze"
+  },
+  "pdfClearToAnalyzeTab": {
+    "message": "⚠️ PDF loaded: click \"Clear\" to analyze a new tab."
   },
   "hintAnalyzePdf": {
     "message": "💡 If a file is selected, it will be analyzed instead of the web page."

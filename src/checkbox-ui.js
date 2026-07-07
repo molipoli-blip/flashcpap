@@ -17,11 +17,11 @@ import { getCustomCheckboxes } from './custom-checkbox-store.js';
 const CUSTOM_CHECKBOX_EVENT = 'custom-checkbox-changed';
 const CUSTOM_CHIP_STYLE = {
   display: 'inline-block',
-  margin: '2px',
-  padding: '3px 6px',
+  margin: '1px',
+  padding: '2px 5px',
   fontSize: '10px',
   border: '1px solid #ddd',
-  borderRadius: '3px',
+  borderRadius: '2px',
   cursor: 'pointer',
   backgroundColor: '#f9f9f9',
   transition: 'all 0.2s'
@@ -184,7 +184,21 @@ export function createCustomCheckboxesUI(prestataire) {
 
   const siteKey = normalizeProviderSiteKey(prestataire);
   const customCheckboxes = getCustomCheckboxes(settings, siteKey);
-  if (!customCheckboxes.length) return;
+  if (!customCheckboxes.length) {
+    container.style.display = 'block';
+    return;
+  }
+
+  Object.assign(container.style, {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '4px 10px',
+    alignItems: 'flex-start',
+    alignContent: 'flex-start',
+    justifyContent: 'flex-start',
+    overflowX: 'hidden',
+    overflowY: 'visible'
+  });
 
   const groupIndexByCb = buildCheckboxGroupIndex(siteKey);
   const favorites = customCheckboxes.filter(checkbox => !!checkbox.favorite);
@@ -196,19 +210,34 @@ export function createCustomCheckboxesUI(prestataire) {
     families[family].push(checkbox);
   });
 
-  const toggleFavorite = (checkboxId, desired) => {
-    const updatedCheckbox = updateCheckboxById(siteKey, checkboxId, checkbox => ({
+  const toggleFavorite = async (checkboxId, desired) => {
+    const currentSiteKey = getAnalyseProviderSiteKey() || siteKey;
+    const updatedCheckbox = updateCheckboxById(currentSiteKey, checkboxId, checkbox => ({
       ...checkbox,
       favorite: typeof desired === 'boolean' ? desired : !checkbox.favorite
     }));
+    try {
+      console.debug('[ANALYSE][FAVORITE_TOGGLE]', {
+        checkboxId,
+        desired,
+        siteKey: currentSiteKey,
+        updated: !!updatedCheckbox
+      });
+    } catch {}
     if (updatedCheckbox) {
-      refreshCheckboxUIs({ siteKey });
+      await refreshCheckboxUIs({
+        siteKey: currentSiteKey,
+        providerLabel: getAnalyseProviderSiteKey(),
+        refreshAnalyse: true
+      });
+      try { console.debug('[ANALYSE][FAVORITE_TOGGLE] UI refreshed'); } catch {}
     }
   };
 
   if (favorites.length) {
     const favoriteSection = document.createElement('div');
     favoriteSection.className = 'chip-section';
+    favoriteSection.style.flexBasis = '100%';
 
     const favoriteTitle = document.createElement('div');
     favoriteTitle.className = 'chip-title favorites';
@@ -216,6 +245,12 @@ export function createCustomCheckboxesUI(prestataire) {
     favoriteSection.appendChild(favoriteTitle);
 
     const favoriteContainer = document.createElement('div');
+    Object.assign(favoriteContainer.style, {
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: '2px'
+    });
     favorites.forEach(checkbox => {
       const favoriteChip = createCheckboxChip(checkbox, CUSTOM_CHIP_STYLE, CHIP_THEME.accent, siteKey, {
         proxy: false,
@@ -233,24 +268,44 @@ export function createCustomCheckboxesUI(prestataire) {
   }
 
   Object.keys(families).sort().forEach(familyName => {
+    const familyItems = families[familyName];
+    const n = familyItems.length;
+    // Estimate chip width (star + toggle + text ≈ 90px), compute how many per row to make
+    // the block roughly square, then cap at the full container width.
+    const chipEstimatedWidth = 92;
+    const chipsPerRow = Math.max(1, Math.ceil(Math.sqrt(n)));
+    const chipsMaxWidth = chipsPerRow * chipEstimatedWidth;
+
     const familySection = document.createElement('div');
-    familySection.style.marginBottom = '6px';
+    familySection.className = 'chip-section';
+    familySection.style.marginBottom = '0';
+    familySection.style.display = 'inline-flex';
+    familySection.style.gap = '5px';
+    familySection.style.alignItems = 'flex-start';
+    // Never grow: take only as much space as content needs
+    familySection.style.flex = '0 0 auto';
+    familySection.style.minWidth = '0';
+    familySection.style.maxWidth = '100%';
 
     const familyTitle = document.createElement('div');
+    familyTitle.className = 'chip-title family';
     familyTitle.textContent = familyName;
-    familyTitle.style.fontSize = '10px';
-    familyTitle.style.fontWeight = 'bold';
-    familyTitle.style.color = '#666';
-    familyTitle.style.marginBottom = '2px';
+    familyTitle.style.marginBottom = '0';
+    familyTitle.style.paddingTop = '2px';
+    familyTitle.style.whiteSpace = 'nowrap';
     familySection.appendChild(familyTitle);
 
     const familyContainer = document.createElement('div');
-    familyContainer.style.lineHeight = '1.2';
+    familyContainer.style.lineHeight = '1.1';
     familyContainer.style.display = 'flex';
-    familyContainer.style.flexWrap = 'wrap';
+    familyContainer.style.flexWrap = n >= 2 ? 'wrap' : 'nowrap';
     familyContainer.style.alignItems = 'center';
+    familyContainer.style.gap = '1px';
+    familyContainer.style.minWidth = '0';
+    // Constrain to roughly square shape; will wrap naturally within that budget
+    familyContainer.style.maxWidth = `${chipsMaxWidth}px`;
 
-    families[familyName].forEach(checkbox => {
+    familyItems.forEach(checkbox => {
       const isFavorite = !!checkbox.favorite;
       const chip = createCheckboxChip(checkbox, CUSTOM_CHIP_STYLE, CHIP_THEME.accent, siteKey, {
         proxy: isFavorite,
@@ -397,12 +452,12 @@ function createCheckboxChip(checkbox, baseStyle, accentColor, siteKey, opts = {}
     fontSize: '14px',
     padding: '0 2px'
   });
-  star.addEventListener('click', event => {
+  star.addEventListener('click', async event => {
     event.preventDefault();
     event.stopPropagation();
     const desiredFavorite = !checkbox.favorite;
     if (typeof opts.onToggleFavorite === 'function') {
-      opts.onToggleFavorite(desiredFavorite);
+      await opts.onToggleFavorite(desiredFavorite);
       return;
     }
 
@@ -410,8 +465,21 @@ function createCheckboxChip(checkbox, baseStyle, accentColor, siteKey, opts = {}
     const updatedCheckbox = updateCheckboxById(currentSiteKey, checkbox.id, {
       favorite: desiredFavorite
     });
+    try {
+      console.debug('[ANALYSE][FAVORITE_BUTTON]', {
+        checkboxId: checkbox.id,
+        desiredFavorite,
+        siteKey: currentSiteKey,
+        updated: !!updatedCheckbox
+      });
+    } catch {}
     if (updatedCheckbox) {
-      refreshCheckboxUIs({ siteKey: currentSiteKey });
+      await refreshCheckboxUIs({
+        siteKey: currentSiteKey,
+        providerLabel: getAnalyseProviderSiteKey(),
+        refreshAnalyse: true
+      });
+      try { console.debug('[ANALYSE][FAVORITE_BUTTON] UI refreshed'); } catch {}
     }
   });
 

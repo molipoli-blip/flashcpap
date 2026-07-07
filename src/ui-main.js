@@ -87,6 +87,10 @@ export function initializeUI() {
       onMainTabActivated: tabName => {
         if (tabName === 'param') {
           renderParameterViews(getCurrentProvider());
+          return;
+        }
+        if (tabName === 'analyse') {
+          updateUIForProvider(getCurrentProvider());
         }
       },
       onSubTabActivated: subtab => {

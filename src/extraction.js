@@ -4,6 +4,27 @@ import { extractTextFromPDF } from '../lib/pdf-parser.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
 
+function isMissingHostPermissionError(error) {
+  const message = String(error?.message || error || '').toLowerCase();
+  return (
+    message.includes('cannot access contents of url')
+    || message.includes('must request permission to access this host')
+    || message.includes('missing host permission')
+    || message.includes('requires host permissions')
+  );
+}
+
+async function requestHostPermissionForTab(tab) {
+  try {
+    const parsed = new URL(tab?.url || '');
+    if (!/^https?:$/.test(parsed.protocol)) return false;
+    const originPattern = `${parsed.protocol}//${parsed.host}/*`;
+    return !!(await browserApi.permissions.request({ origins: [originPattern] }));
+  } catch {
+    return false;
+  }
+}
+
 async function extractHtmlTextFromTab(tab) {
   const results = await browserApi.scripting.executeScript({
     tabId: tab.id,
@@ -77,6 +98,21 @@ export async function getPageText() {
   try {
     return await extractHtmlTextFromTab(tab);
   } catch (error) {
+    if (isMissingHostPermissionError(error)) {
+      const granted = await requestHostPermissionForTab(tab);
+      if (granted) {
+        try {
+          return await extractHtmlTextFromTab(tab);
+        } catch (retryError) {
+          console.error('💥 [getPageText] Erreur apres demande de permission hote:', retryError);
+          return { text: '', isPdf: false };
+        }
+      }
+
+      console.warn('⚠️ [getPageText] Permission hote non accordee pour l\'onglet actif.');
+      return { text: '', isPdf: false };
+    }
+
     console.error('💥 [getPageText] Erreur lors de l\'extraction du texte:', error);
     return { text: '', isPdf: false };
   }

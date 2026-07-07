@@ -22,11 +22,12 @@ import { detectProviderFromUrl, bindProviderSelects, getProviderSelects } from '
 import { setupCopyAction } from './copy-action.js';
 import { setupAnalysisActions } from './analysis-actions.js';
 import { setupCustomCheckboxManagement } from './custom-checkbox-management.js';
-import { applyTranslations } from './i18n.js';
+import { applyTranslations, t } from './i18n.js';
 import { initSupportersUI } from './supporters.js';
 import { buildCleanSummaryText } from './domain/summary-rules.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
+import { initUpdateAnnouncement } from './update-announcement.js';
 
 window.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
@@ -67,14 +68,28 @@ function setupPdfFeedbackLogging() {
   const pdfFileInput = document.getElementById('pdf-file-input');
   if (!pdfFileInput) return;
   const pdfClearBtn = document.getElementById('pdf-clear-btn');
+  const pdfModeStatus = document.getElementById('pdf-mode-status');
 
   const syncClearBtn = () => {
     if (pdfClearBtn) pdfClearBtn.style.display = pdfFileInput.files?.length ? 'inline-block' : 'none';
   };
 
+  const syncPdfModeState = () => {
+    const hasFile = Boolean(pdfFileInput.files?.length);
+    if (pdfModeStatus) {
+      const valueClass = hasFile ? 'pdf-mode-value-file' : 'pdf-mode-value-web';
+      const valueText = hasFile ? t('pdfModeValueFile') : t('pdfModeValueWeb');
+      pdfModeStatus.innerHTML = `<span class="pdf-mode-label">${t('pdfModePrefix')} </span><span class="${valueClass}">${valueText}</span>`;
+    }
+  };
+
+  syncClearBtn();
+  syncPdfModeState();
+
   pdfFileInput.addEventListener('change', event => {
     const file = event.target.files?.[0];
     syncClearBtn();
+    syncPdfModeState();
     if (file) {
       logDebug('PDF', 'Fichier sélectionné', { name: file.name, size: `${(file.size / 1024).toFixed(1)} Ko` });
       return;
@@ -85,6 +100,7 @@ function setupPdfFeedbackLogging() {
   pdfClearBtn?.addEventListener('click', () => {
     pdfFileInput.value = '';
     syncClearBtn();
+    syncPdfModeState();
     logDebug('PDF', 'Fichier vidé (retour mode HTML)');
   });
 }
@@ -150,6 +166,7 @@ function setupActionFeatures(analysisSelect) {
 
 async function init() {
   loadSettings();
+  initUpdateAnnouncement({ browserApi });
   try {
     const manifest = browserApi.runtime.getManifest();
     const baseTitle = (document.title || '').trim() || 'FlashCPAP';

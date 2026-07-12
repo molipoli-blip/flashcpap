@@ -40,11 +40,10 @@ export async function updateSummaryDisplay() {
   logFlow('SUMMARY', 'Debut mise a jour resume');
 
   if (!lastParsedData || !lastSelectedPrestataire) {
-    logWarn('SUMMARY', 'Mise a jour impossible: donnees d analyse absentes', {
+    logFlow('SUMMARY', 'Mise a jour ignoree: aucune analyse active', {
       hasParsedData: !!lastParsedData,
       hasProvider: !!lastSelectedPrestataire
     });
-    showToast(t('warningRunAnalysisFirst'), 'warning');
     __isUpdatingSummary = false;
     return;
   }

@@ -269,41 +269,23 @@ export function createCustomCheckboxesUI(prestataire) {
 
   Object.keys(families).sort().forEach(familyName => {
     const familyItems = families[familyName];
-    const n = familyItems.length;
-    // Estimate chip width (star + toggle + text ≈ 90px), compute how many per row to make
-    // the block roughly square, then cap at the full container width.
-    const chipEstimatedWidth = 92;
-    const chipsPerRow = Math.max(1, Math.ceil(Math.sqrt(n)));
-    const chipsMaxWidth = chipsPerRow * chipEstimatedWidth;
 
     const familySection = document.createElement('div');
     familySection.className = 'chip-section';
-    familySection.style.marginBottom = '0';
-    familySection.style.display = 'inline-flex';
-    familySection.style.gap = '5px';
-    familySection.style.alignItems = 'flex-start';
-    // Never grow: take only as much space as content needs
-    familySection.style.flex = '0 0 auto';
-    familySection.style.minWidth = '0';
-    familySection.style.maxWidth = '100%';
+    familySection.style.flexBasis = '100%';
 
     const familyTitle = document.createElement('div');
     familyTitle.className = 'chip-title family';
     familyTitle.textContent = familyName;
-    familyTitle.style.marginBottom = '0';
-    familyTitle.style.paddingTop = '2px';
-    familyTitle.style.whiteSpace = 'nowrap';
     familySection.appendChild(familyTitle);
 
     const familyContainer = document.createElement('div');
-    familyContainer.style.lineHeight = '1.1';
-    familyContainer.style.display = 'flex';
-    familyContainer.style.flexWrap = n >= 2 ? 'wrap' : 'nowrap';
-    familyContainer.style.alignItems = 'center';
-    familyContainer.style.gap = '1px';
-    familyContainer.style.minWidth = '0';
-    // Constrain to roughly square shape; will wrap naturally within that budget
-    familyContainer.style.maxWidth = `${chipsMaxWidth}px`;
+    Object.assign(familyContainer.style, {
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: '2px'
+    });
 
     familyItems.forEach(checkbox => {
       const isFavorite = !!checkbox.favorite;

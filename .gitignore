@@ -2,3 +2,5 @@
 src/.DS_Store
 dist/
 .gitignore
+build.sh
+build.ps1

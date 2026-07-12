@@ -7,7 +7,7 @@ import { initializeUI, refreshProviderUi, getCurrentProvider } from './ui-main.j
 import { detectProviderFromText } from './provider-management.js';
 import { alertInline } from './ui-utils.js';
 import { generateUniqueId } from './shared/id.js';
-import { isEditing, getEditingInfo, cancelEdit, updateFamilySuggestionsList } from './checkbox-settings.js';
+import { isEditing, getEditingInfo, cancelEdit, updateFamilySuggestionsList, initFamilySuggestionsUi } from './checkbox-settings.js'; // initFamilySuggestionsUi kept for datalist refresh on init
 import { renderOrganizationInterface } from './organization.js';
 import { getPageText } from './extraction.js';
 import { parseTextMeta, applySplitSeparators } from './parsing.js';
@@ -120,6 +120,7 @@ function setupCheckboxFeatures() {
 
   updateFamilySuggestionsFromExistingCheckboxes();
   updateFamilySuggestionsList();
+  initFamilySuggestionsUi();
 }
 
 async function applyAutoLockProviderOnInit() {

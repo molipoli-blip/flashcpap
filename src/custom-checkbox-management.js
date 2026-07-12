@@ -91,15 +91,6 @@ export function setupCustomCheckboxManagement({
     if (index === -1) customCheckboxes.push(nextCheckbox);
     else customCheckboxes[index] = nextCheckbox;
 
-    if (family) {
-      addFamilyToSuggestions(family);
-      updateFamilySuggestionsList();
-      const orgPanel = document.getElementById('param-organization-panel');
-      if (orgPanel && orgPanel.classList.contains('active')) {
-        renderOrganizationInterface();
-      }
-    }
-
     saveSettings();
     await refreshCheckboxUIs({ siteKey: site, refreshSummary: true });
     return true;
@@ -139,7 +130,7 @@ export function setupCustomCheckboxManagement({
 
   addCbBtn.addEventListener('click', async () => {
     clearTimeout(autosaveTimer);
-    const { text, value, family, favorite } = getCheckboxFormState();
+    const { text, value, family } = getCheckboxFormState();
     const site = getParameterProviderSiteKey();
 
     if (!text || !value) {
@@ -159,6 +150,15 @@ export function setupCustomCheckboxManagement({
     getCustomCheckboxes(settings, site);
 
     await ensureCheckboxDraftSaved();
+
+    if (family) {
+      addFamilyToSuggestions(family);
+      updateFamilySuggestionsList();
+      const orgPanel = document.getElementById('param-organization-panel');
+      if (orgPanel && orgPanel.classList.contains('active')) {
+        renderOrganizationInterface();
+      }
+    }
 
     if (isEditing()) {
       cancelEdit();

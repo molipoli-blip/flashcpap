@@ -21,6 +21,304 @@ function withPhraseGuard(event, fn) {
   return fn();
 }
 
+const familyAutocompleteState = {
+  initialized: false,
+  open: false,
+  activeIndex: -1,
+  bestCompletion: '',
+  items: [],
+  blurTimer: null
+};
+
+function normalizeFamilyText(text) {
+  return (text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function sortFamilyEntries(a, b) {
+  return a.localeCompare(b, 'fr', { sensitivity: 'base' });
+}
+
+function getFamilyAutocompleteElements() {
+  return {
+    wrapper: document.querySelector('.family-autocomplete'),
+    input: document.getElementById('new-checkbox-family'),
+    ghostText: document.getElementById('family-ghost-text'),
+    panel: document.getElementById('family-suggestions-panel'),
+    button: document.getElementById('family-dropdown-button')
+  };
+}
+
+function getSortedFamilySuggestions() {
+  return getFamilySuggestions().slice().sort(sortFamilyEntries);
+}
+
+function getFamilyCompletion(query, suggestions) {
+  const normalizedQuery = normalizeFamilyText(query);
+  if (!normalizedQuery) return '';
+  return suggestions.find(family => normalizeFamilyText(family).startsWith(normalizedQuery)) || '';
+}
+
+function getFamilyMatches(query, suggestions) {
+  const normalizedQuery = normalizeFamilyText(query);
+  if (!normalizedQuery) return suggestions.slice();
+
+  return suggestions
+    .filter(family => normalizeFamilyText(family).includes(normalizedQuery))
+    .sort((left, right) => {
+      const leftStarts = normalizeFamilyText(left).startsWith(normalizedQuery);
+      const rightStarts = normalizeFamilyText(right).startsWith(normalizedQuery);
+      if (leftStarts !== rightStarts) return leftStarts ? -1 : 1;
+      return sortFamilyEntries(left, right);
+    });
+}
+
+function closeFamilySuggestions({ clearGhost = false } = {}) {
+  const { input, ghostText, panel, button } = getFamilyAutocompleteElements();
+
+  familyAutocompleteState.open = false;
+  familyAutocompleteState.activeIndex = -1;
+  familyAutocompleteState.items = [];
+
+  if (panel) {
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+  }
+
+  if (input) {
+    input.setAttribute('aria-expanded', 'false');
+  }
+
+  if (button) {
+    button.setAttribute('aria-expanded', 'false');
+  }
+
+  if (clearGhost && ghostText) {
+    ghostText.textContent = '';
+    familyAutocompleteState.bestCompletion = '';
+  }
+}
+
+function selectFamilySuggestion(value) {
+  const { input } = getFamilyAutocompleteElements();
+  if (!input) return;
+
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  closeFamilySuggestions({ clearGhost: true });
+}
+
+function renderFamilySuggestionItems(query, { openAll = false } = {}) {
+  const { input, ghostText, panel, button } = getFamilyAutocompleteElements();
+  if (!input || !panel) return;
+
+  const suggestions = getSortedFamilySuggestions();
+  const normalizedQuery = normalizeFamilyText(query);
+  const matches = openAll ? suggestions : getFamilyMatches(query, suggestions);
+  const exactMatch = normalizedQuery
+    ? suggestions.some(family => normalizeFamilyText(family) === normalizedQuery)
+    : false;
+
+  familyAutocompleteState.bestCompletion = getFamilyCompletion(query, suggestions);
+  familyAutocompleteState.items = matches.map(value => ({ type: 'family', value }));
+
+  if (query.trim() && !exactMatch) {
+    familyAutocompleteState.items.push({ type: 'create', value: query.trim() });
+  }
+
+  if (ghostText) {
+    ghostText.textContent = familyAutocompleteState.bestCompletion
+      ? `${query}${familyAutocompleteState.bestCompletion.slice(query.length)}`
+      : '';
+  }
+
+  panel.innerHTML = '';
+
+  if (familyAutocompleteState.items.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'family-suggestion-empty';
+    empty.textContent = query.trim()
+      ? `Aucune famille ne correspond à “${query.trim()}”.`
+      : 'Aucune famille enregistrée pour le moment.';
+    panel.appendChild(empty);
+  } else {
+    familyAutocompleteState.items.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'family-suggestion-item';
+      row.setAttribute('role', 'option');
+      row.dataset.index = String(index);
+
+      const label = document.createElement('div');
+      label.className = 'family-suggestion-label';
+      label.textContent = item.type === 'create' ? `Créer « ${item.value} »` : item.value;
+
+      const meta = document.createElement('div');
+      meta.className = 'family-suggestion-meta';
+      meta.textContent = item.type === 'create'
+        ? 'Nouvelle famille'
+        : (normalizeFamilyText(item.value).startsWith(normalizedQuery) ? 'Correspondance directe' : 'Résultat proche');
+
+      row.appendChild(label);
+      row.appendChild(meta);
+
+      row.addEventListener('mousedown', event => {
+        event.preventDefault();
+        selectFamilySuggestion(item.value);
+      });
+
+      panel.appendChild(row);
+    });
+  }
+
+  familyAutocompleteState.activeIndex = -1;
+  familyAutocompleteState.open = true;
+  panel.style.display = 'block';
+  input.setAttribute('aria-expanded', 'true');
+  if (button) button.setAttribute('aria-expanded', 'true');
+}
+
+function setActiveFamilySuggestion(nextIndex) {
+  const { panel } = getFamilyAutocompleteElements();
+  if (!panel) return;
+
+  const rows = Array.from(panel.querySelectorAll('.family-suggestion-item'));
+  if (rows.length === 0) return;
+
+  familyAutocompleteState.activeIndex = ((nextIndex % rows.length) + rows.length) % rows.length;
+  rows.forEach((row, index) => row.classList.toggle('active', index === familyAutocompleteState.activeIndex));
+
+  const activeRow = rows[familyAutocompleteState.activeIndex];
+  if (activeRow && typeof activeRow.scrollIntoView === 'function') {
+    activeRow.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function acceptBestFamilyCompletion() {
+  const selectedRow = familyAutocompleteState.activeIndex >= 0
+    ? familyAutocompleteState.items[familyAutocompleteState.activeIndex]
+    : null;
+
+  if (selectedRow?.value) {
+    selectFamilySuggestion(selectedRow.value);
+    return;
+  }
+
+  if (familyAutocompleteState.bestCompletion) {
+    selectFamilySuggestion(familyAutocompleteState.bestCompletion);
+    return;
+  }
+
+  closeFamilySuggestions({ clearGhost: true });
+}
+
+function refreshFamilyAutocompleteUi({ reopen = false } = {}) {
+  const { input, ghostText, button } = getFamilyAutocompleteElements();
+  if (!input || !ghostText) return;
+
+  const query = input.value || '';
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery) {
+    ghostText.textContent = '';
+    familyAutocompleteState.bestCompletion = '';
+    if (reopen) {
+      renderFamilySuggestionItems('', { openAll: true });
+    } else {
+      closeFamilySuggestions({ clearGhost: false });
+    }
+    if (button) button.setAttribute('aria-expanded', reopen ? 'true' : 'false');
+    return;
+  }
+
+  renderFamilySuggestionItems(trimmedQuery, { openAll: reopen && !familyAutocompleteState.open });
+}
+
+function bindFamilyAutocompleteUi() {
+  const { wrapper, input, button } = getFamilyAutocompleteElements();
+  if (!wrapper || !input || !button || familyAutocompleteState.initialized) return;
+
+  familyAutocompleteState.initialized = true;
+
+  input.addEventListener('input', () => {
+    refreshFamilyAutocompleteUi();
+  });
+
+  input.addEventListener('focus', () => {
+    window.clearTimeout(familyAutocompleteState.blurTimer);
+    if (input.value.trim()) {
+      refreshFamilyAutocompleteUi();
+    }
+  });
+
+  input.addEventListener('blur', () => {
+    window.clearTimeout(familyAutocompleteState.blurTimer);
+    familyAutocompleteState.blurTimer = window.setTimeout(() => {
+      if (!wrapper.contains(document.activeElement)) {
+        closeFamilySuggestions({ clearGhost: false });
+      }
+    }, 120);
+  });
+
+  input.addEventListener('keydown', event => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (!familyAutocompleteState.open) {
+        refreshFamilyAutocompleteUi({ reopen: true });
+      }
+      setActiveFamilySuggestion(familyAutocompleteState.activeIndex + 1);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!familyAutocompleteState.open) {
+        refreshFamilyAutocompleteUi({ reopen: true });
+      }
+      setActiveFamilySuggestion(familyAutocompleteState.activeIndex <= 0
+        ? familyAutocompleteState.items.length - 1
+        : familyAutocompleteState.activeIndex - 1);
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      acceptBestFamilyCompletion();
+      return;
+    }
+
+    if ((event.key === 'Tab' || event.key === 'ArrowRight') && familyAutocompleteState.bestCompletion) {
+      event.preventDefault();
+      selectFamilySuggestion(familyAutocompleteState.bestCompletion);
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeFamilySuggestions({ clearGhost: true });
+    }
+  });
+
+  button.addEventListener('click', () => {
+    if (familyAutocompleteState.open) {
+      closeFamilySuggestions({ clearGhost: false });
+      return;
+    }
+
+    refreshFamilyAutocompleteUi({ reopen: true });
+    input.focus();
+  });
+
+  document.addEventListener('click', event => {
+    if (!wrapper.contains(event.target)) {
+      closeFamilySuggestions({ clearGhost: false });
+    }
+  });
+
+  refreshFamilyAutocompleteUi();
+}
+
 function getCheckboxActionElements() {
   return {
     btnImport: document.getElementById('btn-import-checkboxes'),
@@ -68,6 +366,7 @@ export function resetCheckboxForm() {
   if (textInput) textInput.value = '';
   if (valueInput) valueInput.value = '';
   if (familyInput) familyInput.value = '';
+  refreshFamilyAutocompleteUi();
   if (addBtn) {
     addBtn.textContent = t('checkboxButtonAddShort');
     addBtn.classList.remove('submit-btn-editing');
@@ -302,6 +601,7 @@ export function editCheckboxInForm(checkbox, site, index) {
   textInput.value = checkbox.text || '';
   valueInput.value = checkbox.value || '';
   familyInput.value = checkbox.family || '';
+  refreshFamilyAutocompleteUi();
   setFavoriteButtonState(!!checkbox.favorite);
 
   if (addBtn) {
@@ -373,13 +673,10 @@ export function lockCustomCheckboxControls() {
 
 // Refresh the family suggestions datalist from stored checkbox families.
 export function updateFamilySuggestionsList() {
-  const datalist = document.getElementById('family-suggestions');
-  if (!datalist) return;
-  datalist.innerHTML = '';
-  const suggestions = getFamilySuggestions();
-  for (const family of suggestions) {
-    const option = document.createElement('option');
-    option.value = family;
-    datalist.appendChild(option);
-  }
+  refreshFamilyAutocompleteUi();
+}
+
+export function initFamilySuggestionsUi() {
+  bindFamilyAutocompleteUi();
+  updateFamilySuggestionsList();
 }

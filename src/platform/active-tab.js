@@ -3,17 +3,45 @@
 
 import { browserApi } from './browser-api.js';
 
+function hasUsableContentUrl(tab) {
+  const url = String(tab?.url || '');
+  return /^(https?:|file:)/i.test(url);
+}
+
+function appendCandidate(candidates, tab) {
+  if (!tab?.id) return;
+  if (candidates.some(existing => existing.id === tab.id)) return;
+  candidates.push(tab);
+}
+
 export async function getActiveNormalTab() {
+  const candidates = [];
+
   // Prefer the normal browser window currently focused by the user.
-  // This avoids keeping analysis pinned to the first source window when the popup stays open.
   try {
     const win = await browserApi.windows.getLastFocused({ windowTypes: ['normal'] });
     if (win?.id != null) {
       const tabs = await browserApi.tabs.query({ active: true, windowId: win.id });
-      if (tabs?.[0]) return tabs[0];
+      appendCandidate(candidates, tabs?.[0]);
     }
   } catch {}
 
-  const currentWindowTabs = await browserApi.tabs.query({ active: true, currentWindow: true });
-  return currentWindowTabs?.[0] || null;
+  // In popup context, currentWindow may resolve to the extension popup.
+  try {
+    const currentWindowTabs = await browserApi.tabs.query({ active: true, currentWindow: true });
+    appendCandidate(candidates, currentWindowTabs?.[0]);
+  } catch {}
+
+  // Collect active tabs across windows and choose the first usable content tab.
+  try {
+    const activeTabs = await browserApi.tabs.query({ active: true });
+    for (const tab of activeTabs || []) {
+      appendCandidate(candidates, tab);
+    }
+  } catch {}
+
+  const usableTab = candidates.find(hasUsableContentUrl);
+  if (usableTab) return usableTab;
+
+  return candidates[0] || null;
 }

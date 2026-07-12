@@ -62,7 +62,7 @@ export function createProvider(providerName) {
   }
 
   ensureProviderConfig(settings, key, {
-    urls: ['<all_urls>'],
+    urls: [],
     fields: JSON.parse(JSON.stringify(DEFAULT_PROVIDER_FIELDS)),
     fieldOrder: Object.keys(DEFAULT_PROVIDER_FIELDS)
   });

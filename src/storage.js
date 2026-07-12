@@ -117,7 +117,7 @@ function normalizeProviderPatterns(target) {
       .map(url => String(url || '').trim())
       .filter(Boolean);
     const hasLegacyGlobalPair = normalizedUrls.includes('http://*/*') && normalizedUrls.includes('https://*/*');
-    if (normalizedUrls.length === 0 || hasLegacyGlobalPair || normalizedUrls.includes('*://*/*') || normalizedUrls.includes('<all_urls>')) {
+    if (hasLegacyGlobalPair || normalizedUrls.includes('*://*/*') || normalizedUrls.includes('<all_urls>')) {
       normalizedPattern.urls = ['<all_urls>'];
     } else {
       normalizedPattern.urls = normalizedUrls;

@@ -73,6 +73,10 @@ export const firefoxApi = {
     }
   },
   permissions: {
+    async contains(options) {
+      const firefox = requireFirefox();
+      return firefox.permissions.contains(options);
+    },
     async request(options) {
       const firefox = requireFirefox();
       return firefox.permissions.request(options);

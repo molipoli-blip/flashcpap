@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "__MSG_extDescription__",
   "default_locale": "fr",
   "icons": {
@@ -23,8 +23,9 @@
     "tabs",
     "clipboardWrite"
   ],
-  "host_permissions": [
-    "<all_urls>"
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"

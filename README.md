@@ -128,7 +128,7 @@ const _browser = (typeof globalThis.browser !== 'undefined')
 * `scripting` — extract text from the page
 * `storage` — save local settings
 * `clipboardWrite` — copy the generated summary
-* `optional_host_permissions` — granted on demand by the user
+* `optional_host_permissions` (`http://*/*`, `https://*/*`) — granted on demand by the user and reused per origin
 
 Permissions are used strictly for extension functionality.
 

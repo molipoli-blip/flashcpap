@@ -9,6 +9,7 @@ export async function getActiveTabContext({ setLastAnalyzedUrl, getLastAnalyzedU
   const isUrlChanged = currentUrl !== getLastAnalyzedUrl();
 
   return {
+    tab,
     currentUrl,
     isUrlChanged
   };

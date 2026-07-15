@@ -3,50 +3,40 @@
 import { extractTextFromPDF } from '../lib/pdf-parser.js';
 import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
-
-function isMissingHostPermissionError(error) {
-  const message = String(error?.message || error || '').toLowerCase();
-  return (
-    message.includes('cannot access contents of url')
-    || message.includes('must request permission to access this host')
-    || message.includes('missing host permission')
-    || message.includes('requires host permissions')
-  );
-}
-
-async function requestHostPermissionForTab(tab) {
-  try {
-    const parsed = new URL(tab?.url || '');
-    if (!/^https?:$/.test(parsed.protocol)) return false;
-    const originPattern = `${parsed.protocol}//${parsed.host}/*`;
-    return !!(await browserApi.permissions.request({ origins: [originPattern] }));
-  } catch {
-    return false;
-  }
-}
+import { ensurePersistentHostPermissionForTab, HostPermissionError } from './platform/site-root.js';
 
 async function extractHtmlTextFromTab(tab) {
-  const results = await browserApi.scripting.executeScript({
-    tabId: tab.id,
-    allFrames: true,
-    func: () => {
-      try {
-        let text = (document && document.body && document.body.innerText) ? document.body.innerText : '';
-        const isTop = window.top === window;
-        const frameInfo = {
-          url: location.href,
-          title: document?.title || '',
-          isTop,
-          frameElementDesc: (() => {
-            try { return window.frameElement ? (window.frameElement.id || window.frameElement.name || window.frameElement.tagName) : ''; } catch(_) { return ''; }
-          })()
-        };
-        return { text, frameInfo };
-      } catch(e) {
-        return { text: '', frameInfo: { url: location.href, title: document?.title || '', isTop: window.top===window }, error: e?.message || String(e) };
+  let results;
+
+  try {
+    results = await browserApi.scripting.executeScript({
+      tabId: tab.id,
+      allFrames: true,
+      func: () => {
+        try {
+          let text = (document && document.body && document.body.innerText) ? document.body.innerText : '';
+          const isTop = window.top === window;
+          const frameInfo = {
+            url: location.href,
+            title: document?.title || '',
+            isTop,
+            frameElementDesc: (() => {
+              try { return window.frameElement ? (window.frameElement.id || window.frameElement.name || window.frameElement.tagName) : ''; } catch(_) { return ''; }
+            })()
+          };
+          return { text, frameInfo };
+        } catch(e) {
+          return { text: '', frameInfo: { url: location.href, title: document?.title || '', isTop: window.top===window }, error: e?.message || String(e) };
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    throw new HostPermissionError(
+      'INJECTION_FAILED',
+      'Injection impossible malgré l\'autorisation accordée.',
+      { cause: error, tabUrl: tab?.url || '' }
+    );
+  }
 
   let finalText = '';
   let totalChars = 0;
@@ -72,48 +62,39 @@ async function extractHtmlTextFromTab(tab) {
   return { text: finalText, isPdf: false };
 }
 
-export async function getPageText() {
-  const tab = await getActiveNormalTab();
-  if (!tab) return '';
-
-  // PDF mode: extract from the uploaded file when present.
+export async function getPageText(tab = null) {
   const pdfFileInput = document.getElementById('pdf-file-input');
 
+  // PDF mode: extract from the uploaded file when present.
   if (pdfFileInput?.files?.length > 0) {
     const file = pdfFileInput.files[0];
 
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const text = await extractTextFromPDF(arrayBuffer);
-      return { text: text || '[Aucun texte détecté dans le PDF]', isPdf: true };
-    } catch (error) {
-      console.error('💥 [PDF] Erreur extraction:', error);
-      return { text: `ERREUR: Impossible de lire le fichier PDF.\n\n${error.message}`, isPdf: true };
-    }
+    const arrayBuffer = await file.arrayBuffer();
+    const text = await extractTextFromPDF(arrayBuffer);
+    return { text: text || '[Aucun texte détecté dans le PDF]', isPdf: true };
   }
 
-  // HTML mode also allows local file URLs for tests.
-  if (!/^(https?|file):/.test(tab.url)) return { text: '', isPdf: false };
+  const sourceTab = tab || await getActiveNormalTab();
+  if (!sourceTab?.url) {
+    throw new HostPermissionError('NO_NORMAL_TAB', 'Aucun onglet normal trouvé. Ouvrez une page Web dans une fenêtre normale puis relancez l\'analyse.');
+  }
+
+  await ensurePersistentHostPermissionForTab(sourceTab, {
+    requestPermission: true,
+    throwOnDenied: true
+  });
 
   try {
-    return await extractHtmlTextFromTab(tab);
+    return await extractHtmlTextFromTab(sourceTab);
   } catch (error) {
-    if (isMissingHostPermissionError(error)) {
-      const granted = await requestHostPermissionForTab(tab);
-      if (granted) {
-        try {
-          return await extractHtmlTextFromTab(tab);
-        } catch (retryError) {
-          console.error('💥 [getPageText] Erreur apres demande de permission hote:', retryError);
-          return { text: '', isPdf: false };
-        }
-      }
-
-      console.warn('⚠️ [getPageText] Permission hote non accordee pour l\'onglet actif.');
-      return { text: '', isPdf: false };
+    if (error instanceof HostPermissionError) {
+      throw error;
     }
 
-    console.error('💥 [getPageText] Erreur lors de l\'extraction du texte:', error);
-    return { text: '', isPdf: false };
+    throw new HostPermissionError(
+      'INJECTION_FAILED',
+      'Injection impossible malgré l\'autorisation accordée.',
+      { cause: error, tabUrl: sourceTab.url }
+    );
   }
 }

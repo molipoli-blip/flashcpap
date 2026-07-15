@@ -11,6 +11,8 @@ import { ensureSettingsObject } from './storage-guards.js';
 import { getActiveTabContext, normalizePageTextResult } from './analysis-flow-utils.js';
 import { renderSourceWithHighlights, setupJumpSelect } from './analysis-highlight-renderer.js';
 import { getCustomCheckboxes } from './custom-checkbox-store.js';
+import { alertInline } from './ui-utils.js';
+import { HostPermissionError } from './platform/site-root.js';
 
 function setCheckedState(input, checked, { bubbles = false } = {}) {
   if (!input || input.checked === checked) return false;
@@ -95,6 +97,22 @@ function prepareAnalysisText({
     detectedProvider,
     activeProvider
   };
+}
+
+async function surfaceAnalysisError(error) {
+  const message = error instanceof HostPermissionError
+    ? error.message
+    : (error?.message || 'Analyse interrompue.');
+
+  const analyseAlert = document.getElementById('analyse-alert');
+  if (analyseAlert) {
+    analyseAlert.textContent = `⚠️ ${message}`;
+    analyseAlert.style.display = 'block';
+  }
+
+  try {
+    await alertInline(message, 'error');
+  } catch {}
 }
 
 async function loadExclusionKeywords() {
@@ -285,59 +303,86 @@ export async function executeAnalysisRun({
   const analyseAlert = document.getElementById('analyse-alert');
   if (analyseAlert) analyseAlert.style.display = 'none';
 
-  const { currentUrl, isUrlChanged } = await getActiveTabContext({
-    setLastAnalyzedUrl,
-    getLastAnalyzedUrl
-  });
+  try {
+    const pdfFileInput = document.getElementById('pdf-file-input');
+    const hasPdfFile = Boolean(pdfFileInput?.files?.length);
 
-  const rawResult = await getPageText();
-  let { text, isPdf } = normalizePageTextResult(rawResult);
+    let currentUrl = null;
+    let isUrlChanged = false;
+    let rawResult;
 
-  const prepared = prepareAnalysisText({
-    text,
-    isPdf,
-    currentUrl,
-    providerSelect,
-    settings,
-    detectProviderFromText,
-    detectProviderFromUrl,
-    refreshProviderUi,
-    applySplitSeparatorsFn: applySplitSeparators
-  });
+    if (hasPdfFile) {
+      rawResult = await getPageText();
+      const activeTabContext = await getActiveTabContext({
+        setLastAnalyzedUrl,
+        getLastAnalyzedUrl
+      });
 
-  text = prepared.preparedText;
-  providerValue = prepared.activeProvider || providerSelect?.value || providerValue;
+      currentUrl = activeTabContext.currentUrl;
+      isUrlChanged = activeTabContext.isUrlChanged;
+    } else {
+      const activeTabContext = await getActiveTabContext({
+        setLastAnalyzedUrl,
+        getLastAnalyzedUrl
+      });
 
-  if (!providerValue) {
-    logWarn('ANALYSE', 'Analyse ignoree: prestataire absent');
-    return;
+      currentUrl = activeTabContext.currentUrl;
+      isUrlChanged = activeTabContext.isUrlChanged;
+
+      rawResult = await getPageText(activeTabContext.tab);
+    }
+
+    let { text, isPdf } = normalizePageTextResult(rawResult);
+
+    const prepared = prepareAnalysisText({
+      text,
+      isPdf,
+      currentUrl,
+      providerSelect,
+      settings,
+      detectProviderFromText,
+      detectProviderFromUrl,
+      refreshProviderUi,
+      applySplitSeparatorsFn: applySplitSeparators
+    });
+
+    text = prepared.preparedText;
+    providerValue = prepared.activeProvider || providerSelect?.value || providerValue;
+
+    if (!providerValue) {
+      logWarn('ANALYSE', 'Analyse ignoree: prestataire absent');
+      return;
+    }
+
+    const wrapper = document.getElementById('source-wrapper');
+    if (!wrapper) {
+      logWarn('ANALYSE', 'Analyse interrompue: #source-wrapper introuvable');
+      return;
+    }
+
+    const exclusions = await loadExclusionKeywords();
+    const { data } = runParsingPipeline({
+      text,
+      provider: providerValue,
+      settings,
+      wrapper,
+      exclusions,
+      parseTextMeta,
+      setupHighlighting
+    });
+
+    setLastParsedData(data, providerValue);
+    setLastAnalyzedUrl(currentUrl);
+
+    await finalizeAnalysisState({
+      provider: providerValue,
+      settings,
+      isUrlChanged,
+      setPinningInProgress,
+      updateSummaryDisplay
+    });
+  } catch (error) {
+    logError('ANALYSE', 'Echec analyse', error);
+    await surfaceAnalysisError(error);
   }
-
-  const wrapper = document.getElementById('source-wrapper');
-  if (!wrapper) {
-    logWarn('ANALYSE', 'Analyse interrompue: #source-wrapper introuvable');
-    return;
-  }
-
-  const exclusions = await loadExclusionKeywords();
-  const { data } = runParsingPipeline({
-    text,
-    provider: providerValue,
-    settings,
-    wrapper,
-    exclusions,
-    parseTextMeta,
-    setupHighlighting
-  });
-
-  setLastParsedData(data, providerValue);
-  setLastAnalyzedUrl(currentUrl);
-
-  await finalizeAnalysisState({
-    provider: providerValue,
-    settings,
-    isUrlChanged,
-    setPinningInProgress,
-    updateSummaryDisplay
-  });
 }

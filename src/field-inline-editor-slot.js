@@ -10,6 +10,23 @@ import {
 } from './field-inline-editor-state.js';
 import { t } from './i18n.js';
 
+const pendingInlineFieldPersists = new Map();
+
+export function flushPendingInlineFieldChanges() {
+  let allSaved = true;
+
+  for (const [fieldKey, persist] of pendingInlineFieldPersists.entries()) {
+    const result = persist();
+    if (result === null) {
+      pendingInlineFieldPersists.delete(fieldKey);
+      continue;
+    }
+    if (result === false) allSaved = false;
+  }
+
+  return allSaved;
+}
+
 function setupInlineEditorHeaderToggle(header, modeWrap, toggle) {
   header.addEventListener('click', () => {
     const isOpen = modeWrap.style.display !== 'none';
@@ -334,6 +351,14 @@ function setupInlineEditorActions({
       persistState({ rerender: false, toast: false });
     }, AUTOSAVE_DELAY_MS);
   };
+
+  const flushPendingPersist = () => {
+    if (!contentWrap.isConnected || !modeWrap.isConnected) return null;
+    clearTimeout(autosaveTimer);
+    return persistState({ rerender: false, toast: false });
+  };
+
+  pendingInlineFieldPersists.set(fieldKey, flushPendingPersist);
 
   if (inlineCancel) {
     inlineCancel.addEventListener('click', (event) => {

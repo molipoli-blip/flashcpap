@@ -19,12 +19,107 @@ export const DEFAULT_PROVIDER_FIELDS = {
   epap:        { type: 'numeric', labels: [], unit: 'cmH2O' }
 };
 
+const DEFAULT_CUSTOM_CHECKBOXES = [
+  {
+    id: 'cb_q93us4b98',
+    text: 'Bonne tolérance',
+    value: 'Le dispositif est bien toléré',
+    family: 'tolérance',
+    favorite: false,
+    pinned: false
+  },
+  {
+    id: 'cb_gyilpprbe',
+    text: 'Mauvaise tolérance',
+    value: 'Mauvaise tolérance du dispositif',
+    family: 'tolérance',
+    favorite: false,
+    pinned: false
+  },
+  {
+    id: 'cb_xik70xc53',
+    text: 'Bénéfice ressenti',
+    value: 'Ressent le bénéfice',
+    family: 'Bénéfice',
+    favorite: false,
+    pinned: false
+  },
+  {
+    id: 'cb_voham7c83',
+    text: 'Pas de bénéfice',
+    value: 'Ne ressent pas de bénéfice',
+    family: 'Bénéfice',
+    favorite: false,
+    pinned: false
+  },
+  {
+    id: 'cb_3savwm1pn',
+    text: 'Horaires',
+    value: 'Les horaires de sommeil sont :\nCoucher [xxx], lever [xxx]',
+    family: 'horaires',
+    favorite: false,
+    pinned: false
+  },
+  {
+    id: 'cb_x82rlrv7k',
+    text: 'SDE résiduelle',
+    value: "Persistance d'une somnolence résiduelle",
+    family: 'SDE',
+    favorite: false,
+    pinned: false
+  },
+  {
+    id: 'cb_d15rhvhke',
+    text: 'Amélio SDE',
+    value: 'Amélioration de la somnolence',
+    family: 'SDE',
+    favorite: false,
+    pinned: false
+  },
+  {
+    id: 'cb_pgt2tx2x5',
+    text: 'Pas de SDE résiduelle',
+    value: 'Absence de somnolence résiduelle',
+    family: 'SDE',
+    favorite: false,
+    pinned: true
+  }
+];
+
+const DEFAULT_CHECKBOX_PHRASES_BY_PROVIDER = {
+  zz: [
+    {
+      id: 'phr-benefice-mri9erua',
+      title: 'Groupe Bénéfice',
+      family: 'Bénéfice',
+      order: [
+        'cb_xik70xc53',
+        'cb_voham7c83',
+        'cb_x82rlrv7k',
+        'cb_d15rhvhke',
+        'cb_pgt2tx2x5',
+        'cb_q93us4b98',
+        'cb_gyilpprbe'
+      ],
+      prefix: "Concernant l'efficacité et tolérance du dispositif : ",
+      connector: '. ',
+      lastConnector: '. ',
+      suffix: '.'
+    }
+  ]
+};
+
+const DEFAULT_CHECKBOX_FAMILIES = ['tolérance', 'Bénéfice', 'horaires', 'SDE'];
+
 function createDefaultSettings() {
   return {
     patterns: {},
     noteLibre: {},
-    customCheckboxes: {},
-    checkboxFamilies: [],
+    customCheckboxes: {
+      __global__: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_CHECKBOXES))
+    },
+    checkboxPhrases: JSON.parse(JSON.stringify(DEFAULT_CHECKBOX_PHRASES_BY_PROVIDER)),
+    checkboxFamilies: [...DEFAULT_CHECKBOX_FAMILIES],
     organizationOrder: [],
     summaryMeta: { lastAutoLines: [] },
     pinnedOptions: { interpret: false, rodap: false },
@@ -209,6 +304,7 @@ function normalizeSettings(target) {
 
   normalizeProviderPatterns(target);
   ensureObject(target, 'noteLibre');
+  ensureObject(target, 'checkboxPhrases');
   ensureArray(target, 'checkboxFamilies');
   ensureArray(target, 'organizationOrder');
 

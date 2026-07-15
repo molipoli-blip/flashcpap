@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
 import { extractTextFromPDF } from '../lib/pdf-parser.js';
-import { getActiveNormalTab } from './platform/active-tab.js';
 import { browserApi } from './platform/browser-api.js';
-import { ensurePersistentHostPermissionForTab, HostPermissionError } from './platform/site-root.js';
+import { HostPermissionError } from './platform/site-root.js';
 
 async function extractHtmlTextFromTab(tab) {
   let results;
@@ -74,18 +73,12 @@ export async function getPageText(tab = null) {
     return { text: text || '[Aucun texte détecté dans le PDF]', isPdf: true };
   }
 
-  const sourceTab = tab || await getActiveNormalTab();
-  if (!sourceTab?.url) {
+  if (!tab?.url) {
     throw new HostPermissionError('NO_NORMAL_TAB', 'Aucun onglet normal trouvé. Ouvrez une page Web dans une fenêtre normale puis relancez l\'analyse.');
   }
 
-  await ensurePersistentHostPermissionForTab(sourceTab, {
-    requestPermission: true,
-    throwOnDenied: true
-  });
-
   try {
-    return await extractHtmlTextFromTab(sourceTab);
+    return await extractHtmlTextFromTab(tab);
   } catch (error) {
     if (error instanceof HostPermissionError) {
       throw error;
@@ -94,7 +87,7 @@ export async function getPageText(tab = null) {
     throw new HostPermissionError(
       'INJECTION_FAILED',
       'Injection impossible malgré l\'autorisation accordée.',
-      { cause: error, tabUrl: sourceTab.url }
+      { cause: error, tabUrl: tab.url }
     );
   }
 }

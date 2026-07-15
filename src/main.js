@@ -25,7 +25,7 @@ import { setupCustomCheckboxManagement } from './custom-checkbox-management.js';
 import { applyTranslations, t } from './i18n.js';
 import { initSupportersUI } from './supporters.js';
 import { buildCleanSummaryText } from './domain/summary-rules.js';
-import { getActiveNormalTab } from './platform/active-tab.js';
+import { initializeSourceTabTracking, refreshTrackedSourceTab } from './platform/source-tab-tracker.js';
 import { browserApi } from './platform/browser-api.js';
 import { initUpdateAnnouncement } from './update-announcement.js';
 
@@ -125,7 +125,7 @@ function setupCheckboxFeatures() {
 
 async function applyAutoLockProviderOnInit() {
   try {
-    const tab = await getActiveNormalTab();
+    const tab = await refreshTrackedSourceTab();
     const currentUrl = tab?.url || '';
     if (!currentUrl) return;
 
@@ -168,6 +168,7 @@ function setupActionFeatures(analysisSelect) {
 async function init() {
   loadSettings();
   initUpdateAnnouncement({ browserApi });
+  await initializeSourceTabTracking();
   try {
     const manifest = browserApi.runtime.getManifest();
     const baseTitle = (document.title || '').trim() || 'FlashCPAP';

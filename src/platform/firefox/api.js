@@ -47,6 +47,12 @@ export const firefoxApi = {
       const firefox = requireFirefox();
       return firefox.tabs.create(createProperties);
     },
+    get onActivated() {
+      return getFirefox()?.tabs?.onActivated || null;
+    },
+    get onUpdated() {
+      return getFirefox()?.tabs?.onUpdated || null;
+    },
     async update(tabId, updateProperties) {
       const firefox = requireFirefox();
       return firefox.tabs.update(tabId, updateProperties);
@@ -67,6 +73,9 @@ export const firefoxApi = {
     async update(windowId, updateInfo) {
       const firefox = requireFirefox();
       return firefox.windows.update(windowId, updateInfo);
+    },
+    get onFocusChanged() {
+      return getFirefox()?.windows?.onFocusChanged || null;
     },
     get onRemoved() {
       return getFirefox()?.windows?.onRemoved || null;

@@ -43,6 +43,12 @@ export const chromiumApi = {
       const chromium = requireChromium();
       return chromium.tabs.create(createProperties);
     },
+    get onActivated() {
+      return getChromium()?.tabs?.onActivated || null;
+    },
+    get onUpdated() {
+      return getChromium()?.tabs?.onUpdated || null;
+    },
     get onRemoved() {
       return getChromium()?.tabs?.onRemoved || null;
     }
@@ -59,6 +65,9 @@ export const chromiumApi = {
     async update(windowId, updateInfo) {
       const chromium = requireChromium();
       return chromium.windows.update(windowId, updateInfo);
+    },
+    get onFocusChanged() {
+      return getChromium()?.windows?.onFocusChanged || null;
     },
     get onRemoved() {
       return getChromium()?.windows?.onRemoved || null;

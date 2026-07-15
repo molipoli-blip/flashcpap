@@ -8,7 +8,7 @@ import { applySplitSeparators } from './parsing.js';
 import { applyTupleExtraction } from './analysis-tuples.js';
 import { safeRun } from './error-handling.js';
 import { ensureSettingsObject } from './storage-guards.js';
-import { getActiveTabContext, normalizePageTextResult } from './analysis-flow-utils.js';
+import { normalizePageTextResult } from './analysis-flow-utils.js';
 import { renderSourceWithHighlights, setupJumpSelect } from './analysis-highlight-renderer.js';
 import { getCustomCheckboxes } from './custom-checkbox-store.js';
 import { alertInline } from './ui-utils.js';
@@ -296,7 +296,8 @@ export async function executeAnalysisRun({
   setupHighlighting,
   setLastParsedData,
   setPinningInProgress,
-  updateSummaryDisplay
+  updateSummaryDisplay,
+  sourceTab = null
 }) {
   let providerValue = providerSelect?.value || '';
 
@@ -313,23 +314,14 @@ export async function executeAnalysisRun({
 
     if (hasPdfFile) {
       rawResult = await getPageText();
-      const activeTabContext = await getActiveTabContext({
-        setLastAnalyzedUrl,
-        getLastAnalyzedUrl
-      });
-
-      currentUrl = activeTabContext.currentUrl;
-      isUrlChanged = activeTabContext.isUrlChanged;
     } else {
-      const activeTabContext = await getActiveTabContext({
-        setLastAnalyzedUrl,
-        getLastAnalyzedUrl
-      });
+      if (!sourceTab?.id || !sourceTab?.url) {
+        throw new HostPermissionError('NO_NORMAL_TAB', 'Aucun onglet normal trouvé. Ouvrez une page Web dans une fenêtre normale puis relancez l\'analyse.');
+      }
 
-      currentUrl = activeTabContext.currentUrl;
-      isUrlChanged = activeTabContext.isUrlChanged;
-
-      rawResult = await getPageText(activeTabContext.tab);
+      currentUrl = sourceTab.url;
+      isUrlChanged = currentUrl !== getLastAnalyzedUrl();
+      rawResult = await getPageText(sourceTab);
     }
 
     let { text, isPdf } = normalizePageTextResult(rawResult);

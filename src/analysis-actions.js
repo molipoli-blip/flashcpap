@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
 import { executeAnalysisRun, resetAnalysisState } from './analysis-runner.js';
+import { flushPendingInlineFieldChanges } from './field-inline-editor-slot.js';
 import { browserApi } from './platform/browser-api.js';
 import { buildSiteRootPattern } from './platform/site-root.js';
 import { getTrackedSourceTab } from './platform/source-tab-tracker.js';
@@ -16,6 +17,8 @@ function bindResetAnalysisButton(button, setLastAnalyzedUrl) {
 function bindAnalyseButton(button, deps) {
   if (!button) return;
   button.onclick = async () => {
+    flushPendingInlineFieldChanges();
+
     const pdfFileInput = document.getElementById('pdf-file-input');
     const hasPdfFile = Boolean(pdfFileInput?.files?.length);
 

@@ -45,7 +45,7 @@ export function setupCopyAction({ buildCleanSummaryText }) {
       markSuccess();
 
       const providerLabel = document.getElementById('prestataire-select')?.value || '';
-      handleSuccessfulCopyEngagement(providerLabel);
+      await handleSuccessfulCopyEngagement(providerLabel);
     } catch (_) {
       markFail();
     }

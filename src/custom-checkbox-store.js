@@ -38,6 +38,12 @@ function mergeCheckboxesIntoMap(map, sourceList) {
   });
 }
 
+export function mergeCustomCheckboxLists(...sourceLists) {
+  const mergedMap = new Map();
+  sourceLists.forEach(sourceList => mergeCheckboxesIntoMap(mergedMap, sourceList));
+  return Array.from(mergedMap.values());
+}
+
 export function getGlobalCustomCheckboxes(settings) {
   ensureSettingsObject(settings, 'customCheckboxes');
   if (!Array.isArray(settings.customCheckboxes[GLOBAL_CUSTOM_CHECKBOXES_KEY])) {
@@ -69,12 +75,13 @@ export function migrateCustomCheckboxesToGlobal(settings) {
     .filter(([key, value]) => key !== GLOBAL_CUSTOM_CHECKBOXES_KEY && Array.isArray(value));
 
   if (entries.length > 0) {
-    const mergedMap = new Map();
-    mergeCheckboxesIntoMap(mergedMap, globalCheckboxes);
-    entries.forEach(([, list]) => mergeCheckboxesIntoMap(mergedMap, list));
+    const mergedCheckboxes = mergeCustomCheckboxLists(
+      globalCheckboxes,
+      ...entries.map(([, list]) => list)
+    );
 
-    if (mergedMap.size > 0) {
-      settings.customCheckboxes[GLOBAL_CUSTOM_CHECKBOXES_KEY] = Array.from(mergedMap.values());
+    if (mergedCheckboxes.length > 0) {
+      settings.customCheckboxes[GLOBAL_CUSTOM_CHECKBOXES_KEY] = mergedCheckboxes;
     }
   }
 

@@ -60,8 +60,8 @@ function showProviderSharePopup(providerLabel, providerCopies) {
   });
 }
 
-export function handleSuccessfulCopyEngagement(providerLabel) {
-  const milestone = registerSuccessfulCopy(providerLabel);
+export async function handleSuccessfulCopyEngagement(providerLabel) {
+  const milestone = await registerSuccessfulCopy(providerLabel);
 
   if (milestone.shouldShowSupportPrompt) {
     showSupportPopup(milestone.totalCopies);

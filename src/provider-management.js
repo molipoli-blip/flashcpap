@@ -10,7 +10,7 @@ import { ensureProviderConfig, getAvailableProviderLabels, getFirstAvailableProv
 import { t } from './i18n.js';
 import { markProviderAsShared } from './copy-engagement.js';
 import { ensureProviderEntry, ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
-import { getCustomCheckboxes, linkCustomCheckboxesForProvider } from './custom-checkbox-store.js';
+import { getCustomCheckboxes, linkCustomCheckboxesForProvider, mergeCustomCheckboxLists } from './custom-checkbox-store.js';
 
 let _onRefreshSettings = null;
 
@@ -250,7 +250,8 @@ function applyImportedProviderPayload(siteLabel, normalizedPayload) {
 
   if (normalizedPayload.customCheckboxes !== undefined) {
     const customCheckboxes = getCustomCheckboxes(settings, key);
-    customCheckboxes.splice(0, customCheckboxes.length, ...normalizedPayload.customCheckboxes);
+    const mergedCheckboxes = mergeCustomCheckboxLists(customCheckboxes, normalizedPayload.customCheckboxes);
+    customCheckboxes.splice(0, customCheckboxes.length, ...mergedCheckboxes);
     linkCustomCheckboxesForProvider(settings, key);
   }
 

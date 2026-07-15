@@ -65,6 +65,10 @@ export const chromiumApi = {
     }
   },
   permissions: {
+    async contains(options) {
+      const chromium = requireChromium();
+      return chromium.permissions.contains(options);
+    },
     async request(options) {
       const chromium = requireChromium();
       return chromium.permissions.request(options);

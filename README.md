@@ -3,6 +3,15 @@
 **FlashCPAP est une extension de navigateur open source qui extrait les données des rapports de télésuivi PPC/CPAP depuis une page web ou un fichier PDF, puis génère un résumé clinique structuré, modifiable et prêt à copier dans le dossier médical.**
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Navigateurs-Firefox%20%E2%80%A2%20Chrome%20%E2%80%A2%20Edge-4285F4" alt="Firefox, Chrome et Edge">
+  <img src="https://img.shields.io/badge/Traitement-100%25%20local-27AE60" alt="Traitement local">
+  <img src="https://img.shields.io/badge/Extraction-R%C3%A8gles%20et%20mots--cl%C3%A9s-E67E22" alt="Extraction par règles">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/Licence-Apache%202.0-8E44AD" alt="Licence Apache 2.0">
+  </a>
+</p>
+
+<p align="center">
   <a href="https://www.flashcpap.com">Site officiel</a> •
   <a href="https://www.flashcpap.com/docs">Documentation</a> •
   <a href="https://addons.mozilla.org/en-US/firefox/addon/flashcpap/">Firefox</a> •
@@ -13,7 +22,7 @@
 
 ---
 
-## À quoi sert FlashCPAP ?
+## ⚡ À quoi sert FlashCPAP ?
 
 Les rapports de télésuivi PPC sont présentés différemment selon les prestataires, les portails et les logiciels.
 
@@ -46,18 +55,25 @@ FlashCPAP does **not** use artificial intelligence or a large language model. Ex
 
 ---
 
-## Fonctionnement
+## 🔄 Fonctionnement
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[Page web ou PDF] --> B[Extraction locale du texte]
-    B --> C[Détection du prestataire]
-    C --> D[Recherche par règles et mots-clés]
-    D --> E[Extraction et surlignage des valeurs]
-    E --> F[Génération du résumé]
-    G[Checkboxes et notes personnalisées] --> F
-    H[Seuils personnalisés] --> F
-    F --> I[Validation et copie]
+    B --> C[Détection du prestataire et extraction des valeurs]
+    C --> D[Génération du résumé]
+    E[Checkboxes, notes et seuils personnalisés] --> D
+    D --> F[Validation puis copie]
+
+    classDef source fill:#FFF3E0,stroke:#E67E22,color:#1F2328
+    classDef process fill:#EAF4FF,stroke:#2F80ED,color:#1F2328
+    classDef custom fill:#F4ECF7,stroke:#8E44AD,color:#1F2328
+    classDef validation fill:#EAF7EE,stroke:#27AE60,color:#1F2328
+
+    class A source
+    class B,C,D process
+    class E custom
+    class F validation
 ```
 
 Chaque prestataire peut disposer de sa propre configuration :
@@ -93,7 +109,7 @@ Cet exemple est illustratif. Les champs, les formulations, les unités et leur o
 
 ---
 
-## Fonctionnalités principales
+## 🧩 Fonctionnalités principales
 
 ### Analyse de pages web et de PDF
 
@@ -141,7 +157,7 @@ Les modifications manuelles sont conservées autant que possible lorsque le rés
 
 ### Checkboxes et phrases personnalisées
 
-Des cases à cocher peuvent ajouter rapidement des formulations récurrentes :
+Des cases à cocher peuvent ajouter rapidement des formulations récurrentes, par exemple :
 
 * bonne ou mauvaise tolérance ;
 * bénéfice clinique ressenti ;
@@ -160,13 +176,15 @@ L’utilisateur peut définir ses propres seuils pour certaines données comme :
 * l’observance ;
 * l’IAH résiduel ;
 * les fuites.
-  
-Exemple : 
+
+Exemple :
+
 ```text
 Observance moyenne : 6,4 h (bonne observance)
-IAH résiduel : 2,1/h (efficace)
-Fuites : 8 L/min (pas de fuites)
+IAH résiduel : 2,1/h (traitement efficace)
+Fuites : 8 L/min (absence de fuites importantes)
 ```
+
 Une formulation personnalisée peut être associée à chaque côté du seuil.
 
 Cette fonction applique uniquement les règles définies par l’utilisateur. Elle ne constitue pas une interprétation médicale autonome.
@@ -286,7 +304,7 @@ La documentation détaillée est disponible sur [flashcpap.com/docs](https://www
 
 ---
 
-## Confidentialité
+## 🔒 Confidentialité
 
 FlashCPAP suit une approche **local-first** :
 
@@ -312,7 +330,7 @@ Les autorisations d’accès aux sites sont demandées uniquement lorsqu’elles
 
 ---
 
-## Limites
+## ⚠️ Limites
 
 * Une configuration adaptée au prestataire est nécessaire.
 * Une modification d’un portail peut nécessiter une adaptation des règles.

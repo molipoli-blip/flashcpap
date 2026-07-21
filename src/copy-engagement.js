@@ -3,6 +3,7 @@
 // FlashCPAP - copy engagement milestones (support + provider sharing)
 
 import { toProviderKey } from './domain/provider-rules.js';
+import { browserApi } from './platform/browser-api.js';
 
 const COPY_ENGAGEMENT_KEY = 'flashcpap_copy_engagement_v1';
 
@@ -85,77 +86,123 @@ function loadState() {
   }
 }
 
+async function loadStateAsync() {
+  let storedState = null;
+
+  try {
+    const stored = await browserApi.storage?.local?.get?.({ [COPY_ENGAGEMENT_KEY]: null });
+    storedState = stored?.[COPY_ENGAGEMENT_KEY] || null;
+  } catch {}
+
+  if (storedState && typeof storedState === 'object') {
+    return {
+      totalCopies: asStoredCount(storedState.totalCopies),
+      providerCopies: asStoredRecord(storedState.providerCopies),
+      providerNextPromptAtCopies: asStoredRecord(storedState.providerNextPromptAtCopies),
+      providerPromptShownCount: asStoredRecord(storedState.providerPromptShownCount),
+      providerAlreadyShared: asStoredRecord(storedState.providerAlreadyShared),
+      supportDeferredUntilTotal: asStoredCount(storedState.supportDeferredUntilTotal),
+      providerDeferredUntilCopies: asStoredRecord(storedState.providerDeferredUntilCopies)
+    };
+  }
+
+  const migratedState = loadState();
+  await saveStateAsync(migratedState);
+  return migratedState;
+}
+
 function saveState(state) {
   try {
     localStorage.setItem(COPY_ENGAGEMENT_KEY, JSON.stringify(state));
   } catch {}
 }
 
-// Records a successful copy event and returns which prompts should be shown.
-export function registerSuccessfulCopy(providerLabel) {
-  const state = loadState();
+async function saveStateAsync(state) {
+  saveState(state);
+  try {
+    await browserApi.storage?.local?.set?.({ [COPY_ENGAGEMENT_KEY]: state });
+  } catch {}
+}
+
+export function computeCopyEngagementMilestone(state, providerLabel) {
+  const nextState = {
+    totalCopies: asStoredCount(state?.totalCopies),
+    providerCopies: { ...asStoredRecord(state?.providerCopies) },
+    providerNextPromptAtCopies: { ...asStoredRecord(state?.providerNextPromptAtCopies) },
+    providerPromptShownCount: { ...asStoredRecord(state?.providerPromptShownCount) },
+    providerAlreadyShared: { ...asStoredRecord(state?.providerAlreadyShared) },
+    supportDeferredUntilTotal: asStoredCount(state?.supportDeferredUntilTotal),
+    providerDeferredUntilCopies: { ...asStoredRecord(state?.providerDeferredUntilCopies) }
+  };
+
   const providerKey = normalizeProviderKey(providerLabel);
 
-  state.totalCopies += 1;
+  nextState.totalCopies += 1;
 
   if (providerKey) {
-    const previousCount = Number(state.providerCopies[providerKey]) || 0;
-    state.providerCopies[providerKey] = previousCount + 1;
+    const previousCount = Number(nextState.providerCopies[providerKey]) || 0;
+    nextState.providerCopies[providerKey] = previousCount + 1;
   }
 
   const supportEvery = getPositiveRuleNumber(COPY_ENGAGEMENT_RULES.supportEveryCopies, 20);
   const providerFirst = getPositiveRuleNumber(COPY_ENGAGEMENT_RULES.providerFirstPromptCopies, 40);
   const deferExtra = getPositiveRuleNumber(COPY_ENGAGEMENT_RULES.deferExtraCopiesOnConflict, 10);
 
-  const supportDueByPeriod = state.totalCopies >= supportEvery && (state.totalCopies % supportEvery === 0);
-  const supportDeferredUntil = Number(state.supportDeferredUntilTotal) || 0;
-  let shouldShowSupportPrompt = supportDueByPeriod && state.totalCopies >= supportDeferredUntil;
+  const supportDueByPeriod = nextState.totalCopies >= supportEvery && (nextState.totalCopies % supportEvery === 0);
+  const supportDeferredUntil = Number(nextState.supportDeferredUntilTotal) || 0;
+  let shouldShowSupportPrompt = supportDueByPeriod && nextState.totalCopies >= supportDeferredUntil;
 
   let shouldShowProviderSharePrompt = false;
-  let providerCount = 0;
   if (providerKey) {
-    providerCount = Number(state.providerCopies[providerKey]) || 0;
-    const alreadyShared = !!state.providerAlreadyShared[providerKey];
-    const providerThreshold = Number(state.providerNextPromptAtCopies[providerKey]) || providerFirst;
-    if (!state.providerNextPromptAtCopies[providerKey]) {
-      state.providerNextPromptAtCopies[providerKey] = providerThreshold;
+    const providerCount = Number(nextState.providerCopies[providerKey]) || 0;
+    const alreadyShared = !!nextState.providerAlreadyShared[providerKey];
+    const providerThreshold = Number(nextState.providerNextPromptAtCopies[providerKey]) || providerFirst;
+    if (!nextState.providerNextPromptAtCopies[providerKey]) {
+      nextState.providerNextPromptAtCopies[providerKey] = providerThreshold;
     }
 
     const providerDueByPeriod = providerCount >= providerThreshold;
-    const providerDeferredUntil = Number(state.providerDeferredUntilCopies[providerKey]) || 0;
+    const providerDeferredUntil = Number(nextState.providerDeferredUntilCopies[providerKey]) || 0;
     shouldShowProviderSharePrompt = !alreadyShared && providerDueByPeriod && providerCount >= providerDeferredUntil;
 
     if (shouldShowProviderSharePrompt) {
-      const shownCount = Number(state.providerPromptShownCount[providerKey]) || 0;
+      const shownCount = Number(nextState.providerPromptShownCount[providerKey]) || 0;
       const nextIncrement = getProviderStepIncrement(shownCount);
-      state.providerPromptShownCount[providerKey] = shownCount + 1;
-      state.providerNextPromptAtCopies[providerKey] = providerThreshold + nextIncrement;
+      nextState.providerPromptShownCount[providerKey] = shownCount + 1;
+      nextState.providerNextPromptAtCopies[providerKey] = providerThreshold + nextIncrement;
     }
   }
 
-  // Never chain prompts: keep provider prompt now and defer support eligibility.
-  // The support prompt still only appears on configured support milestones.
   if (shouldShowSupportPrompt && shouldShowProviderSharePrompt) {
     shouldShowSupportPrompt = false;
-    state.supportDeferredUntilTotal = state.totalCopies + deferExtra;
+    nextState.supportDeferredUntilTotal = nextState.totalCopies + deferExtra;
   }
 
-  saveState(state);
-
   return {
-    totalCopies: state.totalCopies,
-    providerCopies: providerKey ? Number(state.providerCopies[providerKey]) || 0 : 0,
-    shouldShowSupportPrompt,
-    shouldShowProviderSharePrompt,
-    providerKey
+    state: nextState,
+    milestone: {
+      totalCopies: nextState.totalCopies,
+      providerCopies: providerKey ? Number(nextState.providerCopies[providerKey]) || 0 : 0,
+      shouldShowSupportPrompt,
+      shouldShowProviderSharePrompt,
+      providerKey
+    }
   };
 }
 
-export function markProviderAsShared(providerLabel) {
+// Records a successful copy event and returns which prompts should be shown.
+export async function registerSuccessfulCopy(providerLabel) {
+  const state = await loadStateAsync();
+  const { state: nextState, milestone } = computeCopyEngagementMilestone(state, providerLabel);
+  await saveStateAsync(nextState);
+  return milestone;
+}
+
+export async function markProviderAsShared(providerLabel) {
   const providerKey = normalizeProviderKey(providerLabel);
   if (!providerKey) return;
 
-  const state = loadState();
+  const state = await loadStateAsync();
   state.providerAlreadyShared[providerKey] = true;
-  saveState(state);
+  await saveStateAsync(state);
 }

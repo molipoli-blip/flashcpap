@@ -1,86 +1,163 @@
+<!-- markdownlint-disable MD013 MD033 MD041 -->
+
 <p align="right">
-  🇫🇷 <strong>Français</strong> |
+  🇫🇷 <strong>Français</strong> ·
   🇬🇧 <a href="./README.en.md">English</a>
 </p>
 
-# FlashCPAP
+<p align="center">
+  <img src="icons/favicon_128px.png" width="112" alt="Logo FlashCPAP">
+</p>
 
-**FlashCPAP est une extension de navigateur open source qui extrait les données des rapports de télésuivi PPC/CPAP depuis une page web ou un fichier PDF, puis génère un résumé clinique structuré, modifiable et prêt à copier dans le dossier médical.**
+<h1 align="center">FlashCPAP</h1>
+
+<p align="center">
+  <strong>Des rapports PPC à un résumé clinique structuré, vérifiable et prêt à copier.</strong>
+</p>
+
+<p align="center">
+  Extension de navigateur open source pour extraire localement les données de télésuivi
+  depuis une page web ou un PDF.
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Navigateurs-Firefox%20%E2%80%A2%20Chrome%20%E2%80%A2%20Edge-4285F4" alt="Firefox, Chrome et Edge">
-  <img src="https://img.shields.io/badge/Traitement-100%25%20local-27AE60" alt="Traitement local">
-  <img src="https://img.shields.io/badge/Extraction-R%C3%A8gles%20et%20mots--cl%C3%A9s-E67E22" alt="Extraction par règles">
-  <a href="LICENSE">
+  <img src="https://img.shields.io/badge/Traitement-100%25%20local-27AE60" alt="Traitement 100 % local">
+  <img src="https://img.shields.io/badge/Extraction-R%C3%A8gles%20explicites-E67E22" alt="Extraction par règles explicites">
+  <a href="./notes/LICENSE">
     <img src="https://img.shields.io/badge/Licence-Apache%202.0-8E44AD" alt="Licence Apache 2.0">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://www.flashcpap.com">Site officiel</a> •
-  <a href="https://www.flashcpap.com/docs">Documentation</a> •
-  <a href="https://addons.mozilla.org/en-US/firefox/addon/flashcpap/">Firefox</a> •
-  <a href="https://chromewebstore.google.com/detail/pedibchhakipflddbcfckhgojjagoiim">Chrome</a> •
-  <a href="https://microsoftedge.microsoft.com/addons/detail/flashcpap/poakfgkhfiamihmcbihhajkjbdndgilf">Edge</a> •
+  <a href="https://www.flashcpap.com">Site officiel</a> ·
+  <a href="https://www.flashcpap.com/docs">Documentation</a> ·
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/flashcpap/">Firefox</a> ·
+  <a href="https://chromewebstore.google.com/detail/pedibchhakipflddbcfckhgojjagoiim">Chrome</a> ·
+  <a href="https://microsoftedge.microsoft.com/addons/detail/flashcpap/poakfgkhfiamihmcbihhajkjbdndgilf">Edge</a> ·
   <a href="https://ko-fi.com/H2H81VJXO5">Soutenir le projet</a>
 </p>
 
 ---
 
-## ⚡ À quoi sert FlashCPAP ?
+## Démonstration
 
-Les rapports de télésuivi PPC sont présentés différemment selon les prestataires, les portails et les logiciels.
+<p align="center">
+  <img src="assets/flashcpap-demo.gif" width="100%" alt="Démonstration de FlashCPAP : analyse d’un rapport PPC et génération d’un résumé clinique">
+</p>
 
-Leur analyse nécessite souvent de rechercher puis recopier manuellement :
-
-- l’observance ou la durée moyenne d’utilisation ;
-- l’IAH résiduel ;
-- les fuites ;
-- le mode de ventilation ;
-- les pressions fixes ou automatiques ;
-- l’IPAP et l’EPAP ;
-- d’autres données propres à chaque rapport.
-
-FlashCPAP automatise cette collecte et transforme les valeurs détectées en un résumé standardisé, modifiable et vérifiable avant sa copie dans le dossier patient.
+<p align="center">
+  <sub>Analyse du rapport, contrôle des valeurs détectées, personnalisation puis copie du résumé.</sub>
+</p>
 
 > [!IMPORTANT]
 > FlashCPAP est un outil d’aide à la saisie et à la standardisation des comptes rendus.
->
-> Il ne pose pas de diagnostic, ne recommande aucun traitement et ne remplace pas la vérification des données par un professionnel de santé.
+> Il ne pose pas de diagnostic, ne recommande aucun traitement et ne remplace pas la
+> vérification des données par un professionnel de santé.
 
----
+## En un coup d’œil
 
-## 🔄 Fonctionnement
+| Source | Traitement | Résultat |
+| --- | --- | --- |
+| Page web ou PDF avec couche de texte | Extraction locale par règles et mots-clés configurables | Résumé clinique modifiable et prêt à copier |
 
-```mermaid
-flowchart TD
-    A[Page web ou PDF] --> B[Extraction locale du texte]
-    B --> C[Détection du prestataire et extraction des valeurs]
-    C --> D[Génération du résumé]
-    E[Checkboxes, notes et seuils personnalisés] --> D
-    D --> F[Validation puis copie]
+FlashCPAP automatise la recherche des données couramment présentes dans les rapports
+de télésuivi PPC : observance, durée moyenne d’utilisation, IAH résiduel, fuites,
+mode de ventilation, pressions fixes ou automatiques, IPAP, EPAP et autres champs
+propres à chaque rapport.
 
-    classDef source fill:#FFF3E0,stroke:#E67E22,color:#1F2328
-    classDef process fill:#EAF4FF,stroke:#2F80ED,color:#1F2328
-    classDef custom fill:#F4ECF7,stroke:#8E44AD,color:#1F2328
-    classDef validation fill:#EAF7EE,stroke:#27AE60,color:#1F2328
+Les valeurs reconnues restent visibles et vérifiables dans le texte source avant
+d’être intégrées au dossier patient.
 
-    class A source
-    class B,C,D process
-    class E custom
-    class F validation
+## Fonctionnalités
+
+### Extraire les données d’une page web ou d’un PDF
+
+- Analyse le texte affiché dans un portail web et ses sous-frames.
+- Lit un fichier PDF sélectionné dans l’extension avec PDF.js.
+- Détecte le prestataire à partir du domaine ou de mots-clés du rapport.
+- Extrait des champs textuels, numériques, des durées ou des groupes de valeurs.
+
+Lorsqu’un PDF est chargé, il est analysé à la place de la page web.
+
+> [!NOTE]
+> Le PDF doit contenir une couche de texte exploitable. FlashCPAP ne réalise pas
+> actuellement de reconnaissance optique de caractères (OCR) sur les documents
+> constitués uniquement d’images.
+
+### Configurer chaque prestataire
+
+- Créer ou importer un profil de prestataire.
+- Associer un ou plusieurs domaines au profil.
+- Définir les mots-clés de détection des PDF.
+- Ajouter, modifier et réorganiser les champs à extraire.
+- Personnaliser les intitulés, les unités et l’ordre du résumé.
+- Ajuster les règles d’exclusion, de priorité et les types de valeurs attendus.
+- Importer ou exporter la configuration au format JSON.
+
+### Contrôler les valeurs extraites
+
+Les éléments reconnus sont surlignés dans le texte source. Une navigation dédiée
+permet de retrouver chaque donnée et de confirmer qu’elle correspond au rapport
+original.
+
+### Composer un résumé clinique
+
+- Modifier manuellement le texte généré.
+- Ajouter des notes libres.
+- Réorganiser les informations.
+- Prévisualiser le résultat.
+- Copier le résumé dans le presse-papiers.
+
+Les modifications manuelles sont conservées autant que possible lorsque le résumé
+est régénéré.
+
+### Ajouter des phrases récurrentes
+
+Des cases à cocher personnalisables permettent d’insérer rapidement des formulations
+sur la tolérance, le bénéfice clinique, la somnolence, le masque, la sécheresse,
+les horaires de sommeil ou toute autre observation utile.
+
+Elles peuvent être regroupées par famille, placées en favoris et combinées pour
+produire des phrases plus naturelles.
+
+### Appliquer des seuils personnalisés
+
+L’utilisateur peut définir ses propres seuils et formulations pour certaines valeurs,
+par exemple l’observance, l’IAH résiduel ou les fuites :
+
+```text
+Observance moyenne : 6,4 h (bonne observance)
+IAH résiduel : 2,1/h (traitement efficace)
+Fuites : 8 L/min (absence de fuites importantes)
 ```
 
-Chaque prestataire peut disposer de sa propre configuration :
+Cette fonction applique uniquement les règles définies par l’utilisateur. Elle ne
+constitue pas une interprétation médicale autonome.
 
-- domaines ou URL du portail ;
-- mots-clés de détection dans les PDF ;
-- libellés associés aux données ;
-- types de valeurs et unités attendues ;
-- règles d’exclusion ou de priorité ;
-- ordre d’affichage dans le résumé.
+## Compatibilité
 
----
+### Navigateurs
+
+| Navigateur | Installation |
+| --- | --- |
+| Firefox | [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/flashcpap/) |
+| Google Chrome | [Chrome Web Store](https://chromewebstore.google.com/detail/pedibchhakipflddbcfckhgojjagoiim) |
+| Microsoft Edge | [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/flashcpap/poakfgkhfiamihmcbihhajkjbdndgilf) |
+
+### Sources et plateformes de télésuivi
+
+FlashCPAP fonctionne avec :
+
+- les pages web auxquelles l’utilisateur autorise explicitement l’accès ;
+- les rapports PDF contenant une couche de texte exploitable ;
+- les portails et formats pour lesquels un profil de prestataire adapté a été créé
+  ou importé.
+
+La compatibilité n’est pas limitée à une liste figée de prestataires : les domaines,
+mots-clés, champs, unités et règles d’extraction sont configurables. Une évolution
+d’un portail ou de son format de rapport peut toutefois nécessiter une mise à jour
+du profil associé.
 
 ## Exemple de résultat
 
@@ -100,91 +177,58 @@ Le patient ressent un bénéfice clinique.
 Absence de somnolence résiduelle.
 ```
 
-Cet exemple est illustratif. Les champs, les formulations, les unités et leur ordre sont personnalisables.
+Cet exemple est illustratif. Les champs, les formulations, les unités et leur ordre
+sont personnalisables.
 
----
+## Installation
 
-## 🧩 Fonctionnalités principales
+### Depuis une boutique officielle
 
-### Analyse de pages web et de PDF
+- [Installer pour Firefox](https://addons.mozilla.org/en-US/firefox/addon/flashcpap/)
+- [Installer pour Chrome](https://chromewebstore.google.com/detail/pedibchhakipflddbcfckhgojjagoiim)
+- [Installer pour Edge](https://microsoftedge.microsoft.com/addons/detail/flashcpap/poakfgkhfiamihmcbihhajkjbdndgilf)
 
-FlashCPAP peut analyser :
+### Depuis le code source
 
-- le texte affiché dans un portail web ;
-- les différentes sous-frames d’une page ;
-- un fichier PDF sélectionné dans l’extension.
+Prérequis : `bash`, `python3` et `zip`. Sous Windows, utiliser **Git Bash** ou
+**WSL**.
 
-Lorsqu’un PDF est chargé, il est analysé à la place de la page web.
-
-> [!NOTE]
-> Le PDF doit contenir une couche de texte exploitable. FlashCPAP ne réalise pas actuellement de reconnaissance optique de caractères sur les documents constitués uniquement d’images.
-
-### Prestataires et champs personnalisables
-
-L’utilisateur peut :
-
-- créer ou importer un profil de prestataire ;
-- associer un domaine au prestataire ;
-- configurer les mots-clés permettant de détecter ses rapports ;
-- ajouter, modifier et réorganiser les champs à extraire ;
-- personnaliser les intitulés et les unités ;
-- importer ou exporter la configuration au format JSON.
-
-Les champs peuvent contenir du texte, des valeurs numériques, des durées ou plusieurs valeurs associées.
-
-### Vérification des valeurs extraites
-
-Les éléments reconnus sont surlignés dans le texte source.
-
-Une navigation permet de retrouver chaque donnée afin de vérifier que la valeur extraite correspond bien au rapport original.
-
-### Résumé clinique modifiable
-
-Le résumé généré peut être :
-
-- modifié manuellement ;
-- affiché sous forme d’aperçu lisible ;
-- enrichi avec du texte libre ;
-- réorganisé ;
-- copié dans le presse-papiers.
-
-Les modifications manuelles sont conservées autant que possible lorsque le résumé est régénéré.
-
-### Checkboxes et phrases personnalisées
-
-Des cases à cocher peuvent ajouter rapidement des formulations récurrentes, par exemple :
-
-- bonne ou mauvaise tolérance ;
-- bénéfice clinique ressenti ;
-- persistance ou amélioration de la somnolence ;
-- problèmes de masque ;
-- sécheresse ;
-- horaires de sommeil ;
-- toute observation définie par l’utilisateur.
-
-Les checkboxes peuvent être regroupées par famille, placées en favoris et combinées pour produire des phrases plus naturelles.
-
-### Seuils personnalisés
-
-L’utilisateur peut définir ses propres seuils pour certaines données comme :
-
-- l’observance ;
-- l’IAH résiduel ;
-- les fuites.
-
-Exemple :
-
-```text
-Observance moyenne : 6,4 h (bonne observance)
-IAH résiduel : 2,1/h (traitement efficace)
-Fuites : 8 L/min (absence de fuites importantes)
+```bash
+bash build.sh firefox
+bash build.sh chromium
+bash build.sh edge
 ```
 
-Une formulation personnalisée peut être associée à chaque côté du seuil.
+Les archives sont générées dans le dossier `dist/`.
 
-Cette fonction applique uniquement les règles définies par l’utilisateur. Elle ne constitue pas une interprétation médicale autonome.
+Pour charger localement la version Chrome ou Edge :
 
----
+1. ouvrir la page de gestion des extensions ;
+2. activer le mode développeur ;
+3. sélectionner **Charger l’extension non empaquetée** ;
+4. choisir le dossier de l’extension.
+
+## Utilisation
+
+### Première configuration
+
+1. Installer puis ouvrir FlashCPAP.
+2. Créer ou importer un profil de prestataire.
+3. Associer le domaine du portail.
+4. Ajouter les champs à extraire.
+5. Définir les libellés ou mots-clés correspondants.
+
+### Au quotidien
+
+1. Ouvrir un rapport PPC ou sélectionner un PDF.
+2. Ouvrir FlashCPAP.
+3. Cliquer sur **Analyser la page**.
+4. Contrôler les valeurs surlignées dans la source.
+5. Ajouter les observations utiles.
+6. Relire, modifier puis copier le résumé.
+
+La documentation détaillée est disponible sur
+[flashcpap.com/docs](https://www.flashcpap.com/docs).
 
 ## Cas d’usage
 
@@ -197,109 +241,7 @@ FlashCPAP peut aider à :
 - harmoniser les données provenant de plusieurs prestataires ;
 - analyser successivement plusieurs rapports ouverts dans différents onglets.
 
----
-
-## FlashCPAP n’utilise pas d’IA
-
-FlashCPAP n’utilise actuellement :
-
-- ni intelligence artificielle générative ;
-- ni modèle de langage ;
-- ni service d’analyse distant ;
-- ni API d’interprétation médicale.
-
-L’extraction repose sur des règles explicites et configurables. L’utilisateur peut donc vérifier précisément où chaque valeur a été trouvée.
-
----
-
-## Pour les développeurs
-
-Ce dépôt peut servir de base pour des projets nécessitant :
-
-- l’extraction du texte d’un portail web ;
-- la lecture de rapports PDF avec PDF.js ;
-- la détection automatique d’une source ;
-- le parsing de rapports PPC/CPAP par règles et mots-clés ;
-- l’extraction de données d’observance, d’IAH, de pression ou de fuites ;
-- le surlignage des valeurs dans le texte source ;
-- la génération d’un résumé structuré et modifiable ;
-- une compatibilité Firefox, Chrome et Edge.
-
-Termes associés :
-
-```text
-CPAP report parser
-PAP compliance report extraction
-CPAP adherence data extraction
-CPAP telemonitoring
-PPC télésuivi
-residual AHI extraction
-CPAP leak data
-sleep medicine browser extension
-clinical note generator
-medical report parser
-PDF report extraction
-local-first medical software
-rule-based document parsing
-```
-
----
-
-## Installation
-
-### Boutiques officielles
-
-- [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/flashcpap/)
-- [Chrome Web Store](https://chromewebstore.google.com/detail/pedibchhakipflddbcfckhgojjagoiim)
-- [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/flashcpap/poakfgkhfiamihmcbihhajkjbdndgilf)
-
-### Installation locale
-
-Prérequis : `bash`, `python3` et `zip`.
-
-Sous Windows, utiliser **Git Bash** ou **WSL**.
-
-```bash
-bash build.sh firefox
-bash build.sh chromium
-bash build.sh edge
-```
-
-Les archives sont générées dans le dossier `dist/`.
-
-Pour Chrome ou Edge :
-
-1. ouvrir la page de gestion des extensions ;
-2. activer le mode développeur ;
-3. cliquer sur **Charger l’extension non empaquetée** ;
-4. sélectionner le dossier de l’extension.
-
----
-
-## Démarrage rapide
-
-### Première configuration
-
-1. Installer et ouvrir FlashCPAP.
-2. Créer ou importer un prestataire.
-3. Associer le domaine du portail.
-4. Ajouter les champs à extraire.
-5. Définir les libellés ou mots-clés correspondants.
-
-### Utilisation quotidienne
-
-1. Ouvrir un rapport PPC ou sélectionner un PDF.
-2. Ouvrir FlashCPAP.
-3. Cliquer sur **Analyser la page**.
-4. Contrôler les valeurs surlignées.
-5. Ajouter les observations utiles.
-6. Modifier puis copier le résumé.
-
-La documentation détaillée est disponible sur [flashcpap.com/docs](https://www.flashcpap.com/docs).
-
----
-
-## 🔒 Confidentialité
+## Confidentialité
 
 FlashCPAP suit une approche **local-first** :
 
@@ -309,23 +251,25 @@ FlashCPAP suit une approche **local-first** :
 - les imports et exports JSON sont déclenchés par l’utilisateur ;
 - aucune donnée n’est utilisée pour entraîner un modèle d’intelligence artificielle.
 
----
+FlashCPAP n’utilise ni IA générative, ni modèle de langage, ni service d’analyse
+distant, ni API d’interprétation médicale. L’extraction repose sur des règles
+explicites et configurables, afin que l’utilisateur puisse vérifier précisément
+où chaque valeur a été trouvée.
 
-## Autorisations utilisées
+### Autorisations utilisées
 
 | Autorisation | Utilisation |
-|---|---|
+| --- | --- |
 | `activeTab` et `tabs` | Identifier et suivre l’onglet source |
 | `scripting` | Lire le texte affiché dans la page |
 | `storage` | Enregistrer les configurations locales |
 | `clipboardWrite` | Copier le résumé |
 | Autorisation d’hôte optionnelle | Autoriser l’analyse sur un domaine choisi |
 
-Les autorisations d’accès aux sites sont demandées uniquement lorsqu’elles deviennent nécessaires.
+Les autorisations d’accès aux sites sont demandées uniquement lorsqu’elles deviennent
+nécessaires.
 
----
-
-## ⚠️ Limites
+## Limites et responsabilité
 
 - Une configuration adaptée au prestataire est nécessaire.
 - Une modification d’un portail peut nécessiter une adaptation des règles.
@@ -335,11 +279,35 @@ Les autorisations d’accès aux sites sont demandées uniquement lorsqu’elles
 - FlashCPAP ne remplace pas le jugement clinique.
 - FlashCPAP ne recommande aucun réglage de PPC ni aucun traitement.
 
-**La validation finale du résumé reste sous la responsabilité du professionnel de santé.**
+> [!WARNING]
+> La validation finale du résumé reste sous la responsabilité du professionnel
+> de santé.
 
----
+## Fonctionnement
 
-## Architecture technique
+```mermaid
+flowchart LR
+    A[Page web ou PDF] --> B[Extraction locale du texte]
+    B --> C[Détection de la source]
+    C --> D[Extraction des valeurs]
+    E[Notes, phrases et seuils personnalisés] --> F[Résumé modifiable]
+    D --> F
+    F --> G[Validation puis copie]
+
+    classDef source fill:#FFF3E0,stroke:#E67E22,color:#1F2328
+    classDef process fill:#EAF4FF,stroke:#2F80ED,color:#1F2328
+    classDef custom fill:#F4ECF7,stroke:#8E44AD,color:#1F2328
+    classDef validation fill:#EAF7EE,stroke:#27AE60,color:#1F2328
+
+    class A source
+    class B,C,D process
+    class E custom
+    class F,G validation
+```
+
+## Pour les développeurs
+
+### Architecture
 
 ```text
 background.js              Logique d’arrière-plan
@@ -363,21 +331,43 @@ Technologies principales :
 - HTML et CSS ;
 - aucun service d’analyse distant.
 
----
+Le dépôt peut également servir de référence pour l’extraction locale de rapports
+PDF ou web par règles, le surlignage des valeurs sources et la génération de résumés
+structurés.
+
+<details>
+<summary>Termes techniques associés</summary>
+
+```text
+CPAP report parser
+PAP compliance report extraction
+CPAP adherence data extraction
+CPAP telemonitoring
+PPC télésuivi
+residual AHI extraction
+CPAP leak data
+sleep medicine browser extension
+clinical note generator
+medical report parser
+PDF report extraction
+local-first medical software
+rule-based document parsing
+```
+
+</details>
 
 ## Contribution
 
-Les contributions sont les bienvenues pour améliorer le parsing, l’interface, les tests, la documentation et la compatibilité entre navigateurs.
+Les contributions sont les bienvenues pour améliorer le parsing, l’interface, les
+tests, la documentation et la compatibilité entre navigateurs.
 
-Aucune donnée permettant d’identifier un patient ne doit être incluse dans un rapport de bug ou un exemple partagé.
-
----
+> [!CAUTION]
+> Aucune donnée permettant d’identifier un patient ne doit être incluse dans un
+> rapport de bug ou un exemple partagé.
 
 ## Licence
 
-FlashCPAP est distribué sous [licence Apache 2.0](LICENSE).
-
----
+FlashCPAP est distribué sous [licence Apache 2.0](./notes/LICENSE).
 
 ## Contact
 

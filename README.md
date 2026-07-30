@@ -61,6 +61,25 @@
 | --- | --- | --- |
 | Page web ou PDF avec couche de texte | Extraction locale par règles et mots-clés configurables | Résumé clinique modifiable et prêt à copier |
 
+```mermaid
+flowchart LR
+    A[Rapport web ou PDF] --> B[Extraction locale]
+    B --> C[Analyse selon des champs<br/>associés à des mots-clés]
+    C --> D[Résumé personnalisable]
+    E[Notes, checkboxes<br/>et seuils personnalisés] --> D
+    D --> F[Copie dans le dossier patient]
+
+    classDef source fill:#FFF3E0,stroke:#E67E22
+    classDef process fill:#EAF4FF,stroke:#2F80ED
+    classDef custom fill:#F4ECF7,stroke:#8E44AD
+    classDef result fill:#EAF7EE,stroke:#27AE60
+
+    class A source
+    class B process
+    class C,E custom
+    class D,F result
+```
+
 FlashCPAP automatise la recherche des données couramment présentes dans les rapports
 de télésuivi PPC : observance, durée moyenne d’utilisation, IAH résiduel, fuites,
 mode de ventilation, pressions fixes ou automatiques, IPAP, EPAP et autres champs
@@ -89,17 +108,17 @@ Lorsqu’un PDF est chargé, il est analysé à la place de la page web.
 
 - Créer ou importer un profil de prestataire.
 - Associer un ou plusieurs domaines au profil.
-- Définir les mots-clés de détection des PDF.
+- Définir les champs avec des mots clés pour extraire les données recherchées.
 - Ajouter, modifier et réorganiser les champs à extraire.
 - Personnaliser les intitulés, les unités et l’ordre du résumé.
 - Ajuster les règles d’exclusion, de priorité et les types de valeurs attendus.
-- Importer ou exporter la configuration au format JSON.
+- Possibilité d'importer ou exporter la configuration d'un prestataire au format JSON.
 
 ### Contrôler les valeurs extraites
 
 Les éléments reconnus sont surlignés dans le texte source. Une navigation dédiée
 permet de retrouver chaque donnée et de confirmer qu’elle correspond au rapport
-original.
+original. 
 
 ### Composer un résumé clinique
 
@@ -109,17 +128,15 @@ original.
 - Prévisualiser le résultat.
 - Copier le résumé dans le presse-papiers.
 
-Les modifications manuelles sont conservées autant que possible lorsque le résumé
-est régénéré.
-
 ### Ajouter des phrases récurrentes
 
-Des cases à cocher personnalisables permettent d’insérer rapidement des formulations
-sur la tolérance, le bénéfice clinique, la somnolence, le masque, la sécheresse,
+Des checkboxes personnalisables permettent d’insérer rapidement des phrases répétitives et récurrentes entre
+plusieurs consultations.
+Des checkboxes par défaut portent sur la tolérance, le bénéfice clinique, la somnolence, le masque, la sécheresse,
 les horaires de sommeil ou toute autre observation utile.
 
-Elles peuvent être regroupées par famille, placées en favoris et combinées pour
-produire des phrases plus naturelles.
+Elles peuvent être regroupées par famille, placées en favoris et combinées pour une mise en page 
+par puces ou tout sur une même la ligne.
 
 ### Appliquer des seuils personnalisés
 
@@ -137,27 +154,15 @@ constitue pas une interprétation médicale autonome.
 
 ## Compatibilité
 
-### Navigateurs
-
-| Navigateur | Installation |
-| --- | --- |
-| Firefox | [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/flashcpap/) |
-| Google Chrome | [Chrome Web Store](https://chromewebstore.google.com/detail/pedibchhakipflddbcfckhgojjagoiim) |
-| Microsoft Edge | [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/flashcpap/poakfgkhfiamihmcbihhajkjbdndgilf) |
-
 ### Sources et plateformes de télésuivi
 
 FlashCPAP fonctionne avec :
 
 - les pages web auxquelles l’utilisateur autorise explicitement l’accès ;
 - les rapports PDF contenant une couche de texte exploitable ;
-- les portails et formats pour lesquels un profil de prestataire adapté a été créé
-  ou importé.
 
-La compatibilité n’est pas limitée à une liste figée de prestataires : les domaines,
-mots-clés, champs, unités et règles d’extraction sont configurables. Une évolution
-d’un portail ou de son format de rapport peut toutefois nécessiter une mise à jour
-du profil associé.
+Une évolution d’un portail ou de son format de rapport peut toutefois nécessiter une mise à jour
+du profil prestataire associé.
 
 ## Exemple de résultat
 
@@ -177,8 +182,8 @@ Le patient ressent un bénéfice clinique.
 Absence de somnolence résiduelle.
 ```
 
-Cet exemple est illustratif. Les champs, les formulations, les unités et leur ordre
-sont personnalisables.
+Cet exemple est illustratif. Les champs, les formulations, les unités, les phrases 
+et leur ordre sont personnalisables.
 
 ## Installation
 
@@ -187,26 +192,6 @@ sont personnalisables.
 - [Installer pour Firefox](https://addons.mozilla.org/en-US/firefox/addon/flashcpap/)
 - [Installer pour Chrome](https://chromewebstore.google.com/detail/pedibchhakipflddbcfckhgojjagoiim)
 - [Installer pour Edge](https://microsoftedge.microsoft.com/addons/detail/flashcpap/poakfgkhfiamihmcbihhajkjbdndgilf)
-
-### Depuis le code source
-
-Prérequis : `bash`, `python3` et `zip`. Sous Windows, utiliser **Git Bash** ou
-**WSL**.
-
-```bash
-bash build.sh firefox
-bash build.sh chromium
-bash build.sh edge
-```
-
-Les archives sont générées dans le dossier `dist/`.
-
-Pour charger localement la version Chrome ou Edge :
-
-1. ouvrir la page de gestion des extensions ;
-2. activer le mode développeur ;
-3. sélectionner **Charger l’extension non empaquetée** ;
-4. choisir le dossier de l’extension.
 
 ## Utilisation
 
@@ -238,7 +223,6 @@ FlashCPAP peut aider à :
 - accélérer la rédaction d’un compte rendu ;
 - limiter les erreurs de recopie ;
 - standardiser les notes cliniques ;
-- harmoniser les données provenant de plusieurs prestataires ;
 - analyser successivement plusieurs rapports ouverts dans différents onglets.
 
 ## Confidentialité
@@ -252,9 +236,7 @@ FlashCPAP suit une approche **local-first** :
 - aucune donnée n’est utilisée pour entraîner un modèle d’intelligence artificielle.
 
 FlashCPAP n’utilise ni IA générative, ni modèle de langage, ni service d’analyse
-distant, ni API d’interprétation médicale. L’extraction repose sur des règles
-explicites et configurables, afin que l’utilisateur puisse vérifier précisément
-où chaque valeur a été trouvée.
+distant, ni API d’interprétation médicale. 
 
 ### Autorisations utilisées
 
@@ -271,11 +253,7 @@ nécessaires.
 
 ## Limites et responsabilité
 
-- Une configuration adaptée au prestataire est nécessaire.
-- Une modification d’un portail peut nécessiter une adaptation des règles.
-- La qualité de l’analyse PDF dépend de la couche de texte.
-- Les documents numérisés sans texte exploitable ne sont pas pris en charge.
-- Les valeurs extraites doivent toujours être vérifiées.
+- Une modification d’un portail par le propriétaire peut nécessiter une adaptation des règles.
 - FlashCPAP ne remplace pas le jugement clinique.
 - FlashCPAP ne recommande aucun réglage de PPC ni aucun traitement.
 
@@ -283,29 +261,21 @@ nécessaires.
 > La validation finale du résumé reste sous la responsabilité du professionnel
 > de santé.
 
-## Fonctionnement
+## Pour les développeurs
 
-```mermaid
-flowchart LR
-    A[Page web ou PDF] --> B[Extraction locale du texte]
-    B --> C[Détection de la source]
-    C --> D[Extraction des valeurs]
-    E[Notes, phrases et seuils personnalisés] --> F[Résumé modifiable]
-    D --> F
-    F --> G[Validation puis copie]
+### Installation depuis le code source
 
-    classDef source fill:#FFF3E0,stroke:#E67E22,color:#1F2328
-    classDef process fill:#EAF4FF,stroke:#2F80ED,color:#1F2328
-    classDef custom fill:#F4ECF7,stroke:#8E44AD,color:#1F2328
-    classDef validation fill:#EAF7EE,stroke:#27AE60,color:#1F2328
+Prérequis : `bash`, `python3` et `zip`. Sous Windows, utiliser **Git Bash** ou
+**WSL**.
 
-    class A source
-    class B,C,D process
-    class E custom
-    class F,G validation
+```bash
+bash build.sh firefox
+bash build.sh chromium
+bash build.sh edge
 ```
 
-## Pour les développeurs
+Les archives sont générées dans le dossier `dist/`.
+
 
 ### Architecture
 
@@ -331,10 +301,6 @@ Technologies principales :
 - HTML et CSS ;
 - aucun service d’analyse distant.
 
-Le dépôt peut également servir de référence pour l’extraction locale de rapports
-PDF ou web par règles, le surlignage des valeurs sources et la génération de résumés
-structurés.
-
 <details>
 <summary>Termes techniques associés</summary>
 
@@ -352,6 +318,11 @@ medical report parser
 PDF report extraction
 local-first medical software
 rule-based document parsing
+CPAP report
+consultation de suivi PPC
+obstructive sleep apnea
+syndrome d'apnée obstructif du sommeil
+
 ```
 
 </details>

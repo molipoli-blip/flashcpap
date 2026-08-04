@@ -315,7 +315,7 @@ FlashCPAP follows a **local-first** approach:
 
 | Permission | Purpose |
 |---|---|
-| `activeTab` and `tabs` | Identify and track the source tab |
+| `activeTab`, `tabs`, and `webNavigation` | Identify the source tab and allowed frames |
 | `scripting` | Read text displayed on the web page |
 | `storage` | Save local configurations |
 | `clipboardWrite` | Copy the generated summary |

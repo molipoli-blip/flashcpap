@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/png" href="icons/favicon_128px.png">
+  <link rel="stylesheet" href="styles/onboarding.css">
   <title data-i18n="popupTitle">FlashCPAP</title>
   <style>
     /* body { overflow-x: hidden; } - Removed to fix sticky positioning */
@@ -288,8 +289,10 @@
     #hl-info-popup .row { margin: 2px 0; color: #444; }
 
     /* Right side dock for source viewer */
-    :root { --source-dock-width: 420px; }
+    :root { --source-dock-width: 420px; --quick-start-dock-width: 420px; }
     body.docked-right { padding-right: var(--source-dock-width); }
+    body.guide-docked { padding-right: var(--quick-start-dock-width); }
+    body.docked-right.guide-docked { padding-right: calc(var(--source-dock-width) + var(--quick-start-dock-width)); }
     #sticky-footer {
       position: fixed;
       bottom: 0;
@@ -304,6 +307,12 @@
     }
     body.docked-right #sticky-footer {
       right: var(--source-dock-width);
+    }
+    body.guide-docked #sticky-footer {
+      right: var(--quick-start-dock-width);
+    }
+    body.docked-right.guide-docked #sticky-footer {
+      right: calc(var(--source-dock-width) + var(--quick-start-dock-width));
     }
     #source-dock {
       position: fixed;
@@ -325,6 +334,9 @@
     body.docked-right #source-dock {
       display: flex;
     }
+    body.docked-right.guide-docked #source-dock {
+      right: var(--quick-start-dock-width);
+    }
     #source-dock-header {
       display: flex;
       align-items: center;
@@ -345,6 +357,70 @@
       cursor: ew-resize;
       background: transparent;
       z-index: 2;
+    }
+    #quick-start-dock {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: var(--quick-start-dock-width);
+      max-width: 90vw;
+      background: #f8fafc;
+      border-left: 1px solid #cbd5e1;
+      box-shadow: -6px 0 18px rgba(15,23,42,0.14);
+      z-index: 10011;
+      display: none;
+      overflow: hidden;
+      flex-direction: column;
+    }
+    body.guide-docked #quick-start-dock { display: flex; }
+    #quick-start-dock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      user-select: none;
+    }
+    #quick-start-dock-header button {
+      border: 0;
+      background: transparent;
+      color: #475569;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #quick-start-dock-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 18px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    #quick-start-dock-body h2 {
+      margin: 0 0 7px;
+      color: #0f172a;
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+    #quick-start-dock-body > p {
+      margin: 0 0 12px;
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    #quick-start-dock-resizer {
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 3;
+      width: 6px;
+      height: 100%;
+      cursor: ew-resize;
+      background: transparent;
     }
     /* Checkboxes personnalisées */
     #custom-checkboxes-container {
@@ -893,7 +969,7 @@
       <span data-i18n="tabSettings">⚙️ Paramètres</span>
     </button>
     <button id="tab-help" role="tab" class="tab" aria-selected="false" style="flex: 0 0 auto; min-width: 40px; font-size: 1.2em;" title="Documentation" data-i18n-title="tabHelpTitle">
-      📖
+      (?)
     </button>
     <button id="tab-bug" role="tab" class="tab" aria-selected="false" style="flex: 0 0 auto; min-width: 40px; font-size: 1.2em;" title="Déclarer un bug" data-i18n-title="tabBugTitle">
       🐞
@@ -1195,7 +1271,7 @@
   <!-- Documentation -->
   <section id="help-panel" class="tabpanel" role="tabpanel" aria-labelledby="tab-help">
     <div class="panel-inner" style="text-align:center; padding:28px 18px;">
-      <div style="font-size:2.6em; margin-bottom:12px;">📖</div>
+      <div style="font-size:2.1em; margin-bottom:12px;">(?)</div>
       <h3 style="margin:0 0 10px 0; color:#333;" data-i18n="headingDocumentation">Documentation</h3>
       <p style="font-size:13px; color:#555; line-height:1.5; margin:0 0 20px 0;" data-i18n="descDocumentation">
         Retrouvez les guides d'utilisation, tutoriels et nouveautés sur le site officiel FlashCPAP.
@@ -1204,6 +1280,10 @@
         style="display:inline-block; background:#007acc; color:#fff; font-weight:700; padding:10px 22px; border-radius:8px; text-decoration:none; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,0.12);">
         🌐 flashcpap.com/docs
       </a>
+      <button id="btn-replay-onboarding" type="button" data-i18n="onboardingReplay"
+        style="display:block; margin:12px auto 0; background:#fff; color:#007acc; font-weight:700; padding:8px 16px; border:1px solid #007acc; border-radius:8px; cursor:pointer; font-size:12px;">
+        Revoir le guide de démarrage
+      </button>
     </div>
   </section>
 
@@ -1260,6 +1340,20 @@
     </div>
     <div id="source-dock-body"></div>
   </div>
+
+  <!-- Guide de démarrage latéral -->
+  <aside id="quick-start-dock" role="complementary" aria-label="Guide de démarrage" data-i18n-aria-label="quickStartDockAriaLabel">
+    <div id="quick-start-dock-resizer" title="Redimensionner" data-i18n-title="sourceDockResizeTitle"></div>
+    <div id="quick-start-dock-header">
+      <strong data-i18n="quickStartDockTitle">Guide de démarrage</strong>
+      <button id="btn-close-quick-start" type="button" title="Fermer" data-i18n-title="titleClose">×</button>
+    </div>
+    <div id="quick-start-dock-body">
+      <h2 data-i18n="onboardingQuickStartTitle">Faites votre premier essai</h2>
+      <p data-i18n="onboardingQuickStartBody">Prenez en main FlashCPAP avec un rapport prévu pour la découverte.</p>
+      <div id="quick-start-dock-content"></div>
+    </div>
+  </aside>
 
   <!-- Modal: Ajouter / Modifier un champ -->
   <div id="modal-backdrop" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 9998;"></div>

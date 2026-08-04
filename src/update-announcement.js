@@ -150,8 +150,12 @@ function createAnnouncementElement(version) {
   return overlay;
 }
 
-export function initUpdateAnnouncement({ browserApi } = {}) {
+export function initUpdateAnnouncement({ browserApi, suppress = false } = {}) {
   const version = getCurrentVersion(browserApi);
+  if (version && suppress) {
+    markVersionDismissed(version);
+    return;
+  }
   if (!version || hasDismissedVersion(version)) return;
   if (document.getElementById(ANNOUNCEMENT_ID)) return;
 

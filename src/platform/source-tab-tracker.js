@@ -3,6 +3,7 @@
 
 import { getActiveNormalTab } from './active-tab.js';
 import { browserApi } from './browser-api.js';
+import { clearFrameSnapshot, refreshFrameSnapshot } from '../iframe-permissions.js';
 
 let trackedSourceTab = null;
 let listenersBound = false;
@@ -24,7 +25,11 @@ function normalizeSourceTab(tab) {
 }
 
 export function setTrackedSourceTab(tab) {
-  trackedSourceTab = normalizeSourceTab(tab);
+  const nextTrackedSourceTab = normalizeSourceTab(tab);
+  if (trackedSourceTab?.id && trackedSourceTab.id !== nextTrackedSourceTab?.id) {
+    clearFrameSnapshot(trackedSourceTab.id);
+  }
+  trackedSourceTab = nextTrackedSourceTab;
   return trackedSourceTab;
 }
 
@@ -33,13 +38,16 @@ export function getTrackedSourceTab() {
 }
 
 export function clearTrackedSourceTab() {
+  if (trackedSourceTab?.id) clearFrameSnapshot(trackedSourceTab.id);
   trackedSourceTab = null;
 }
 
 export async function refreshTrackedSourceTab() {
   try {
     const tab = await getActiveNormalTab();
-    return setTrackedSourceTab(tab);
+    const tracked = setTrackedSourceTab(tab);
+    if (tracked) await refreshFrameSnapshot(tracked);
+    return tracked;
   } catch {
     clearTrackedSourceTab();
     return null;
@@ -71,6 +79,11 @@ export async function initializeSourceTabTracking() {
 
     browserApi.windows.onFocusChanged?.addListener(() => {
       void refreshTrackedSourceTab();
+    });
+
+    browserApi.webNavigation.onCompleted?.addListener((details) => {
+      if (trackedSourceTab?.id !== details?.tabId) return;
+      void refreshFrameSnapshot(trackedSourceTab);
     });
 
     listenersBound = true;

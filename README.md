@@ -242,7 +242,7 @@ distant, ni API d’interprétation médicale.
 
 | Autorisation | Utilisation |
 | --- | --- |
-| `activeTab` et `tabs` | Identifier et suivre l’onglet source |
+| `activeTab`, `tabs` et `webNavigation` | Identifier l’onglet source et les frames autorisées |
 | `scripting` | Lire le texte affiché dans la page |
 | `storage` | Enregistrer les configurations locales |
 | `clipboardWrite` | Copier le résumé |

@@ -108,11 +108,20 @@ export const chromiumApi = {
       return getChromium()?.action?.onClicked || null;
     }
   },
+  webNavigation: {
+    async getAllFrames(details) {
+      const chromium = requireChromium();
+      return chromium.webNavigation.getAllFrames(details);
+    },
+    get onCompleted() {
+      return getChromium()?.webNavigation?.onCompleted || null;
+    }
+  },
   scripting: {
-    async executeScript({ tabId, allFrames = false, func }) {
+    async executeScript({ tabId, allFrames = false, frameIds, func }) {
       const chromium = requireChromium();
       return chromium.scripting.executeScript({
-        target: { tabId, allFrames },
+        target: frameIds ? { tabId, frameIds } : { tabId, allFrames },
         func
       });
     }

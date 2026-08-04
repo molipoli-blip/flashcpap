@@ -18,7 +18,10 @@ export function initDock() {
 
   function clampDockWidth(target) {
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) || 500;
-    const maxByViewport = Math.max(MIN_DOCK_WIDTH, vw - MIN_LEFT_UI);
+    const guideWidth = document.body.classList.contains('guide-docked')
+      ? (document.getElementById('quick-start-dock')?.getBoundingClientRect().width || 0)
+      : 0;
+    const maxByViewport = Math.max(MIN_DOCK_WIDTH, vw - MIN_LEFT_UI - guideWidth);
     return Math.min(Math.max(MIN_DOCK_WIDTH, target), Math.min(MAX_DOCK_WIDTH, maxByViewport));
   }
 

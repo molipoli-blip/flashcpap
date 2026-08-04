@@ -326,6 +326,7 @@ export function saveSettings() {
 export function loadSettings() {
   const raw = localStorage.getItem(STORAGE_KEY);
   const parsed = parseStoredSettings(raw);
+  const isFirstRun = !parsed;
 
   if (parsed) {
     try { console.log('[STORAGE][LOAD] Raw settings loaded from localStorage'); } catch {}
@@ -356,6 +357,8 @@ export function loadSettings() {
     saveSettings();
     try { console.log('[STORAGE][INIT] Fresh default settings initialized'); } catch {}
   }
+
+  return { isFirstRun };
 }
 
 // Checkbox family suggestions.

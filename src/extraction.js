@@ -4,13 +4,16 @@ import { extractTextFromPDF } from '../lib/pdf-parser.js';
 import { browserApi } from './platform/browser-api.js';
 import { HostPermissionError } from './platform/site-root.js';
 
-async function extractHtmlTextFromTab(tab) {
+export async function extractHtmlTextFromTab(tab, api = browserApi) {
   let results;
+  const frameIds = Array.isArray(tab?.analysisFrameIds) && tab.analysisFrameIds.length
+    ? tab.analysisFrameIds
+    : [0];
 
   try {
-    results = await browserApi.scripting.executeScript({
+    results = await api.scripting.executeScript({
       tabId: tab.id,
-      allFrames: true,
+      frameIds,
       func: () => {
         try {
           let text = (document && document.body && document.body.innerText) ? document.body.innerText : '';

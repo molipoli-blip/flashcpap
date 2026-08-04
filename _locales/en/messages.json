@@ -41,6 +41,117 @@
   "updateBannerCloseTitle": {
     "message": "Hide this message"
   },
+  "onboardingWelcomeTitle": {
+    "message": "Welcome to FlashCPAP"
+  },
+  "onboardingWelcomeBody": {
+    "message": "FlashCPAP turns CPAP report data from a web page or PDF into a structured summary ready to copy."
+  },
+  "onboardingSetupTitle": {
+    "message": "Configure before analyzing"
+  },
+  "onboardingSetupBody": {
+    "message": "FlashCPAP cannot recognize a report correctly until a provider profile and its extraction rules have been configured."
+  },
+  "onboardingSetupWarningTitle": {
+    "message": "⚠️ Setup is required before first use"
+  },
+  "onboardingSetupWarningBody": {
+    "message": "Do not use the Analyze button until you have imported or created the profile matching your provider."
+  },
+  "onboardingQuickStartTitle": {
+    "message": "Run your first trial"
+  },
+  "onboardingQuickStartBody": {
+    "message": "Get started with FlashCPAP using a report designed for discovery."
+  },
+  "onboardingQuickStartJourneyStart": {
+    "message": "To begin, "
+  },
+  "onboardingQuickStartTrialLink": {
+    "message": "opening the FlashCPAP trial page ↗"
+  },
+  "onboardingQuickStartStep1": {
+    "message": "In the extension, open "
+  },
+  "onboardingQuickStartStep2Before": {
+    "message": "Click "
+  },
+  "onboardingQuickStartStep2After": {
+    "message": " and enter the provider name."
+  },
+  "onboardingCommunityBefore": {
+    "message": "You can also add a provider directly from the "
+  },
+  "onboardingCommunityLink": {
+    "message": "FlashCPAP community library ↗"
+  },
+  "onboardingCommunityAfter": {
+    "message": ". ⚠️ These profiles are not updated automatically: field changes may be required if the portal or report format has changed."
+  },
+  "onboardingQuickStartStep3Before": {
+    "message": "Return to the "
+  },
+  "onboardingQuickStartStep3Middle": {
+    "message": " tab, then click "
+  },
+  "onboardingQuickStartStep4": {
+    "message": "Click "
+  },
+  "onboardingQuickStartStep5Before": {
+    "message": "Go back to "
+  },
+  "onboardingQuickStartStep5After": {
+    "message": ", then configure your "
+  },
+  "onboardingFieldCardLabel": {
+    "message": "fields"
+  },
+  "onboardingQuickStartStep5Details": {
+    "message": ": name, keyword, and extraction mode based on the text and values to extract."
+  },
+  "onboardingQuickStartStep6Before": {
+    "message": "Return to "
+  },
+  "onboardingQuickStartStep6Middle": {
+    "message": " and run your first extraction by clicking "
+  },
+  "onboardingCriticalDocsBefore": {
+    "message": "Feel free to consult "
+  },
+  "onboardingDocsLink": {
+    "message": "flashcpap.com/docs#step3"
+  },
+  "onboardingCriticalDocsAfter": {
+    "message": " for this critical step."
+  },
+  "onboardingPrevious": {
+    "message": "Previous"
+  },
+  "onboardingNext": {
+    "message": "Next"
+  },
+  "onboardingConfigureNow": {
+    "message": "Configure FlashCPAP"
+  },
+  "onboardingOpenGuidePanel": {
+    "message": "Show guide alongside"
+  },
+  "quickStartDockTitle": {
+    "message": "Getting started guide"
+  },
+  "quickStartDockAriaLabel": {
+    "message": "Side panel: getting started guide"
+  },
+  "onboardingLater": {
+    "message": "Continue later"
+  },
+  "onboardingProgressLabel": {
+    "message": "Getting started guide progress"
+  },
+  "onboardingReplay": {
+    "message": "Replay the getting started guide"
+  },
   "updateBannerExampleTitle1": {
     "message": "New version available: FlashCPAP v$1"
   },
@@ -82,6 +193,9 @@
   },
   "buttonAnalyzePage": {
     "message": "Analyze page"
+  },
+  "uiConfigureProviderNow": {
+    "message": "Configure a provider"
   },
   "titleResetAnalysis": {
     "message": "Reset analysis"
@@ -347,11 +461,23 @@
   "copyFailure": {
     "message": "Copy failed"
   },
+  "copyPromptLater": {
+    "message": "Later"
+  },
+  "copyReviewPopupTitle": {
+    "message": "Is FlashCPAP useful to you?"
+  },
+  "copyReviewPopupMessage": {
+    "message": "An honest store review will help other sleep professionals discover FlashCPAP."
+  },
+  "copyReviewPopupAction": {
+    "message": "Leave a review"
+  },
   "copySupportPopupTitle": {
     "message": "Thanks for using FlashCPAP"
   },
   "copySupportPopupMessage": {
-    "message": "You reached $1 summary copies. If FlashCPAP helps you, you can support the project."
+    "message": "If FlashCPAP saves you time, you can support the project and help maintain it."
   },
   "copySupportPopupAction": {
     "message": "Support FlashCPAP"
@@ -360,7 +486,7 @@
     "message": "Share $1"
   },
   "copyProviderSharePopupMessage": {
-    "message": "You used $1 $2 times. Do you want to share it with the community?"
+    "message": "You used $1 $2 times. Would you like to share its configuration with the community?"
   },
   "copyProviderSharePopupAction": {
     "message": "Share this provider"

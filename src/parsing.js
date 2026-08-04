@@ -392,6 +392,20 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
   return { value: '?', match: null };
 }
 
+const TEXT_CONTEXT_LINE_PATTERN = /\d{2}\/\d{2}\/\d{4}|depuis le|du \d/i;
+const TEXT_STOP_WORD_PATTERN = /^(de|du|le|la|les|un|une|des)$/i;
+const SHORT_UPPERCASE_CODE_PATTERN = /^(?=.*[A-Z])[A-Z0-9]{1,3}(?:[-/][A-Z0-9]{1,3})?$/;
+
+function isTextContextLine(value) {
+  return TEXT_CONTEXT_LINE_PATTERN.test(String(value || ''));
+}
+
+function isUsableTextCandidate(value) {
+  const raw = String(value || '').trim();
+  if (!raw || TEXT_STOP_WORD_PATTERN.test(raw)) return false;
+  return raw.length > 3 || SHORT_UPPERCASE_CODE_PATTERN.test(raw);
+}
+
 export function extractTextMeta(text, labelDefs) {
   const effectiveLabelDefs = normalizeLabelDefs(labelDefs);
   if (!effectiveLabelDefs.length) return { value: '?', match: null };
@@ -445,7 +459,7 @@ export function extractTextMeta(text, labelDefs) {
           const nxt = (L[i + j] || '').trim().replace(/\s*✂\s*/g, '').trim();
           if (!nxt) continue;
 
-          if (/\d{2}\/\d{2}\/\d{4}|depuis le|du \d/.test(nxt)) continue;
+          if (isTextContextLine(nxt)) continue;
           if (excludeKeywords && excludeKeywords.length > 0) {
             const excludePattern = new RegExp(excludeKeywords.join('|'), 'i');
             if (excludePattern.test(nxt)) continue;
@@ -457,7 +471,7 @@ export function extractTextMeta(text, labelDefs) {
           for (const c of candidates) if (priorityPattern.test(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
         }
         for (const c of candidates) {
-          if (c.raw.length > 3 && !/^(de|du|le|la|les|un|une|des)$/i.test(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
+          if (isUsableTextCandidate(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
         }
         return { value: '?', match: null };
       }
@@ -489,7 +503,7 @@ export function extractTextMeta(text, labelDefs) {
       for (let j = 1; j <= 5; j++) {
         const nxt = (L[i + j] || '').trim().replace(/\s*✂\s*/g, '').trim();
         if (!nxt) continue;
-        if (/\d{2}\/\d{2}\/\d{4}|depuis le|du \d/.test(nxt)) continue;
+        if (isTextContextLine(nxt)) continue;
         if (excludeKeywords && excludeKeywords.length > 0) {
           const excludePattern = new RegExp(excludeKeywords.join('|'), 'i');
           if (excludePattern.test(nxt)) continue;
@@ -511,7 +525,7 @@ export function extractTextMeta(text, labelDefs) {
         }
       }
       for (const c of candidates) {
-        if (c.raw.length > 3 && !/^(de|du|le|la|les|un|une|des)$/i.test(c.raw)) {
+        if (isUsableTextCandidate(c.raw)) {
           logParsingStrategy('Mode auto texte: valeur trouvee sur ligne suivante', {
             labelText: lbl,
             labelLine: i + 1,

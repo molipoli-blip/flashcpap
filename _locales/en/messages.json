@@ -221,6 +221,12 @@
   "ariaSummaryPreview": {
     "message": "Readable summary preview"
   },
+  "ariaResizeSummaryPreview": {
+    "message": "Adjust the summary area height"
+  },
+  "resizeSummaryPreviewHint": {
+    "message": "Drag to resize"
+  },
   "labelAnalyzePdf": {
     "message": "📄 Analyze a PDF file (optional):"
   },

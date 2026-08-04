@@ -354,7 +354,7 @@ export async function shareProviderToCommunity(siteLabel) {
   });
 
   const result = await publishTemplate(payload);
-  markProviderAsShared(site);
+  await markProviderAsShared(site);
   logFlow('SHARE', 'Publication communaute terminee', {
     provider: site,
     hasTemplateId: !!(result && (result.id || result.template_id)),

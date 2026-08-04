@@ -116,11 +116,20 @@ export const firefoxApi = {
       return getFirefox()?.action?.onClicked || null;
     }
   },
+  webNavigation: {
+    async getAllFrames(details) {
+      const firefox = requireFirefox();
+      return firefox.webNavigation.getAllFrames(details);
+    },
+    get onCompleted() {
+      return getFirefox()?.webNavigation?.onCompleted || null;
+    }
+  },
   scripting: {
-    async executeScript({ tabId, allFrames = false, func }) {
+    async executeScript({ tabId, allFrames = false, frameIds, func }) {
       const firefox = requireFirefox();
       const results = await firefox.scripting.executeScript({
-        target: { tabId, allFrames },
+        target: frameIds ? { tabId, frameIds } : { tabId, allFrames },
         func
       });
       return results || [];

@@ -21,6 +21,7 @@
     "activeTab",
     "storage",
     "tabs",
+    "webNavigation",
     "clipboardWrite"
   ],
   "optional_host_permissions": [

@@ -3,11 +3,17 @@
 import { t } from './i18n.js';
 import { handleSuccessfulCopyEngagement } from './copy-engagement-prompts.js';
 
-export function setupCopyAction({ buildCleanSummaryText }) {
+export function setupCopyAction({
+  buildCleanSummaryText,
+  onSuccessfulCopy = handleSuccessfulCopyEngagement
+}) {
   const copyButton = document.getElementById('btn-copy');
   if (!copyButton) return;
+  let copyInProgress = false;
 
   copyButton.onclick = async () => {
+    if (copyInProgress) return;
+
     const preview = document.getElementById('résumé-preview');
     const rows = preview?.querySelectorAll('.pv-row .pv-content') || [];
     const rawText = Array.from(rows).map(row => row.textContent).join('\n');
@@ -37,17 +43,27 @@ export function setupCopyAction({ buildCleanSummaryText }) {
       }, 1800);
     };
 
+    const providerLabel = document.getElementById('prestataire-select')?.value || '';
+    copyInProgress = true;
+    const wasDisabled = copyButton.disabled;
+    copyButton.disabled = true;
+
     try {
-      try {
-        await navigator.clipboard.writeText('');
-      } catch (_) {}
       await navigator.clipboard.writeText(text);
       markSuccess();
-
-      const providerLabel = document.getElementById('prestataire-select')?.value || '';
-      await handleSuccessfulCopyEngagement(providerLabel);
-    } catch (_) {
+    } catch (error) {
       markFail();
+      return;
+    } finally {
+      copyInProgress = false;
+      copyButton.disabled = wasDisabled;
+    }
+
+    try {
+      await onSuccessfulCopy(providerLabel);
+    } catch (error) {
+      // Engagement is deliberately isolated from the clipboard result.
+      console.warn('[COPY][ENGAGEMENT] La copie a réussi mais le gestionnaire a échoué', error);
     }
   };
 }

@@ -28,6 +28,8 @@ import { buildCleanSummaryText } from './domain/summary-rules.js';
 import { initializeSourceTabTracking, refreshTrackedSourceTab } from './platform/source-tab-tracker.js';
 import { browserApi } from './platform/browser-api.js';
 import { initUpdateAnnouncement } from './update-announcement.js';
+import { initFirstRunOnboarding } from './first-run-onboarding.js';
+import { initQuickStartDock } from './quick-start-dock.js';
 
 window.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
@@ -43,6 +45,7 @@ function initializeCoreUi() {
 
   const { ensureInlineEditorPosition } = initFieldEditor({ renderSettingsUi: renderSettingsUI });
   initDock();
+  initQuickStartDock();
 
   const initialProvider = getCurrentProvider();
   refreshProviderUi(initialProvider);
@@ -166,8 +169,8 @@ function setupActionFeatures(analysisSelect) {
 }
 
 async function init() {
-  loadSettings();
-  initUpdateAnnouncement({ browserApi });
+  const { isFirstRun } = loadSettings();
+  initUpdateAnnouncement({ browserApi, suppress: isFirstRun });
   await initializeSourceTabTracking();
   try {
     const manifest = browserApi.runtime.getManifest();
@@ -182,4 +185,5 @@ async function init() {
   setupCheckboxFeatures();
   await applyAutoLockProviderOnInit();
   setupActionFeatures(analysisSelect);
+  initFirstRunOnboarding({ isFirstRun });
 }

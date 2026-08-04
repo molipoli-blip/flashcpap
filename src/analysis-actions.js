@@ -2,8 +2,7 @@
 // Copyright (C) 2026 molipoli-blip
 import { executeAnalysisRun, resetAnalysisState } from './analysis-runner.js';
 import { flushPendingInlineFieldChanges } from './field-inline-editor-slot.js';
-import { browserApi } from './platform/browser-api.js';
-import { buildSiteRootPattern } from './platform/site-root.js';
+import { requestAnalysisPermissions } from './iframe-permissions.js';
 import { getTrackedSourceTab } from './platform/source-tab-tracker.js';
 import { alertInline } from './ui-utils.js';
 
@@ -33,30 +32,28 @@ function bindAnalyseButton(button, deps) {
       return;
     }
 
-    let originPattern;
+    // Keep permissions.request() synchronous with the click. Firefox rejects
+    // permission requests made after any awaited asynchronous operation.
+    let access;
     try {
-      originPattern = buildSiteRootPattern(sourceTab.url);
+      const permissionRequest = requestAnalysisPermissions(sourceTab);
+      access = await permissionRequest;
     } catch (error) {
-      await alertInline(error?.message || 'URL non prise en charge.', 'warning');
+      await alertInline(error?.message || 'Impossible de demander les autorisations nécessaires.', 'error');
       return;
     }
 
-    let granted = false;
-    try {
-      granted = !!(await browserApi.permissions.request({ origins: [originPattern] }));
-    } catch (error) {
-      await alertInline(error?.message || 'Autorisation d\'hôte refusée.', 'error');
-      return;
-    }
-
-    if (!granted) {
-      await alertInline(`Autorisation d'hôte refusée pour ${originPattern}.`, 'warning');
+    if (!access.granted) {
+      await alertInline('L\'autorisation nécessaire pour lire la page et son rapport intégré a été refusée.', 'warning');
       return;
     }
 
     await executeAnalysisRun({
       ...deps,
-      sourceTab
+      sourceTab: {
+        ...sourceTab,
+        analysisFrameIds: access.frameIds
+      }
     });
   };
 }

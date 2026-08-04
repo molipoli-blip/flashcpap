@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // FlashCPAP — Supporters content config
 import { t } from './i18n.js';
+import { markSupportLinkOpened } from './copy-engagement.js';
 
 function getSupportersConfig() {
   return {
@@ -74,7 +75,10 @@ export function initSupportersUI() {
       supportBtn.style.filter = 'none';
     });
     supportBtn.addEventListener('click', () => {
-      try { window.open(supportersConfig.coffee.link, '_blank', 'noopener,noreferrer'); } catch {}
+      try {
+        window.open(supportersConfig.coffee.link, '_blank', 'noopener,noreferrer');
+        void markSupportLinkOpened();
+      } catch {}
     });
 
     donorsRibbon.appendChild(supportBtn);
@@ -89,6 +93,9 @@ export function initSupportersUI() {
   if (coffeeLink) {
     coffeeLink.href = supportersConfig.coffee.link;
     coffeeLink.textContent = supportersConfig.coffee.buttonLabel;
+    coffeeLink.addEventListener('click', () => {
+      void markSupportLinkOpened();
+    });
   }
 }
 

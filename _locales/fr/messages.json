@@ -38,6 +38,117 @@
   "updateBannerCloseTitle": {
     "message": "Masquer ce message"
   },
+  "onboardingWelcomeTitle": {
+    "message": "Bienvenue dans FlashCPAP"
+  },
+  "onboardingWelcomeBody": {
+    "message": "FlashCPAP transforme les données d'un rapport PPC, depuis une page web ou un PDF, en un résumé structuré et prêt à copier."
+  },
+  "onboardingSetupTitle": {
+    "message": "Configurez avant d'analyser"
+  },
+  "onboardingSetupBody": {
+    "message": "FlashCPAP ne peut pas reconnaître correctement un rapport tant qu'un profil prestataire et ses règles d'extraction ne sont pas paramétrés."
+  },
+  "onboardingSetupWarningTitle": {
+    "message": "⚠️ Configuration obligatoire avant la première utilisation"
+  },
+  "onboardingSetupWarningBody": {
+    "message": "N'utilisez pas le bouton Analyser tant que vous n'avez pas importé ou créé le profil correspondant à votre prestataire."
+  },
+  "onboardingQuickStartTitle": {
+    "message": "Faites votre premier essai"
+  },
+  "onboardingQuickStartBody": {
+    "message": "Prenez en main FlashCPAP avec un rapport prévu pour la découverte."
+  },
+  "onboardingQuickStartJourneyStart": {
+    "message": "Pour commencer, "
+  },
+  "onboardingQuickStartTrialLink": {
+    "message": "ouvrir la page d'essai FlashCPAP ↗"
+  },
+  "onboardingQuickStartStep1": {
+    "message": "Dans l'extension, ouvrez ensuite "
+  },
+  "onboardingQuickStartStep2Before": {
+    "message": "Cliquez sur "
+  },
+  "onboardingQuickStartStep2After": {
+    "message": " et renseignez le nom."
+  },
+  "onboardingCommunityBefore": {
+    "message": "Vous pouvez aussi ajouter directement un prestataire depuis la "
+  },
+  "onboardingCommunityLink": {
+    "message": "bibliothèque communautaire FlashCPAP ↗"
+  },
+  "onboardingCommunityAfter": {
+    "message": ". ⚠️ Ces profils ne sont pas mis à jour automatiquement : une modification des champs peut être nécessaire si le portail ou le rapport a évolué."
+  },
+  "onboardingQuickStartStep3Before": {
+    "message": "Revenez dans l'onglet "
+  },
+  "onboardingQuickStartStep3Middle": {
+    "message": ", puis cliquez sur "
+  },
+  "onboardingQuickStartStep4": {
+    "message": "Cliquez sur "
+  },
+  "onboardingQuickStartStep5Before": {
+    "message": "Retournez dans "
+  },
+  "onboardingQuickStartStep5After": {
+    "message": ", puis configurez vos "
+  },
+  "onboardingFieldCardLabel": {
+    "message": "champs"
+  },
+  "onboardingQuickStartStep5Details": {
+    "message": " : nom, mot-clé et mode d'extraction, selon le texte et les valeurs à extraire."
+  },
+  "onboardingQuickStartStep6Before": {
+    "message": "Retournez dans "
+  },
+  "onboardingQuickStartStep6Middle": {
+    "message": " et effectuez votre première extraction en cliquant sur "
+  },
+  "onboardingCriticalDocsBefore": {
+    "message": "N'hésitez pas à consulter "
+  },
+  "onboardingDocsLink": {
+    "message": "flashcpap.com/docs#step3"
+  },
+  "onboardingCriticalDocsAfter": {
+    "message": " pour cette étape critique."
+  },
+  "onboardingPrevious": {
+    "message": "Précédent"
+  },
+  "onboardingNext": {
+    "message": "Suivant"
+  },
+  "onboardingConfigureNow": {
+    "message": "Configurer FlashCPAP"
+  },
+  "onboardingOpenGuidePanel": {
+    "message": "Afficher le guide à côté"
+  },
+  "quickStartDockTitle": {
+    "message": "Guide de démarrage"
+  },
+  "quickStartDockAriaLabel": {
+    "message": "Panneau latéral : guide de démarrage"
+  },
+  "onboardingLater": {
+    "message": "Continuer plus tard"
+  },
+  "onboardingProgressLabel": {
+    "message": "Progression du guide de démarrage"
+  },
+  "onboardingReplay": {
+    "message": "Revoir le guide de démarrage"
+  },
   "tabAnalyze": {
     "message": "🧪 Analyse"
   },
@@ -61,6 +172,9 @@
   },
   "buttonAnalyzePage": {
     "message": "Analyser la page"
+  },
+  "uiConfigureProviderNow": {
+    "message": "Configurer un prestataire"
   },
   "titleResetAnalysis": {
     "message": "Réinitialiser l'analyse"
@@ -326,11 +440,23 @@
   "copyFailure": {
     "message": "Échec copie"
   },
+  "copyPromptLater": {
+    "message": "Plus tard"
+  },
+  "copyReviewPopupTitle": {
+    "message": "FlashCPAP vous est utile ?"
+  },
+  "copyReviewPopupMessage": {
+    "message": "Un avis honnête sur la boutique aidera d'autres professionnels du sommeil à découvrir FlashCPAP."
+  },
+  "copyReviewPopupAction": {
+    "message": "Donner mon avis"
+  },
   "copySupportPopupTitle": {
     "message": "Merci d'utiliser FlashCPAP"
   },
   "copySupportPopupMessage": {
-    "message": "Vous avez atteint $1 copies de résumé. Si FlashCPAP vous aide, vous pouvez soutenir le projet."
+    "message": "Si FlashCPAP vous fait gagner du temps, vous pouvez soutenir le projet et contribuer à son maintien."
   },
   "copySupportPopupAction": {
     "message": "Soutenir FlashCPAP"
@@ -339,7 +465,7 @@
     "message": "Partager $1"
   },
   "copyProviderSharePopupMessage": {
-    "message": "Vous avez utilisé $1 $2 fois. Voulez-vous le partager à la communauté ?"
+    "message": "Vous avez utilisé $1 $2 fois. Voulez-vous partager sa configuration avec la communauté ?"
   },
   "copyProviderSharePopupAction": {
     "message": "Partager ce prestataire"

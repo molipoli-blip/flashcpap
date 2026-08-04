@@ -150,7 +150,15 @@ export function updateUIForProvider(providerKey) {
         h3.textContent = t('checkboxNoProviderTitle');
         const p = document.createElement('p');
         p.textContent = t('uiNoProviderStartDescription');
-        lockMessage.append(h3, p);
+        const settingsButton = document.createElement('button');
+        settingsButton.type = 'button';
+        settingsButton.className = 'no-provider-settings-button';
+        settingsButton.textContent = t('uiConfigureProviderNow');
+        settingsButton.addEventListener('click', () => {
+          byId('tab-param')?.click();
+          byId('param-tab-general')?.click();
+        });
+        lockMessage.append(h3, p, settingsButton);
         checkboxContainer.appendChild(lockMessage);
       }
     } else {

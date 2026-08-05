@@ -73,6 +73,33 @@
       border-bottom: 2px solid #007acc;
       color: #007acc;
     }
+    #tab-help {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .help-tab-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: 2px solid #0b74b8;
+      border-radius: 50%;
+      background: #fff;
+      color: #0b74b8;
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1;
+      transition: background .15s ease, color .15s ease, transform .15s ease;
+    }
+    #tab-help:hover .help-tab-icon,
+    #tab-help:focus-visible .help-tab-icon {
+      background: #0b74b8;
+      color: #fff;
+      transform: scale(1.06);
+    }
 
     /* Sections */
     .tabpanel {
@@ -156,6 +183,17 @@
     #résumé {
       height: 160px;
     }
+    #summary-container {
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #fff;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
     /* Résumé preview (lisible) */
     #résumé-preview {
       margin-top: 8px;
@@ -167,6 +205,46 @@
       font-size: 13px;
       line-height: 1.35;
       white-space: pre-wrap;
+      min-height: 150px;
+      height: auto;
+      max-height: clamp(200px, min(46vh, calc(100vh - 300px)), 360px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      transition: max-height .18s ease;
+    }
+    #résumé-preview:empty {
+      min-height: 72px;
+    }
+    #summary-preview-resizer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      height: 22px;
+      margin-top: 2px;
+      border-radius: 5px;
+      color: #64748b;
+      cursor: ns-resize;
+      font-size: 10px;
+      line-height: 1;
+      touch-action: none;
+      user-select: none;
+      transition: color .15s ease, background .15s ease;
+    }
+    #summary-preview-resizer:hover,
+    #summary-preview-resizer:focus-visible,
+    #summary-preview-resizer.is-resizing {
+      color: #0369a1;
+      background: #e0f2fe;
+      outline: none;
+    }
+    .summary-preview-grip {
+      width: 42px;
+      height: 5px;
+      border-top: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+      opacity: .75;
     }
     .tag-chip {
       display: inline-block;
@@ -968,8 +1046,8 @@
     <button id="tab-param" role="tab" class="tab" aria-selected="false">
       <span data-i18n="tabSettings">⚙️ Paramètres</span>
     </button>
-    <button id="tab-help" role="tab" class="tab" aria-selected="false" style="flex: 0 0 auto; min-width: 40px; font-size: 1.2em;" title="Documentation" data-i18n-title="tabHelpTitle">
-      (?)
+    <button id="tab-help" role="tab" class="tab" aria-selected="false" aria-label="Documentation" data-i18n-aria-label="tabHelpTitle" style="flex: 0 0 auto; min-width: 40px;" title="Documentation" data-i18n-title="tabHelpTitle">
+      <span class="help-tab-icon" aria-hidden="true">?</span>
     </button>
     <button id="tab-bug" role="tab" class="tab" aria-selected="false" style="flex: 0 0 auto; min-width: 40px; font-size: 1.2em;" title="Déclarer un bug" data-i18n-title="tabBugTitle">
       🐞
@@ -1018,7 +1096,7 @@
     </div>
 
     <!-- Full Width Content -->
-    <div class="field-group" id="summary-container" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 1000; background: #fff; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px; max-height: 60vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <div class="field-group" id="summary-container">
       <label for="résumé" data-i18n="labelSummary">Résumé :</label>
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
         <label style="font-size:12px; color:#444; display:flex; align-items:center; gap:6px;">
@@ -1028,7 +1106,13 @@
         <button id="btn-copy" title="Copier le résumé" data-i18n="buttonCopySummary" data-i18n-title="titleCopySummary">Copier le résumé</button>
       </div>
       <textarea id="résumé" placeholder="Le résumé apparaîtra ici…" data-i18n-placeholder="placeholderSummary"></textarea>
-      <div id="résumé-preview" aria-label="Aperçu lisible du résumé" data-i18n-aria-label="ariaSummaryPreview" style="max-height: 200px; overflow-y: auto;"></div>
+      <div id="summary-preview-shell">
+        <div id="résumé-preview" aria-label="Aperçu lisible du résumé" data-i18n-aria-label="ariaSummaryPreview"></div>
+        <div id="summary-preview-resizer" role="separator" tabindex="0" aria-orientation="horizontal" aria-label="Ajuster la hauteur de la zone résumé" data-i18n-aria-label="ariaResizeSummaryPreview">
+          <span class="summary-preview-grip" aria-hidden="true"></span>
+          <span data-i18n="resizeSummaryPreviewHint">Glisser pour ajuster</span>
+        </div>
+      </div>
     </div>
 
     <div class="field-group">

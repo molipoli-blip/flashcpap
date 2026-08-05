@@ -200,6 +200,12 @@
   "ariaSummaryPreview": {
     "message": "Aperçu lisible du résumé"
   },
+  "ariaResizeSummaryPreview": {
+    "message": "Ajuster la hauteur de la zone résumé"
+  },
+  "resizeSummaryPreviewHint": {
+    "message": "Glisser pour ajuster"
+  },
   "labelAnalyzePdf": {
     "message": "📄 Analyser un fichier PDF (optionnel) :"
   },

@@ -3,8 +3,21 @@
 import { logDebug, logFlow, logWarn } from './debug-logger.js';
 import { selectFirstPlaceholder, selectFirstPlaceholderInPreview } from './placeholder-navigation.js';
 import { t } from './i18n.js';
+import {
+  centerRowInSummaryPreview,
+  growSummaryPreviewToContent
+} from './summary-preview-resize.js';
 
-export function renderSummaryPreview(preview, toggle, textarea, raw) {
+export function renderSummaryPreview(preview, toggle, textarea, raw, {
+  revealCheckboxId = ''
+} = {}) {
+  const hadPreviousRender = preview.dataset.summaryRendered === '1';
+  const previousCheckboxRows = new Map(
+    Array.from(preview.querySelectorAll('.pv-row[data-type="cb"]')).map(row => [
+      row.dataset.id || '',
+      row.querySelector('.pv-content')?.textContent || ''
+    ])
+  );
 
     // Parse stored markers from the raw summary text.
   const tokens = [];
@@ -171,6 +184,16 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
         #résumé-preview .pv-row .pv-handle:hover { color:#888; }
         #résumé-preview.drag-active .pv-row.dragging { opacity:0.6; }
   #résumé-preview .pv-row.drag-over { outline: 1px dashed #dcdcdc; }
+        #résumé-preview .pv-row.is-auto-revealed {
+          animation: summary-row-reveal 1.25s ease-out;
+        }
+        @keyframes summary-row-reveal {
+          0%, 35% { background:#e0f2fe; box-shadow:0 0 0 1px #7dd3fc inset; }
+          100% { background:transparent; box-shadow:none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          #résumé-preview .pv-row.is-auto-revealed { animation:none; background:#e0f2fe; }
+        }
       `;
       document.head.appendChild(st);
     }
@@ -243,12 +266,6 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
     const addBtn = document.createElement('div');
     addBtn.className = 'pv-add-btn';
     addBtn.innerHTML = `<span style="color:#999; cursor:pointer; font-size:12px;">${t('previewAddText')}</span>`;
-    addBtn.onclick = () => {
-      const newRow = createRow('man', '', '', '', { placeholder: t('previewNewTextPlaceholder') });
-      preview.insertBefore(newRow, addBtn);
-      newRow.querySelector('.pv-content').focus();
-      rebuildRaw();
-    };
     preview.appendChild(addBtn);
 
     (function setupDnD(){
@@ -393,14 +410,24 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
         pointerOverRow = target;
       }, true);
 
-      const originalAdd = addBtn.onclick;
       addBtn.onclick = () => {
         const newRow = createRow('man', '', '', '', { placeholder: t('previewNewTextPlaceholder') });
         preview.insertBefore(newRow, addBtn);
         const span = newRow.querySelector('.pv-content');
-        if (span) { span.focus(); }
         attachDnDToRow(newRow);
         rebuildRaw();
+        growSummaryPreviewToContent(preview);
+        requestAnimationFrame(() => {
+          if (!newRow.isConnected || !preview.contains(newRow)) return;
+          growSummaryPreviewToContent(preview);
+          centerRowInSummaryPreview(preview, newRow);
+          newRow.classList.add('is-auto-revealed');
+          if (span) {
+            try { span.focus({ preventScroll: true }); }
+            catch { span.focus(); }
+          }
+          setTimeout(() => newRow.classList.remove('is-auto-revealed'), 1300);
+        });
       };
 
       preview.addEventListener('dragover', (e) => {
@@ -513,6 +540,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
 
     preview.addEventListener('input', (e) => {
       const row = e.target.closest('.pv-row');
+      growSummaryPreviewToContent(preview);
       if (row) {
         const type = row.dataset.type;
         const id = row.dataset.id || '';
@@ -657,7 +685,9 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
 
     if (toggle) {
       const showPreview = !!toggle.checked;
+      const previewShell = document.getElementById('summary-preview-shell');
       preview.style.display = showPreview ? 'block' : 'none';
+      if (previewShell) previewShell.style.display = showPreview ? 'block' : 'none';
       textarea.style.display = showPreview ? 'none' : 'block';
 
       if (showPreview) {
@@ -669,5 +699,33 @@ export function renderSummaryPreview(preview, toggle, textarea, raw) {
       preview.style.display = 'block';
       textarea.style.display = 'none';
       selectFirstPlaceholderInPreview(preview);
+    }
+
+    preview.dataset.summaryRendered = '1';
+    if (hadPreviousRender && revealCheckboxId && preview.style.display !== 'none') {
+      const checkboxRows = Array.from(preview.querySelectorAll('.pv-row[data-type="cb"]'));
+      const exactRowId = `cb_${revealCheckboxId}`;
+      let rowToReveal = checkboxRows.find(row => row.dataset.id === exactRowId) || null;
+
+      if (!rowToReveal) {
+        const changedRows = checkboxRows.filter(row => {
+          const rowId = row.dataset.id || '';
+          const currentText = row.querySelector('.pv-content')?.textContent || '';
+          return !previousCheckboxRows.has(rowId)
+            || previousCheckboxRows.get(rowId) !== currentText;
+        });
+        rowToReveal = changedRows[changedRows.length - 1] || null;
+      }
+
+      if (rowToReveal) {
+        growSummaryPreviewToContent(preview);
+        requestAnimationFrame(() => {
+          if (!rowToReveal.isConnected || !preview.contains(rowToReveal)) return;
+          growSummaryPreviewToContent(preview);
+          centerRowInSummaryPreview(preview, rowToReveal);
+          rowToReveal.classList.add('is-auto-revealed');
+          setTimeout(() => rowToReveal.classList.remove('is-auto-revealed'), 1300);
+        });
+      }
     }
 }

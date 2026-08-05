@@ -27,7 +27,7 @@ export function setPinningInProgress(v) {
   __pinningInProgress = !!v;
 }
 
-export async function updateSummaryDisplay() {
+export async function updateSummaryDisplay(trigger = null) {
   if (__pinningInProgress) {
     logFlow('SUMMARY', 'Mise a jour ignoree pendant le pinning');
     return;
@@ -63,6 +63,12 @@ export async function updateSummaryDisplay() {
         if (cbElement.checked) checkedCustomCount++;
       }
     }
+    const changedCheckboxId = trigger?.type === 'custom-checkbox-changed'
+      ? String(trigger?.detail?.checkboxId || '')
+      : '';
+    const revealCheckboxId = changedCheckboxId && customCheckboxStates[changedCheckboxId]
+      ? changedCheckboxId
+      : '';
     logFlow('SUMMARY', 'Etat options capture avant regeneration', {
       provider: lastSelectedPrestataire,
       interpret: !!cbI?.checked,
@@ -90,7 +96,7 @@ export async function updateSummaryDisplay() {
     const preview = document.getElementById('résumé-preview');
     const toggle = document.getElementById('toggle-preview');
     if (preview) {
-      renderSummaryPreview(preview, toggle, textarea, newAuto);
+      renderSummaryPreview(preview, toggle, textarea, newAuto, { revealCheckboxId });
     }
 
     if (!__placeholderNavigationSetup) {
@@ -135,9 +141,11 @@ export function setupDOMEventListeners() {
       toggle.addEventListener('change', () => {
         const textarea = document.getElementById('résumé');
         const preview = document.getElementById('résumé-preview');
+        const previewShell = document.getElementById('summary-preview-shell');
         const showPreview = !!toggle.checked;
         if (preview && textarea) {
           preview.style.display = showPreview ? 'block' : 'none';
+          if (previewShell) previewShell.style.display = showPreview ? 'block' : 'none';
           textarea.style.display = showPreview ? 'none' : 'block';
           updateSummaryDisplay();
         }

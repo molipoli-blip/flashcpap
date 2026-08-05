@@ -30,6 +30,7 @@ import { browserApi } from './platform/browser-api.js';
 import { initUpdateAnnouncement } from './update-announcement.js';
 import { initFirstRunOnboarding } from './first-run-onboarding.js';
 import { initQuickStartDock } from './quick-start-dock.js';
+import { initSummaryPreviewResize } from './summary-preview-resize.js';
 
 window.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
@@ -46,6 +47,7 @@ function initializeCoreUi() {
   const { ensureInlineEditorPosition } = initFieldEditor({ renderSettingsUi: renderSettingsUI });
   initDock();
   initQuickStartDock();
+  initSummaryPreviewResize();
 
   const initialProvider = getCurrentProvider();
   refreshProviderUi(initialProvider);

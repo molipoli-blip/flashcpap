@@ -80,8 +80,14 @@ function restoreCheckboxState(chip, checkboxId, previousStates) {
   if (!previousStates.get(checkboxId)) return;
   const input = chip.querySelector('input[type="checkbox"]');
   if (!input || input.checked) return;
+
+  // This is a UI rebuild, not a user interaction. Dispatching `change` here
+  // regenerates the summary while the checkbox container is still detached /
+  // incomplete, so every custom checkbox is briefly read as unchecked.
   input.checked = true;
-  input.dispatchEvent(new Event('change', { bubbles: true }));
+  if (typeof chip._setVisual === 'function') {
+    chip._setVisual(true);
+  }
 }
 
 function getProxyChips(container, checkboxId) {

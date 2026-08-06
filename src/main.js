@@ -28,7 +28,7 @@ import { buildCleanSummaryText } from './domain/summary-rules.js';
 import { initializeSourceTabTracking, refreshTrackedSourceTab } from './platform/source-tab-tracker.js';
 import { browserApi } from './platform/browser-api.js';
 import { initUpdateAnnouncement } from './update-announcement.js';
-import { initFirstRunOnboarding } from './first-run-onboarding.js';
+import { initFirstRunOnboarding, shouldShowCurrentOnboarding } from './first-run-onboarding.js';
 import { initQuickStartDock } from './quick-start-dock.js';
 import { initSummaryPreviewResize } from './summary-preview-resize.js';
 
@@ -172,7 +172,9 @@ function setupActionFeatures(analysisSelect) {
 
 async function init() {
   const { isFirstRun } = loadSettings();
-  initUpdateAnnouncement({ browserApi, suppress: isFirstRun });
+  const shouldShowOnboarding = shouldShowCurrentOnboarding();
+  // Do not stack the release announcement underneath the getting-started guide.
+  initUpdateAnnouncement({ browserApi, suppress: isFirstRun || shouldShowOnboarding });
   await initializeSourceTabTracking();
   try {
     const manifest = browserApi.runtime.getManifest();

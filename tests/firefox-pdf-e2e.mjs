@@ -11,6 +11,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { CURRENT_ONBOARDING_REVISION } from '../src/first-run-onboarding.js';
+
 const webExtPath = process.env.FLASHCPAP_WEB_EXT_PATH;
 const firefoxPath = process.env.FLASHCPAP_FIREFOX_PATH || '/Applications/Firefox.app/Contents/MacOS/firefox';
 if (!webExtPath) {
@@ -20,6 +22,7 @@ if (!webExtPath) {
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(await readFile(path.join(repositoryRoot, 'manifest.json'), 'utf8'));
 const unpackedPath = path.join(repositoryRoot, 'dist', 'firefox-unpacked');
+const onboardingRevision = CURRENT_ONBOARDING_REVISION;
 
 function buildPdf() {
   const encoder = new TextEncoder();
@@ -126,6 +129,7 @@ const harnessSource = `
 const settings = ${JSON.stringify(testSettings)};
 const pdfBase64 = ${JSON.stringify(pdfBase64)};
 const resultUrl = ${JSON.stringify(`http://127.0.0.1:${port}/result`)};
+const onboardingRevision = ${JSON.stringify(onboardingRevision)};
 let currentStage = 'initialisation';
 
 function report(status, details = {}) {
@@ -153,10 +157,31 @@ async function run() {
   if (sessionStorage.getItem(marker) !== '1') {
     currentStage = 'configuration locale';
     localStorage.setItem('ppc_analyzer_settings', JSON.stringify(settings));
+    // Simulate an existing installation which had completed the legacy guide.
+    localStorage.setItem('flashcpap:onboarding-completed', '1');
+    localStorage.removeItem('flashcpap:onboarding-seen-revision');
     sessionStorage.setItem(marker, '1');
     location.reload();
     return;
   }
+
+  const onboardingVerifiedMarker = 'flashcpap_onboarding_e2e_verified';
+  if (sessionStorage.getItem(onboardingVerifiedMarker) !== '1') {
+    currentStage = 'guide sur installation existante';
+    await waitFor(() => document.querySelector('#first-run-onboarding'));
+    document.querySelector('#first-run-onboarding .onboarding-close').click();
+    await waitFor(() => !document.querySelector('#first-run-onboarding'));
+    if (localStorage.getItem('flashcpap:onboarding-seen-revision') !== onboardingRevision) {
+      throw new Error('La révision du guide n’a pas été mémorisée');
+    }
+    sessionStorage.setItem(onboardingVerifiedMarker, '1');
+    location.reload();
+    return;
+  }
+
+  currentStage = 'non-répétition du guide';
+  await new Promise(resolve => setTimeout(resolve, 750));
+  if (document.querySelector('#first-run-onboarding')) throw new Error('Le guide réapparaît après fermeture');
 
   currentStage = 'chargement du prestataire';
   await waitFor(() => document.querySelector('#prestataire-select')?.options.length === 1);
@@ -194,7 +219,8 @@ async function run() {
     provider,
     summary,
     source,
-    clearMode: document.querySelector('#pdf-mode-status')?.textContent?.trim() || ''
+    clearMode: document.querySelector('#pdf-mode-status')?.textContent?.trim() || '',
+    onboardingRevision: localStorage.getItem('flashcpap:onboarding-seen-revision') || ''
   });
 }
 
@@ -261,7 +287,8 @@ try {
     provider: result.provider,
     summary: result.summary,
     source: result.source,
-    clearMode: result.clearMode
+    clearMode: result.clearMode,
+    onboardingRevision: result.onboardingRevision
   }, null, 2));
 } catch (error) {
   console.error(webExtOutput.join('').slice(-8_000));

@@ -437,6 +437,9 @@
   "errorProviderNameRequired": {
     "message": "Provider name is required"
   },
+  "errorProviderNameInvalid": {
+    "message": "This provider name is invalid or reserved"
+  },
   "errorProviderCreate": {
     "message": "Error while creating the provider"
   },

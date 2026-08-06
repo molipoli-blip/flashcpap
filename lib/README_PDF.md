@@ -4,11 +4,11 @@ Pour que l'extraction PDF fonctionne, vous devez télécharger pdf.js (biblioth�
 
 ## Étapes :
 
-1. **Télécharger pdf.js** depuis le CDN officiel ou GitHub :
-   - Option 1 (CDN) : Télécharger depuis https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/
-     - `pdf.mjs` (ou `pdf.min.mjs`)
-     - `pdf.worker.mjs` (ou `pdf.worker.min.mjs`)
-   
+1. **Télécharger PDF.js** depuis le paquet officiel Mozilla ou GitHub :
+   - Option 1 (npm) : `npm pack pdfjs-dist@6.1.200`
+     - Copier `package/build/pdf.mjs`
+     - Copier `package/build/pdf.worker.mjs`
+
    - Option 2 (GitHub) : https://github.com/mozilla/pdf.js/releases/latest
      - Télécharger `pdfjs-*-dist.zip`
      - Extraire `build/pdf.mjs` et `build/pdf.worker.mjs`
@@ -28,14 +28,6 @@ Pour que l'extraction PDF fonctionne, vous devez télécharger pdf.js (biblioth�
 
 pdf.js est sous licence Apache 2.0 - utilisation commerciale autorisée.
 
-## Alternative rapide (PowerShell)
-
-Exécuter dans le dossier `lib/` :
-
-```powershell
-# Télécharger pdf.mjs
-Invoke-WebRequest -Uri "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.mjs" -OutFile "pdf.mjs"
-
-# Télécharger pdf.worker.mjs
-Invoke-WebRequest -Uri "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.mjs" -OutFile "pdf.worker.mjs"
-```
+La version actuellement embarquée est PDF.js 6.1.200. Après chaque mise à jour,
+conserver `isEvalSupported: false` dans `lib/pdf-parser.js` et refaire les tests
+sur Firefox, Chromium et Edge.

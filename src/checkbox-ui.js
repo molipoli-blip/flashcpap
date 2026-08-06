@@ -203,7 +203,7 @@ export function createCustomCheckboxesUI(prestataire) {
     alignContent: 'flex-start',
     justifyContent: 'flex-start',
     overflowX: 'hidden',
-    overflowY: 'visible'
+    overflowY: 'auto'
   });
 
   const groupIndexByCb = buildCheckboxGroupIndex(siteKey);

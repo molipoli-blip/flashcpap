@@ -1,4 +1,5 @@
 import { applyInlineFieldChanges } from './field-inline-editor-state.js';
+import { assertSafeFieldKey } from './domain/config-security.js';
 
 export function createFieldKeyFromLabel(label) {
   const base = (label || '')
@@ -7,9 +8,11 @@ export function createFieldKeyFromLabel(label) {
     .trim();
   if (!base) return 'champ';
   const parts = base.split(/\s+/);
-  return parts.map((word, index) => index === 0
+  let fieldKey = parts.map((word, index) => index === 0
     ? word.toLowerCase()
     : (word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())).join('') || 'champ';
+  if (!/^[A-Za-z]/.test(fieldKey)) fieldKey = `champ${fieldKey}`;
+  return fieldKey.slice(0, 64);
 }
 
 export function createUniqueFieldKey(cfg, baseLabel = 'Nouveau champ') {
@@ -45,6 +48,7 @@ export function removeFieldFromConfig(cfg, fieldKey) {
 }
 
 export function saveInlineFieldChanges(cfg, fieldKey, state, firstLabelWanted) {
+  assertSafeFieldKey(fieldKey);
   const definition = cfg?.fields?.[fieldKey];
   if (!definition) return false;
   applyInlineFieldChanges(definition, state, firstLabelWanted);

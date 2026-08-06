@@ -4,6 +4,7 @@ import { generateUniqueId } from './shared/id.js';
 import { browserApi } from './platform/browser-api.js';
 import { ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
 import { linkCustomCheckboxesForProvider, migrateCustomCheckboxesToGlobal } from './custom-checkbox-store.js';
+import { isSafeFieldKey, isSafePropertyKey } from './domain/config-security.js';
 
 export const STORAGE_KEY = 'ppc_analyzer_settings';
 
@@ -190,9 +191,15 @@ function normalizeLabelDefinition(label) {
 }
 
 function normalizeProviderPatterns(target) {
-  ensureObject(target, 'patterns');
+  const sourcePatterns = ensureObject(target, 'patterns');
+  const safePatterns = Object.create(null);
 
-  for (let site in target.patterns) {
+  for (const [site, pattern] of Object.entries(sourcePatterns)) {
+    if (isSafePropertyKey(site)) safePatterns[site] = pattern;
+  }
+  target.patterns = safePatterns;
+
+  for (const site of Object.keys(target.patterns)) {
     const pattern = target.patterns[site];
     if (!isObject(pattern)) {
       target.patterns[site] = { urls: [], fields: {}, fieldOrder: [] };
@@ -201,8 +208,10 @@ function normalizeProviderPatterns(target) {
 
     if (!pattern.fields) {
       const urls = Array.isArray(pattern.urls) ? pattern.urls : [];
-      const newFields = {};
-      for (let key in pattern) if (key !== 'urls') newFields[key] = pattern[key];
+      const newFields = Object.create(null);
+      for (const [key, value] of Object.entries(pattern)) {
+        if (key !== 'urls' && isSafeFieldKey(key)) newFields[key] = value;
+      }
       target.patterns[site] = { urls, fields: newFields };
     }
 
@@ -218,7 +227,14 @@ function normalizeProviderPatterns(target) {
       normalizedPattern.urls = normalizedUrls;
     }
     if (!isObject(normalizedPattern.fields)) normalizedPattern.fields = {};
-    if (!normalizedPattern.fieldOrder) normalizedPattern.fieldOrder = Object.keys(normalizedPattern.fields || {});
+    const safeFields = Object.create(null);
+    for (const [fieldKey, fieldDefinition] of Object.entries(normalizedPattern.fields)) {
+      if (isSafeFieldKey(fieldKey)) safeFields[fieldKey] = fieldDefinition;
+    }
+    normalizedPattern.fields = safeFields;
+    normalizedPattern.fieldOrder = Array.isArray(normalizedPattern.fieldOrder)
+      ? normalizedPattern.fieldOrder.filter(fieldKey => isSafeFieldKey(fieldKey) && Object.hasOwn(safeFields, fieldKey))
+      : Object.keys(safeFields);
 
     for (let [fieldName, fieldDef] of Object.entries(normalizedPattern.fields)) {
       if (!isObject(fieldDef)) {

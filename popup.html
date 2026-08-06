@@ -504,8 +504,14 @@
     #custom-checkboxes-container {
       margin-top: 4px;
       padding-top: 4px;
+      padding-right: 4px;
       border-top: 0;
       line-height: 1.2;
+      max-height: clamp(140px, 28vh, 240px);
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
     }
 
     #custom-checkboxes-container .custom-checkbox {

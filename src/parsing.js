@@ -2,6 +2,7 @@
 // Copyright (C) 2026 molipoli-blip
 import { logDebug, logError, logFlow, logWarn } from './debug-logger.js';
 import { getProviderConfig } from './domain/provider-rules.js';
+import { buildLiteralKeywordRegex } from './domain/config-security.js';
 
 const LABEL_BOUNDARY_WORD_CHARS = 'A-Za-z0-9_À-ÖØ-öø-ÿĀ-ſƀ-ɏ';
 
@@ -295,8 +296,8 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
       logDebug('PARSE', 'Label numeric trouve', { line: i + 1, labelLength: String(lbl).length, lineLength: line.length });
 
       if (labelExcludeKeywords && labelExcludeKeywords.length > 0) {
-        const labelExcludePattern = new RegExp(labelExcludeKeywords.join('|'), 'i');
-        if (labelExcludePattern.test(line)) {
+        const labelExcludePattern = buildLiteralKeywordRegex(labelExcludeKeywords);
+        if (labelExcludePattern?.test(line)) {
             logDebug('PARSE', 'Label numeric exclu par mot-cle', { line: i + 1, keywordCount: labelExcludeKeywords.length });
             continue;
         }
@@ -419,8 +420,8 @@ export function extractTextMeta(text, labelDefs) {
       const line = L[i].trim();
       if (!labelBoundaryPattern(lbl).test(line)) continue;
       if (labelExcludeKeywords && labelExcludeKeywords.length > 0) {
-        const labelExcludePattern = new RegExp(labelExcludeKeywords.join('|'), 'i');
-        if (labelExcludePattern.test(line)) continue;
+        const labelExcludePattern = buildLiteralKeywordRegex(labelExcludeKeywords);
+        if (labelExcludePattern?.test(line)) continue;
       }
       // Do not add an optional separator when the label already ends with one.
       const labelEndsWithSeparator = /[:=]\s*$/.test(lbl);
@@ -447,14 +448,14 @@ export function extractTextMeta(text, labelDefs) {
 
           if (/\d{2}\/\d{2}\/\d{4}|depuis le|du \d/.test(nxt)) continue;
           if (excludeKeywords && excludeKeywords.length > 0) {
-            const excludePattern = new RegExp(excludeKeywords.join('|'), 'i');
-            if (excludePattern.test(nxt)) continue;
+            const excludePattern = buildLiteralKeywordRegex(excludeKeywords);
+            if (excludePattern?.test(nxt)) continue;
           }
           candidates.push({ line: i + j + 1, raw: nxt });
         }
         if (priorityKeywords && priorityKeywords.length > 0) {
-          const priorityPattern = new RegExp(priorityKeywords.join('|'), 'i');
-          for (const c of candidates) if (priorityPattern.test(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
+          const priorityPattern = buildLiteralKeywordRegex(priorityKeywords);
+          for (const c of candidates) if (priorityPattern?.test(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
         }
         for (const c of candidates) {
           if (c.raw.length > 3 && !/^(de|du|le|la|les|un|une|des)$/i.test(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
@@ -491,15 +492,15 @@ export function extractTextMeta(text, labelDefs) {
         if (!nxt) continue;
         if (/\d{2}\/\d{2}\/\d{4}|depuis le|du \d/.test(nxt)) continue;
         if (excludeKeywords && excludeKeywords.length > 0) {
-          const excludePattern = new RegExp(excludeKeywords.join('|'), 'i');
-          if (excludePattern.test(nxt)) continue;
+          const excludePattern = buildLiteralKeywordRegex(excludeKeywords);
+          if (excludePattern?.test(nxt)) continue;
         }
         candidates.push({ line: i + j + 1, raw: nxt });
       }
       if (priorityKeywords && priorityKeywords.length > 0) {
-        const priorityPattern = new RegExp(priorityKeywords.join('|'), 'i');
+        const priorityPattern = buildLiteralKeywordRegex(priorityKeywords);
         for (const c of candidates) {
-          if (priorityPattern.test(c.raw)) {
+          if (priorityPattern?.test(c.raw)) {
             logParsingStrategy('Mode auto texte: candidat prioritaire trouve sur ligne suivante', {
               labelText: lbl,
               labelLine: i + 1,
@@ -792,8 +793,8 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
       });
 
       if (labelExcludeKeywords && labelExcludeKeywords.length) {
-        const ex = new RegExp(labelExcludeKeywords.join('|'), 'i');
-        if (ex.test(line)) {
+        const ex = buildLiteralKeywordRegex(labelExcludeKeywords);
+        if (ex?.test(line)) {
             logDebug('PARSE', 'Label tuple exclu par mot-cle', { labelLength: String(lbl).length, keywordCount: labelExcludeKeywords.length });
             continue;
         }

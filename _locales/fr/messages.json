@@ -416,6 +416,9 @@
   "errorProviderNameRequired": {
     "message": "Nom du prestataire requis"
   },
+  "errorProviderNameInvalid": {
+    "message": "Ce nom de prestataire est invalide ou réservé"
+  },
   "errorProviderCreate": {
     "message": "Erreur lors de la création du prestataire"
   },

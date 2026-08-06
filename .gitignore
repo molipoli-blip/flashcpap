@@ -4,4 +4,3 @@ dist/
 .gitignore
 build.sh
 build.ps1
-tests/

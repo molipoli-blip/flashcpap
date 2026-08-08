@@ -63,10 +63,10 @@
     "message": "Prenez en main FlashCPAP avec un rapport prévu pour la découverte."
   },
   "onboardingQuickStartJourneyStart": {
-    "message": "Pour commencer, "
+    "message": "Connectez-vous à "
   },
   "onboardingQuickStartTrialLink": {
-    "message": "ouvrir la page d'essai FlashCPAP ↗"
+    "message": "la page d'essai FlashCPAP ↗"
   },
   "onboardingQuickStartStep1": {
     "message": "Dans l'extension, ouvrez ensuite "

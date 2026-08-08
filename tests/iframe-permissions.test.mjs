@@ -12,27 +12,39 @@ const {
 
 const sourceTab = {
   id: 42,
-  url: 'https://portail.adiral.fr/report'
+  url: 'https://portal.example/report'
 };
 
 const frames = [
   { frameId: 0, parentFrameId: -1, url: sourceTab.url },
-  { frameId: 2, parentFrameId: 0, url: 'https://portail.adiral.fr/help' },
-  { frameId: 4, parentFrameId: 0, url: 'https://adiral.morpheos.fr/report/123' },
+  { frameId: 2, parentFrameId: 0, url: 'https://portal.example/help' },
+  { frameId: 4, parentFrameId: 0, url: 'https://reports.vendor.example/report/123' },
   { frameId: 5, parentFrameId: 0, url: 'https://www.youtube.com/embed/video' },
+  { frameId: 6, parentFrameId: 0, url: 'https://reports.vendor.example/report/456' },
   { frameId: 7, parentFrameId: 4, url: 'about:blank' },
-  { frameId: 9, parentFrameId: 0, url: 'http://adiral.morpheos.fr/insecure' },
-  { frameId: 11, parentFrameId: 0, frameType: 'fenced_frame', url: 'https://portail.adiral.fr/ad' }
+  { frameId: 8, parentFrameId: 7, url: 'data:text/html,Inherited' },
+  { frameId: 9, parentFrameId: 0, url: 'http://legacy.example/report' },
+  { frameId: 10, parentFrameId: 0, url: 'blob:https://files.example/1234' },
+  { frameId: 11, parentFrameId: 0, url: 'about:srcdoc' },
+  { frameId: 12, parentFrameId: 0, url: 'blob:null/opaque' },
+  { frameId: 13, parentFrameId: 12, url: 'about:blank' },
+  { frameId: 14, parentFrameId: 0, url: 'chrome://settings' },
+  { frameId: 15, parentFrameId: 0, frameType: 'fenced_frame', url: 'https://ads.example/ad' },
+  { frameId: 16, parentFrameId: 4, url: 'https://nested.example/report' }
 ];
 
-test('analysis access includes only the page, same-origin frames, and trusted HTTPS frames', () => {
+test('analysis access includes every injectable web iframe origin without a domain allowlist', () => {
   const access = buildAnalysisAccess(sourceTab, frames);
 
   assert.deepEqual(access.origins, [
-    'https://portail.adiral.fr/*',
-    'https://adiral.morpheos.fr/*'
+    'https://portal.example/*',
+    'https://reports.vendor.example/*',
+    'https://www.youtube.com/*',
+    'http://legacy.example/*',
+    'https://files.example/*',
+    'https://nested.example/*'
   ]);
-  assert.deepEqual(access.frameIds, [0, 2, 4, 7]);
+  assert.deepEqual(access.frameIds, [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 16]);
 });
 
 test('permission request is the first API call and requests all required origins once', async () => {
@@ -54,13 +66,33 @@ test('permission request is the first API call and requests all required origins
     method: 'request',
     options: {
       origins: [
-        'https://portail.adiral.fr/*',
-        'https://adiral.morpheos.fr/*'
+        'https://portal.example/*',
+        'https://reports.vendor.example/*',
+        'https://www.youtube.com/*',
+        'http://legacy.example/*',
+        'https://files.example/*',
+        'https://nested.example/*'
       ]
     }
   }]);
   assert.equal(result.granted, true);
-  assert.deepEqual(result.frameIds, [0, 2, 4, 7]);
+  assert.deepEqual(result.frameIds, [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 16]);
+});
+
+test('permission refusal is reported without changing the prepared frame selection', async () => {
+  clearFrameSnapshot();
+  cacheFrameSnapshot(sourceTab, frames);
+
+  const result = await requestAnalysisPermissions(sourceTab, {
+    permissions: {
+      request() {
+        return Promise.resolve(false);
+      }
+    }
+  });
+
+  assert.equal(result.granted, false);
+  assert.deepEqual(result.frameIds, [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 16]);
 });
 
 test('cached access falls back safely to the main frame when the page URL changed', () => {
@@ -86,7 +118,7 @@ test('frame snapshots use webNavigation frame IDs and tolerate unavailable tabs'
   };
 
   await refreshFrameSnapshot(sourceTab, api);
-  assert.deepEqual(getCachedAnalysisAccess(sourceTab).frameIds, [0, 2, 4, 7]);
+  assert.deepEqual(getCachedAnalysisAccess(sourceTab).frameIds, [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 16]);
 
   await refreshFrameSnapshot(sourceTab, {
     webNavigation: {

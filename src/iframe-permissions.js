@@ -3,8 +3,6 @@
 import { browserApi } from './platform/browser-api.js';
 import { buildSiteRootPattern } from './platform/site-root.js';
 
-export const TRUSTED_IFRAME_ORIGINS = ['https://adiral.morpheos.fr'];
-
 const frameSnapshots = new Map();
 
 function parseUrl(url) {
@@ -17,6 +15,14 @@ function parseUrl(url) {
 
 function isHttpUrl(parsed) {
   return parsed && /^https?:$/.test(parsed.protocol);
+}
+
+function getPermittableFrameOrigin(parsed) {
+  if (isHttpUrl(parsed)) return parsed.origin;
+  if (parsed?.protocol !== 'blob:') return null;
+
+  const origin = parseUrl(parsed.origin);
+  return isHttpUrl(origin) ? origin.origin : null;
 }
 
 function normalizeFrames(frames) {
@@ -45,14 +51,10 @@ export function buildAnalysisAccess(tab, frames) {
     const parsed = parseUrl(frame.url);
     if (!parsed) continue;
 
-    if (parsed.origin === pageUrl.origin && (isHttpUrl(parsed) || parsed.protocol === 'blob:')) {
+    const origin = getPermittableFrameOrigin(parsed);
+    if (origin) {
       frameIds.add(frame.frameId);
-      continue;
-    }
-
-    if (TRUSTED_IFRAME_ORIGINS.includes(parsed.origin) && (isHttpUrl(parsed) || parsed.protocol === 'blob:')) {
-      frameIds.add(frame.frameId);
-      origins.add(`${parsed.origin}/*`);
+      origins.add(`${origin}/*`);
     }
   }
 

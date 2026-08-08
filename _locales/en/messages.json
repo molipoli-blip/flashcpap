@@ -66,10 +66,10 @@
     "message": "Get started with FlashCPAP using a report designed for discovery."
   },
   "onboardingQuickStartJourneyStart": {
-    "message": "To begin, "
+    "message": "Go to "
   },
   "onboardingQuickStartTrialLink": {
-    "message": "opening the FlashCPAP trial page ↗"
+    "message": "the FlashCPAP trial page ↗"
   },
   "onboardingQuickStartStep1": {
     "message": "In the extension, open "

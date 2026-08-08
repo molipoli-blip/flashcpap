@@ -127,14 +127,7 @@ body.onboarding-open {
   font-weight: 750;
 }
 
-.onboarding-trial-intro {
-  margin: 10px 0 0;
-  color: #475569;
-  font-size: 13.5px;
-  line-height: 1.5;
-}
-
-.onboarding-trial-intro a {
+.onboarding-trial-step a {
   color: #1d4ed8;
   font-weight: 700;
   text-underline-offset: 2px;

@@ -14,14 +14,14 @@ test('HTML extraction targets only the prepared frame IDs', async () => {
             frameId: 0,
             result: {
               text: 'Page principale',
-              frameInfo: { url: 'https://portail.adiral.fr/report', title: 'Portail', isTop: true }
+              frameInfo: { url: 'https://portal.example/report', title: 'Portail', isTop: true }
             }
           },
           {
             frameId: 4,
             result: {
-              text: 'Rapport Morpheos',
-              frameInfo: { url: 'https://adiral.morpheos.fr/report/123', title: 'Rapport', isTop: false }
+              text: 'Rapport intégré',
+              frameInfo: { url: 'https://reports.vendor.example/report/123', title: 'Rapport', isTop: false }
             }
           }
         ];
@@ -31,7 +31,7 @@ test('HTML extraction targets only the prepared frame IDs', async () => {
 
   const result = await extractHtmlTextFromTab({
     id: 42,
-    url: 'https://portail.adiral.fr/report',
+    url: 'https://portal.example/report',
     analysisFrameIds: [0, 4]
   }, api);
 
@@ -39,5 +39,5 @@ test('HTML extraction targets only the prepared frame IDs', async () => {
   assert.deepEqual(injection.frameIds, [0, 4]);
   assert.equal('allFrames' in injection, false);
   assert.match(result.text, /Page principale/);
-  assert.match(result.text, /Rapport Morpheos/);
+  assert.match(result.text, /Rapport intégré/);
 });

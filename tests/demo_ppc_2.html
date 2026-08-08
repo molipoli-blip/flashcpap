@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Pro - Respiratory Care</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #eef2f5;
+            margin: 0;
+            color: #333;
+        }
+
+        /* Top Navigation - Dark Blue */
+        .navbar {
+            background-color: #2c3e50;
+            color: white;
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+        .navbar-menu a { color: #bdc3c7; text-decoration: none; }
+        .navbar-menu a:hover { color: white; }
+
+        /* Patient Banner - White strip */
+        .patient-banner {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #dcdcdc;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .patient-avatar {
+            width: 60px;
+            height: 60px;
+            background: #95a5a6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        .patient-identity h2 { margin: 0 0 5px 0; color: #2c3e50; }
+        .patient-meta { font-size: 13px; color: #7f8c8d; }
+        .patient-tags { margin-left: auto; display: flex; gap: 10px; }
+        .tag { padding: 5px 10px; border-radius: 3px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .tag-alert { background: #e74c3c; color: white; }
+        .tag-info { background: #3498db; color: white; }
+
+        /* Layout Grid */
+        .wrapper {
+            max-width: 1200px;
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            padding: 0 20px;
+        }
+
+        /* Panels */
+        .panel {
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        .panel-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+        }
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* Device Info Box (Right Col) */
+        .device-box {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .device-box:last-child { border-bottom: none; }
+        .device-label { font-size: 12px; color: #95a5a6; text-transform: uppercase; margin-bottom: 5px; }
+        .device-val { font-size: 24px; font-weight: bold; color: #2c3e50; }
+        .device-val.highlight { color: #e67e22; }
+
+        /* Metrics Table (Left Col) */
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .metrics-table th { text-align: left; color: #7f8c8d; font-weight: normal; border-bottom: 2px solid #eee; padding: 10px; }
+        .metrics-table td { padding: 15px 10px; border-bottom: 1px solid #eee; }
+        .metric-big { font-size: 18px; font-weight: bold; }
+        .trend-up { color: #27ae60; font-size: 12px; }
+        .trend-down { color: #c0392b; font-size: 12px; }
+
+        /* Visual Bars */
+        .progress-bg { background: #ecf0f1; height: 8px; border-radius: 4px; width: 100%; margin-top: 8px; }
+        .progress-fill { height: 100%; border-radius: 4px; }
+        .fill-green { background: #27ae60; }
+        .fill-orange { background: #f39c12; }
+        .fill-red { background: #c0392b; }
+
+        /* Contact Info (Right Col) */
+        .contact-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+        .contact-list li { margin-bottom: 10px; display: flex; gap: 10px; }
+        .icon { color: #bdc3c7; width: 20px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-brand">RESPIRATORY<span style="color:#3498db">CARE</span></div>
+        
+        <!-- Search Bar -->
+        <div style="position: relative; width: 300px; margin: 0 20px;">
+            <input type="text" id="patientSearch" placeholder="Rechercher un patient..." style="width: 100%; padding: 8px 12px; border-radius: 4px; border: none; font-size: 13px;">
+            <div id="searchSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 0 0 4px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; display: none; max-height: 200px; overflow-y: auto; color: #333;"></div>
+        </div>
+
+        <div class="navbar-menu">
+            <a href="#">Tableau de bord</a>
+            <a href="#" style="color:white; border-bottom: 2px solid #3498db;">Patients</a>
+            <a href="#">Rapports</a>
+            <a href="#">Configuration</a>
+        </div>
+        <div style="font-size: 12px;">Dr. DUPONT (Admin)</div>
+    </nav>
+
+    <!-- Patient Header -->
+    <div class="patient-banner">
+        <div class="patient-avatar">PT</div>
+        <div class="patient-identity">
+            <h2>Mme TEST Lambda</h2>
+            <div class="patient-meta">Née le 01/01/1970 (55 ans) | NIR: 1 12 34 56 789 000 00</div>
+        </div>
+        <div class="patient-tags">
+            <span class="tag tag-alert">Observance Faible</span>
+            <span class="tag tag-info">Télé-suivi Actif</span>
+        </div>
+    </div>
+
+    <div class="wrapper">
+
+        <!-- LEFT COLUMN -->
+        <div class="main-col">
+            
+            <!-- Clinical Overview -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Synthèse Clinique (30 derniers jours)</span>
+                    <span style="font-size: 12px; font-weight: normal; color: #7f8c8d;">Dernière synchro: Aujourd'hui 08:30</span>
+                </div>
+                <div class="panel-body">
+                    <table class="metrics-table">
+                        <thead>
+                            <tr>
+                                <th>Indicateur</th>
+                                <th>Valeur Moyenne</th>
+                                <th>Tendance</th>
+                                <th>Objectif</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong>Observance</strong>
+                                    <div style="font-size: 12px; color: #95a5a6;">Utilisation quotidienne</div>
+                                </td>
+                                <td class="metric-big" style="color: #e67e22;">3h 45m</td>
+                                <td><span class="trend-down">▼ -15m</span></td>
+                                <td style="width: 150px;">
+                                    <div style="font-size: 11px; text-align: right; margin-bottom: 2px;">Target: >4h</div>
+                                    <div class="progress-bg"><div class="progress-fill fill-orange" style="width: 85%;"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>IAH</strong>
+                                    <div style="font-size: 12px; color: #95a5a6;">Index d'Apnées-Hypopnées</div>
+                                </td>
+                                <td class="metric-big" style="color: #c0392b;">8.5 /h</td>
+                                <td><span class="trend-up">▲ +1.2</span></td>
+                                <td>
+                                    <div style="font-size: 11px; text-align: right; margin-bottom: 2px;">Target: <5</div>
+                                    <div class="progress-bg"><div class="progress-fill fill-red" style="width: 100%;"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Fuites</strong>
+                                    <div style="font-size: 12px; color: #95a5a6;">Fuites non intentionnelles (95%)</div>
+                                </td>
+                                <td class="metric-big" style="color: #27ae60;">2.0 L/min</td>
+                                <td><span class="trend-down">▼ Stable</span></td>
+                                <td>
+                                    <div style="font-size: 11px; text-align: right; margin-bottom: 2px;">Target: <24</div>
+                                    <div class="progress-bg"><div class="progress-fill fill-green" style="width: 10%;"></div></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Detailed History -->
+            <div class="panel">
+                <div class="panel-header">Historique Détaillé</div>
+                <div class="panel-body">
+                    <div style="background: #f9f9f9; padding: 15px; text-align: center; color: #7f8c8d; border: 1px dashed #ccc;">
+                        Graphique d'observance détaillé (Placeholder)
+                        <br><br>
+                        [ ||||| || |||| ||| ||||| ]
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="side-col">
+            
+            <!-- Device Configuration -->
+            <div class="panel">
+                <div class="panel-header">Configuration Appareil</div>
+                <div class="panel-body" style="padding: 0;">
+                    <div class="device-box">
+                        <div class="device-label">Modèle</div>
+                        <div class="device-val" style="font-size: 18px;">SleepTech DreamSleep 2</div>
+                    </div>
+                    <div class="device-box">
+                        <div class="device-label">Mode de Traitement</div>
+                        <div class="device-val highlight">PPC Fixe</div>
+                    </div>
+                    <div class="device-box">
+                        <div class="device-label">Pression Prescrite</div>
+                        <div class="device-val">8.5 <span style="font-size: 14px; color: #7f8c8d;">cmH2O</span></div>
+                    </div>
+                    <div class="device-box">
+                        <div class="device-label">Rampe</div>
+                        <div class="device-val" style="font-size: 18px; color: #7f8c8d;">20 min</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Contact -->
+            <div class="panel">
+                <div class="panel-header">Coordonnées</div>
+                <div class="panel-body">
+                    <ul class="contact-list">
+                        <li>
+                            <span class="icon">📍</span>
+                            <span>1 rue fictive<br>0000 Ville</span>
+                        </li>
+                        <li>
+                            <span class="icon">📞</span>
+                            <span>01 02 03 04 05</span>
+                        </li>
+                        <li>
+                            <span class="icon">📧</span>
+                            <span>patient.test.02@email.fictif</span>
+                        </li>
+                    </ul>
+                    <button style="width: 100%; padding: 10px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">Modifier la fiche</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const patients = {
+            "TEST Lambda": {
+                name: "Mme TEST Lambda",
+                id: "TEST-ID-002",
+                details: "Née le 01/01/1970 (55 ans) | NIR: 1 12 34 56 789 000 00",
+                tags: [
+                    { text: "Observance Faible", class: "tag-alert" },
+                    { text: "Télé-suivi Actif", class: "tag-info" }
+                ],
+                obs: "3h 45m",
+                obs_trend: "▼ -15m",
+                obs_trend_class: "trend-down",
+                obs_bar: "85%",
+                obs_bar_class: "fill-orange",
+                iah: "8.5 /h",
+                iah_trend: "▲ +1.2",
+                iah_trend_class: "trend-up",
+                iah_bar: "100%",
+                iah_bar_class: "fill-red",
+                leak: "2.0 L/min",
+                leak_trend: "▼ Stable",
+                leak_trend_class: "trend-down",
+                leak_bar: "10%",
+                leak_bar_class: "fill-green",
+                mode: "PPC Fixe",
+                pressure: "8.5 <span style='font-size: 14px; color: #7f8c8d;'>cmH2O</span>"
+            },
+            "ESSAI Prévu": {
+                name: "M. ESSAI Prévu",
+                id: "ESSAI-ID-003",
+                details: "Né le 15/05/1980 (45 ans) | NIR: 2 80 05 99 123 456 78",
+                tags: [
+                    { text: "Bonne Observance", class: "tag-info" },
+                    { text: "IAH Excellent", class: "tag-info" }
+                ],
+                obs: "7h 30m",
+                obs_trend: "▲ +10m",
+                obs_trend_class: "trend-up",
+                obs_bar: "95%",
+                obs_bar_class: "fill-green",
+                iah: "1.5 /h",
+                iah_trend: "▼ -0.2",
+                iah_trend_class: "trend-down",
+                iah_bar: "15%",
+                iah_bar_class: "fill-green",
+                leak: "35.0 L/min",
+                leak_trend: "▲ +5.0",
+                leak_trend_class: "trend-up",
+                leak_bar: "80%",
+                leak_bar_class: "fill-red",
+                mode: "APAP (Auto)",
+                pressure: "5 - 15 <span style='font-size: 14px; color: #7f8c8d;'>cmH2O</span>"
+            }
+        };
+
+        const searchInput = document.getElementById('patientSearch');
+        const suggestionsBox = document.getElementById('searchSuggestions');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            suggestionsBox.innerHTML = '';
+            
+            if (query.length === 0) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+
+            const matches = Object.keys(patients).filter(key => 
+                key.toLowerCase().includes(query) || 
+                patients[key].name.toLowerCase().includes(query) ||
+                patients[key].id.toLowerCase().includes(query)
+            );
+
+            if (matches.length > 0) {
+                matches.forEach(key => {
+                    const patient = patients[key];
+                    const div = document.createElement('div');
+                    div.style.padding = '10px';
+                    div.style.cursor = 'pointer';
+                    div.style.borderBottom = '1px solid #eee';
+                    div.innerHTML = `<strong>${patient.name}</strong> <span style="font-size:12px; color:#888;">${patient.id}</span>`;
+                    div.addEventListener('mouseenter', () => div.style.backgroundColor = '#f8f9fa');
+                    div.addEventListener('mouseleave', () => div.style.backgroundColor = 'white');
+                    div.addEventListener('click', () => selectPatient(key));
+                    suggestionsBox.appendChild(div);
+                });
+                suggestionsBox.style.display = 'block';
+            } else {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim().toLowerCase();
+                const matchKey = Object.keys(patients).find(key => 
+                    key.toLowerCase().includes(query) || 
+                    patients[key].name.toLowerCase().includes(query)
+                );
+                if (matchKey) selectPatient(matchKey);
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // Check URL hash on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = decodeURIComponent(window.location.hash.substring(1));
+            if (hash && patients[hash]) {
+                selectPatient(hash);
+            }
+        });
+
+        function selectPatient(key) {
+            console.log('[Demo] selectPatient:', key);
+            const data = patients[key];
+            if (data) {
+                updateDashboard(data);
+                searchInput.value = key;
+                suggestionsBox.style.display = 'none';
+                
+                // Update URL to simulate navigation for extension detection
+                const targetHash = encodeURIComponent(key);
+                const currentHash = window.location.hash;
+                const targetHashWithHash = '#' + targetHash;
+
+                console.log('[Demo] Hash check - Current:', currentHash, 'Target:', targetHashWithHash);
+
+                if (currentHash !== targetHashWithHash) {
+                    console.log('[Demo] Updating hash...');
+                    window.location.hash = targetHash;
+                } else {
+                    console.log('[Demo] Hash matches, skipping update.');
+                }
+            }
+        }
+
+        function updateDashboard(data) {
+            // Header
+            document.querySelector('.patient-identity h2').textContent = data.name;
+            document.querySelector('.patient-meta').textContent = data.details;
+            
+            // Tags
+            const tagsContainer = document.querySelector('.patient-tags');
+            tagsContainer.innerHTML = '';
+            data.tags.forEach(tag => {
+                const span = document.createElement('span');
+                span.className = `tag ${tag.class}`;
+                span.textContent = tag.text;
+                tagsContainer.appendChild(span);
+            });
+
+            // Metrics Table
+            const rows = document.querySelectorAll('.metrics-table tbody tr');
+            
+            // Obs
+            rows[0].querySelector('.metric-big').textContent = data.obs;
+            rows[0].querySelector('.metric-big').style.color = data.obs_bar_class === 'fill-green' ? '#27ae60' : (data.obs_bar_class === 'fill-orange' ? '#e67e22' : '#c0392b');
+            rows[0].querySelector('td:nth-child(3) span').textContent = data.obs_trend;
+            rows[0].querySelector('td:nth-child(3) span').className = data.obs_trend_class;
+            rows[0].querySelector('.progress-fill').className = `progress-fill ${data.obs_bar_class}`;
+            rows[0].querySelector('.progress-fill').style.width = data.obs_bar;
+
+            // IAH
+            rows[1].querySelector('.metric-big').textContent = data.iah;
+            rows[1].querySelector('.metric-big').style.color = data.iah_bar_class === 'fill-green' ? '#27ae60' : '#c0392b';
+            rows[1].querySelector('td:nth-child(3) span').textContent = data.iah_trend;
+            rows[1].querySelector('td:nth-child(3) span').className = data.iah_trend_class;
+            rows[1].querySelector('.progress-fill').className = `progress-fill ${data.iah_bar_class}`;
+            rows[1].querySelector('.progress-fill').style.width = data.iah_bar;
+
+            // Leak
+            rows[2].querySelector('.metric-big').textContent = data.leak;
+            rows[2].querySelector('.metric-big').style.color = data.leak_bar_class === 'fill-green' ? '#27ae60' : '#c0392b';
+            rows[2].querySelector('td:nth-child(3) span').textContent = data.leak_trend;
+            rows[2].querySelector('td:nth-child(3) span').className = data.leak_trend_class;
+            rows[2].querySelector('.progress-fill').className = `progress-fill ${data.leak_bar_class}`;
+            rows[2].querySelector('.progress-fill').style.width = data.leak_bar;
+
+            // Device
+            const deviceBoxes = document.querySelectorAll('.device-box');
+            deviceBoxes[1].querySelector('.device-val').textContent = data.mode;
+            deviceBoxes[2].querySelector('.device-val').innerHTML = data.pressure;
+        }
+    </script>
+
+</body>
+</html>

@@ -38,7 +38,13 @@ globalThis.document = {
 
 const messages = {
   onboardingQuickStartJourneyStart: 'Connectez-vous à ',
-  onboardingQuickStartTrialLink: "la page d'essai FlashCPAP ↗"
+  onboardingQuickStartTrialLink: "la page d'essai FlashCPAP ↗",
+  onboardingQuickStartStep6Before: 'Retournez dans ',
+  onboardingQuickStartStep6RefreshBefore: ", cliquez d'abord sur le bouton ",
+  onboardingQuickStartRefreshButton: '🔄 Refresh',
+  onboardingQuickStartStep6Middle: " pour réinitialiser l'analyse, puis cliquez sur ",
+  tabAnalyze: '🧪 Analyse',
+  buttonAnalyzePage: 'Analyser la page'
 };
 
 globalThis.chrome = {
@@ -71,4 +77,8 @@ test("the trial page is the guide's first numbered step", () => {
   assert.equal(trialLink?.href, 'https://www.flashcpap.com/espace-essai/');
   assert.equal(trialLink?.target, '_blank');
   assert.equal(trialLink?.rel, 'noopener noreferrer');
+
+  const lastStepText = collectText(instructions.children[6]);
+  assert.match(lastStepText, /🔄 Refresh/);
+  assert.match(lastStepText, /Analyser la page/);
 });

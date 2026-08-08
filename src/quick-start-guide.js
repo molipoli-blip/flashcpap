@@ -81,6 +81,16 @@ export function createQuickStartGuide() {
     t('onboardingQuickStartStep5Details')
   );
 
+  const firstExtractionStep = createInstruction(
+    t('onboardingQuickStartStep6Before'),
+    createButtonLabel('tabAnalyze'),
+    t('onboardingQuickStartStep6RefreshBefore'),
+    createButtonLabel('onboardingQuickStartRefreshButton'),
+    t('onboardingQuickStartStep6Middle'),
+    createButtonLabel('buttonAnalyzePage'),
+    '.'
+  );
+
   const criticalDocs = document.createElement('span');
   criticalDocs.className = 'onboarding-critical-docs';
   const criticalDocsBefore = document.createElement('span');
@@ -102,7 +112,7 @@ export function createQuickStartGuide() {
     createInstruction(t('onboardingQuickStartStep3Before'), createButtonLabel('tabAnalyze'), t('onboardingQuickStartStep3Middle'), createButtonLabel('buttonAnalyzePage'), '.'),
     createInstruction(t('onboardingQuickStartStep4'), createButtonLabel('buttonOpenSourceText'), '.'),
     fieldConfigurationStep,
-    createInstruction(t('onboardingQuickStartStep6Before'), createButtonLabel('tabAnalyze'), t('onboardingQuickStartStep6Middle'), createButtonLabel('buttonAnalyzePage'), '.')
+    firstExtractionStep
   );
 
   fragment.append(instructions);

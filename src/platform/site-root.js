@@ -91,7 +91,7 @@ export async function ensurePersistentHostPermissionForTab(tab, options = {}) {
   return ensurePersistentHostPermissionForUrl(tab.url, options);
 }
 
-export async function addCurrentSiteRootToProviderConfig(cfg) {
+export async function addCurrentSiteRootToProviderConfig(cfg, { validatePattern } = {}) {
   const tab = await getActiveNormalTab();
   if (!tab?.url) {
     throw new Error('Impossible de lire l\'onglet actif.');
@@ -106,6 +106,10 @@ export async function addCurrentSiteRootToProviderConfig(cfg) {
       alreadyPresent: true,
       permissionGranted: false
     };
+  }
+
+  if (typeof validatePattern === 'function') {
+    await validatePattern(pattern);
   }
 
   cfg.urls = [...existing, pattern];

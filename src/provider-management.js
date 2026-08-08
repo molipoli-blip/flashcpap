@@ -12,6 +12,7 @@ import { markProviderAsShared } from './copy-engagement.js';
 import { ensureProviderEntry, ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
 import { getCustomCheckboxes, linkCustomCheckboxesForProvider, mergeCustomCheckboxLists } from './custom-checkbox-store.js';
 import { assertSafePropertyKey, validateProviderPatterns } from './domain/config-security.js';
+import { buildCommunityShareJson } from './domain/community-share.js';
 
 let _onRefreshSettings = null;
 const MAX_IMPORT_FILE_BYTES = 2 * 1024 * 1024;
@@ -320,7 +321,6 @@ function buildProviderExportPayload(site) {
 
 export async function shareProviderToCommunity(siteLabel) {
   const site = siteLabel;
-  const key = toProviderKey(site);
   if (!isValidProviderSelection(site)) {
     throw new Error(t('providerShareNeedsValid'));
   }
@@ -336,32 +336,19 @@ export async function shareProviderToCommunity(siteLabel) {
     vendor: vendor,
     model: model,
     submitted_by: 'User',
-    json: {
-      version: 2,
-      meta: { name: site, vendor, model },
-      patterns: patterns,
-      customCheckboxes: getCustomCheckboxes(settings, key),
-      checkboxPhrases: settings.checkboxPhrases?.[key] || [],
-      noteLibre: settings.noteLibre?.[key] || '',
-      compactFields: settings.compactFields?.[key] || false,
-      organizationOrder: settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || [],
-      exclusions: settings.exclusionsByProvider?.[key] || [],
-      globalSeparators: patterns.globalSeparators || [],
-      familySettings: settings.familySettings?.[key] || {},
-      pinnedOptions: settings.pinnedOptions?.[key] || []
-    }
+    json: buildCommunityShareJson({
+      providerName: site,
+      vendor,
+      model,
+      patterns
+    })
   };
   logFlow('SHARE', 'Publication communaute demandee', {
     provider: site,
     vendor,
     model,
     fieldCount: Object.keys(patterns.fields || {}).length,
-    checkboxCount: getCustomCheckboxes(settings, key).length,
-    phraseCount: (settings.checkboxPhrases?.[key] || []).length,
-    organizationCount: (settings.organizationOrderByProvider?.[site] || settings.organizationOrderByProvider?.[key] || []).length,
-    exclusionCount: (settings.exclusionsByProvider?.[key] || []).length,
-    separatorCount: (patterns.globalSeparators || []).length,
-    pinnedOptionCount: (settings.pinnedOptions?.[key] || []).length
+    urlCount: (patterns.urls || []).length
   });
 
   const result = await publishTemplate(payload);

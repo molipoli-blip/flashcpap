@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../favicon_128px.png">
+    <title>AsozO2 - Rapport Patient</title>
+    <style>
+        :root {
+            --header-bg: #2c3e50;
+            --sidebar-bg: #34495e;
+            --active-item: #3498db;
+            --text-main: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #ecf0f1;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            color: var(--text-main);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #2c3e50;
+            border-bottom: 1px solid #465a6e;
+        }
+
+        .brand span { color: var(--active-item); margin-left: 5px; }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background-color: #3e5871;
+        }
+
+        .nav-item.active {
+            background-color: #3e5871;
+            border-left-color: var(--active-item);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            height: 60px;
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .patient-context {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .patient-avatar {
+            width: 35px;
+            height: 35px;
+            background-color: #bdc3c7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .patient-details div:first-child { font-weight: 600; font-size: 14px; }
+        .patient-details div:last-child { font-size: 12px; color: var(--text-light); }
+
+        .scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Dashboard Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .card.double { grid-column: span 2; }
+        .card.full { grid-column: span 4; }
+
+        .card-header {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 300;
+            color: var(--text-main);
+        }
+
+        .metric-unit {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-left: 5px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-ok { background-color: #e8f5e9; color: #2e7d32; }
+        .status-warn { background-color: #fff3e0; color: #ef6c00; }
+
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Device Settings Grid */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dotted var(--border-color);
+            padding-bottom: 5px;
+        }
+        .setting-label { font-size: 13px; color: var(--text-light); }
+        .setting-val { font-size: 13px; font-weight: 600; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand">AsozO2<span>Clinical</span></div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Tableau de bord
+            </li>
+            <li class="nav-item active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Rapports
+            </li>
+            <li class="nav-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Patients
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="section-title" style="margin:0;">Aperçu Thérapeutique</div>
+            
+            <!-- Search Bar -->
+            <div style="position: relative; width: 300px; margin: 0 20px;">
+                <input type="text" id="patientSearch" placeholder="Rechercher un patient..." style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd; font-size: 13px; background: #f8f9fa;">
+                <div id="searchSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; display: none; max-height: 200px; overflow-y: auto; color: #333;"></div>
+            </div>
+
+            <div class="patient-context">
+                <div class="patient-details" style="text-align: right;">
+                    <div class="p-name">TEST Lambda</div>
+                    <div class="p-meta">ID: TEST-ID-003 | Né le 01/01/1950</div>
+                </div>
+                <div class="patient-avatar">PT</div>
+            </div>
+        </div>
+
+        <div class="scroll-area">
+            
+            <div class="grid-container">
+                <!-- Device Info -->
+                <div class="card double">
+                    <div class="card-header">Dispositif Connecté</div>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 20px; font-weight: 600;">MedFlow SmartAir</div>
+                        <div style="font-size: 13px; color: var(--text-light); background: #f0f2f5; padding: 5px 10px; border-radius: 4px;">SN: 6722-9981</div>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 13px; color: var(--text-light);">
+                        Dernière transmission: <span style="color: var(--text-main); font-weight: 600;">Aujourd'hui 08:15</span>
+                    </div>
+                </div>
+
+                <!-- Compliance Summary -->
+                <div class="card">
+                    <div class="card-header">Observance (30j)</div>
+                    <div class="metric-value">6.2 h<span class="metric-unit">/nuit</span></div>
+                    <div class="status-badge status-ok" style="display: inline-block; margin-top: 5px;">Excellente</div>
+                </div>
+
+                <!-- AHI Summary -->
+                <div class="card">
+                    <div class="card-header">IAH Moyen</div>
+                    <div class="metric-value">2.1<span class="metric-unit">/h</span></div>
+                    <div class="status-badge status-ok" style="display: inline-block; margin-top: 5px;">Normal (<5)</div>
+                </div>
+            </div>
+
+            <div class="grid-container">
+                <!-- Detailed Metrics -->
+                <div class="card double">
+                    <div class="section-title">Métriques Cliniques (Moy. 7 jours)</div>
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <span class="setting-label">Utilisation</span>
+                            <span class="setting-val">6h 12m</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Pression (95e)</span>
+                            <span class="setting-val">11.5 hPa</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Fuites (95e)</span>
+                            <span class="setting-val">18 L/min</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">IAH Central</span>
+                            <span class="setting-val">0.4 /h</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">IAH Obstructif</span>
+                            <span class="setting-val">1.2 /h</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Hypopnées</span>
+                            <span class="setting-val">0.5 /h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Device Settings -->
+                <div class="card double">
+                    <div class="section-title">Paramètres Machine</div>
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <span class="setting-label">Mode</span>
+                            <span class="setting-val">APAP (Auto)</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Pression Min</span>
+                            <span class="setting-val">6.0 hPa</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Pression Max</span>
+                            <span class="setting-val">14.0 hPa</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Rampe</span>
+                            <span class="setting-val">20 min</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Pression Départ</span>
+                            <span class="setting-val">4.0 hPa</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">EPR / Flex</span>
+                            <span class="setting-val">Niveau 2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session History Table -->
+            <div class="card full">
+                <div class="section-title">Historique des Sessions (Derniers 5 jours)</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Utilisation</th>
+                            <th>IAH</th>
+                            <th>Pression Moy.</th>
+                            <th>Fuites (95%)</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>10 Déc 2025</td>
+                            <td>7h 15m</td>
+                            <td>1.8</td>
+                            <td>10.2</td>
+                            <td>12 L/min</td>
+                            <td><span class="status-badge status-ok">Conforme</span></td>
+                        </tr>
+                        <tr>
+                            <td>09 Déc 2025</td>
+                            <td>6h 45m</td>
+                            <td>2.4</td>
+                            <td>10.5</td>
+                            <td>15 L/min</td>
+                            <td><span class="status-badge status-ok">Conforme</span></td>
+                        </tr>
+                        <tr>
+                            <td>08 Déc 2025</td>
+                            <td>3h 20m</td>
+                            <td>3.1</td>
+                            <td>9.8</td>
+                            <td>22 L/min</td>
+                            <td><span class="status-badge status-warn">Non Conforme</span></td>
+                        </tr>
+                        <tr>
+                            <td>07 Déc 2025</td>
+                            <td>8h 05m</td>
+                            <td>1.5</td>
+                            <td>10.1</td>
+                            <td>8 L/min</td>
+                            <td><span class="status-badge status-ok">Conforme</span></td>
+                        </tr>
+                        <tr>
+                            <td>06 Déc 2025</td>
+                            <td>7h 30m</td>
+                            <td>2.0</td>
+                            <td>10.3</td>
+                            <td>10 L/min</td>
+                            <td><span class="status-badge status-ok">Conforme</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const patients = {
+            "TEST Lambda": {
+                name: "TEST Lambda",
+                id: "TEST-ID-003",
+                meta: "ID: TEST-ID-003 | Né le 01/01/1950",
+                obs_val: "6.2 h",
+                obs_unit: "/nuit",
+                obs_status: "Excellente",
+                obs_class: "status-ok",
+                iah: "2.1",
+                iah_status: "Normal (<5)",
+                iah_class: "status-ok",
+                usage: "6.2 h",
+                p95: "11.5 hPa",
+                leak95: "18 L/min",
+                iah_c: "0.4 /h",
+                iah_o: "1.2 /h",
+                hyp: "0.5 /h",
+                mode: "APAP (Auto)",
+                p_min: "6.0 hPa",
+                p_max: "14.0 hPa",
+                p_start: "4.0 hPa"
+            },
+            "ESSAI Prévu": {
+                name: "ESSAI Prévu",
+                id: "ESSAI-ID-004",
+                meta: "ID: ESSAI-ID-004 | Né le 15/05/1980",
+                obs_val: "3.2 h",
+                obs_unit: "/nuit",
+                obs_status: "Faible",
+                obs_class: "status-warn",
+                iah: "12.5",
+                iah_status: "Modéré (5-15)",
+                iah_class: "status-warn",
+                usage: "3.2 h",
+                p95: "14.0 hPa",
+                leak95: "55 L/min",
+                iah_c: "1.5 /h",
+                iah_o: "8.0 /h",
+                hyp: "3.0 /h",
+                mode: "PPC (Fixe)",
+                p_min: "12.0 hPa",
+                p_max: "-",
+                p_start: "6.0 hPa"
+            }
+        };
+
+        const searchInput = document.getElementById('patientSearch');
+        const suggestionsBox = document.getElementById('searchSuggestions');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            suggestionsBox.innerHTML = '';
+            
+            if (query.length === 0) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+
+            const matches = Object.keys(patients).filter(key => 
+                key.toLowerCase().includes(query) || 
+                patients[key].name.toLowerCase().includes(query) ||
+                patients[key].id.toLowerCase().includes(query)
+            );
+
+            if (matches.length > 0) {
+                matches.forEach(key => {
+                    const patient = patients[key];
+                    const div = document.createElement('div');
+                    div.style.padding = '10px';
+                    div.style.cursor = 'pointer';
+                    div.style.borderBottom = '1px solid #eee';
+                    div.innerHTML = `<strong>${patient.name}</strong> <span style="font-size:12px; color:#888;">${patient.id}</span>`;
+                    div.addEventListener('mouseenter', () => div.style.backgroundColor = '#f8f9fa');
+                    div.addEventListener('mouseleave', () => div.style.backgroundColor = 'white');
+                    div.addEventListener('click', () => selectPatient(key));
+                    suggestionsBox.appendChild(div);
+                });
+                suggestionsBox.style.display = 'block';
+            } else {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim().toLowerCase();
+                const matchKey = Object.keys(patients).find(key => 
+                    key.toLowerCase().includes(query) || 
+                    patients[key].name.toLowerCase().includes(query)
+                );
+                if (matchKey) selectPatient(matchKey);
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // Check URL hash on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = decodeURIComponent(window.location.hash.substring(1));
+            if (hash && patients[hash]) {
+                selectPatient(hash);
+            }
+        });
+
+        function selectPatient(key) {
+            console.log('[Demo] selectPatient:', key);
+            const data = patients[key];
+            if (data) {
+                updateDashboard(data);
+                searchInput.value = key;
+                suggestionsBox.style.display = 'none';
+                
+                // Update URL to simulate navigation for extension detection
+                const targetHash = encodeURIComponent(key);
+                const currentHash = window.location.hash;
+                const targetHashWithHash = '#' + targetHash;
+
+                console.log('[Demo] Hash check - Current:', currentHash, 'Target:', targetHashWithHash);
+
+                if (currentHash !== targetHashWithHash) {
+                    console.log('[Demo] Updating hash...');
+                    window.location.hash = targetHash;
+                } else {
+                    console.log('[Demo] Hash matches, skipping update.');
+                }
+            }
+        }
+
+        function updateDashboard(data) {
+            // Header
+            document.querySelector('.p-name').textContent = data.name;
+            document.querySelector('.p-meta').textContent = data.meta;
+
+            // Cards
+            // Obs
+            const obsCard = document.querySelectorAll('.grid-container')[0].children[1];
+            obsCard.querySelector('.metric-value').innerHTML = `${data.obs_val}<span class="metric-unit">${data.obs_unit}</span>`;
+            obsCard.querySelector('.status-badge').textContent = data.obs_status;
+            obsCard.querySelector('.status-badge').className = `status-badge ${data.obs_class}`;
+
+            // IAH
+            const iahCard = document.querySelectorAll('.grid-container')[0].children[2];
+            iahCard.querySelector('.metric-value').innerHTML = `${data.iah}<span class="metric-unit">/h</span>`;
+            iahCard.querySelector('.status-badge').textContent = data.iah_status;
+            iahCard.querySelector('.status-badge').className = `status-badge ${data.iah_class}`;
+
+            // Detailed Metrics
+            const metricsGrid = document.querySelectorAll('.settings-grid')[0];
+            metricsGrid.children[0].querySelector('.setting-val').textContent = data.usage;
+            metricsGrid.children[1].querySelector('.setting-val').textContent = data.p95;
+            metricsGrid.children[2].querySelector('.setting-val').textContent = data.leak95;
+            metricsGrid.children[3].querySelector('.setting-val').textContent = data.iah_c;
+            metricsGrid.children[4].querySelector('.setting-val').textContent = data.iah_o;
+            metricsGrid.children[5].querySelector('.setting-val').textContent = data.hyp;
+
+            // Device Settings
+            const settingsGrid = document.querySelectorAll('.settings-grid')[1];
+            settingsGrid.children[0].querySelector('.setting-val').textContent = data.mode;
+            settingsGrid.children[1].querySelector('.setting-val').textContent = data.p_min;
+            settingsGrid.children[2].querySelector('.setting-val').textContent = data.p_max;
+            settingsGrid.children[4].querySelector('.setting-val').textContent = data.p_start;
+        }
+    </script>
+
+</body>
+</html>

@@ -332,6 +332,22 @@ function normalizeSettings(target) {
   return target;
 }
 
+// Keep the exported object identity stable: analysis actions retain this
+// reference for the lifetime of the popup, including after a JSON import.
+function replaceSettingsContents(nextSettings) {
+  if (nextSettings === settings) return settings;
+
+  for (const key of Object.keys(settings)) {
+    delete settings[key];
+  }
+
+  for (const [key, value] of Object.entries(nextSettings)) {
+    if (isSafePropertyKey(key)) settings[key] = value;
+  }
+
+  return settings;
+}
+
 export function saveSettings() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   try {
@@ -346,7 +362,7 @@ export function loadSettings() {
 
   if (parsed) {
     try { console.log('[STORAGE][LOAD] Raw settings loaded from localStorage'); } catch {}
-    settings = normalizeSettings(parsed);
+    replaceSettingsContents(normalizeSettings(parsed));
 
     try {
       console.log('[STORAGE][LOAD] Pinned Options:', settings.pinnedOptions);
@@ -368,7 +384,7 @@ export function loadSettings() {
       });
     } catch {}
   } else {
-    settings = normalizeSettings(createDefaultSettings());
+    replaceSettingsContents(normalizeSettings(createDefaultSettings()));
 
     saveSettings();
     try { console.log('[STORAGE][INIT] Fresh default settings initialized'); } catch {}

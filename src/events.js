@@ -114,6 +114,19 @@ export async function updateSummaryDisplay(trigger = null) {
   }
 }
 
+export async function changeActiveAnalysisProvider(providerLabel) {
+  const nextProvider = String(providerLabel || '').trim();
+  if (!lastParsedData || !nextProvider) return false;
+
+  lastSelectedPrestataire = nextProvider;
+  hasActiveAnalysisSession = true;
+  logFlow('SUMMARY', 'Prestataire de l analyse active modifie', {
+    provider: nextProvider
+  });
+  await updateSummaryDisplay({ type: 'provider-changed' });
+  return true;
+}
+
 export function setupDOMEventListeners() {
   // Persist simple control state locally, excluding file inputs.
   const trackableElements = Array.from(document.querySelectorAll('input[id], select[id]'))

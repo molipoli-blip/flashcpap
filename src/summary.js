@@ -635,6 +635,13 @@ export function generateSummary(data, prestataire, includeInterpretation = false
       const currBaseLines = currentFldBase.split(/\r?\n/);
       [0,1].forEach(i => {
         if (linesPrev[i] && currBaseLines[i] && linesPrev[i] !== currBaseLines[i]) {
+          // The provider line is application state, not a manual header
+          // override. It must follow a manual provider selection.
+          if (i === 1
+            && normalizeComparableText(linesPrev[i]).startsWith('prestataire :')
+            && normalizeComparableText(currBaseLines[i]).startsWith('prestataire :')) {
+            return;
+          }
           headerOverrideByIndex.set(i, linesPrev[i]);
           logDebug('SUMMARY', 'Override header capture', { headerIndex: i });
         }

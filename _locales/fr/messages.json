@@ -110,8 +110,14 @@
   "onboardingQuickStartStep6Before": {
     "message": "Retournez dans "
   },
+  "onboardingQuickStartStep6RefreshBefore": {
+    "message": ", cliquez d'abord sur le bouton "
+  },
+  "onboardingQuickStartRefreshButton": {
+    "message": "🔄 Refresh"
+  },
   "onboardingQuickStartStep6Middle": {
-    "message": " et effectuez votre première extraction en cliquant sur "
+    "message": " pour réinitialiser l'analyse, puis effectuez votre première extraction en cliquant sur "
   },
   "onboardingCriticalDocsBefore": {
     "message": "N'hésitez pas à consulter "

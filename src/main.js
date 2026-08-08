@@ -11,7 +11,7 @@ import { isEditing, getEditingInfo, cancelEdit, updateFamilySuggestionsList, ini
 import { renderOrganizationInterface } from './organization.js';
 import { getPageText } from './extraction.js';
 import { parseTextMeta, applySplitSeparators } from './parsing.js';
-import { setupDOMEventListeners, setupURLChangeMonitoring, updateSummaryDisplay, setLastAnalyzedUrl, setLastParsedData, setPinningInProgress, getLastAnalyzedUrl } from './events.js';
+import { setupDOMEventListeners, setupURLChangeMonitoring, updateSummaryDisplay, changeActiveAnalysisProvider, setLastAnalyzedUrl, setLastParsedData, setPinningInProgress, getLastAnalyzedUrl } from './events.js';
 import { setupHighlighting } from './highlight-interactions.js';
 import { initFieldEditor } from './field-editor.js';
 import { renderSettingsUI } from './field-management.js';
@@ -60,8 +60,9 @@ function setupInterpretationAndProviderBindings() {
   setupInterpretationThresholds({ settings, saveSettings, updateSummaryDisplay });
 
   bindProviderSelects({
-    onProviderChanged: value => {
-      refreshProviderUi(value);
+    onProviderChanged: async value => {
+      const activeProvider = refreshProviderUi(value);
+      await changeActiveAnalysisProvider(activeProvider);
     }
   });
 

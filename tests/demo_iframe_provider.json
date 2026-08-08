@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "type": "provider",
+  "provider": "Demo_iframe",
+  "meta": {
+    "name": "Demo_iframe",
+    "vendor": "AsozO2",
+    "model": "Rapport PPC intégré"
+  },
+  "patterns": {
+    "urls": [
+      "http://127.0.0.1:*/*"
+    ],
+    "pdfKeywords": [
+      "AsozO2",
+      "Métriques Cliniques",
+      "IAH MOYEN"
+    ],
+    "fields": {
+      "mode": {
+        "type": "text",
+        "label": "Mode",
+        "unit": "",
+        "labels": [
+          {
+            "text": "Mode",
+            "range": { "start": 1, "end": 999 },
+            "excludeKeywords": [],
+            "priorityKeywords": [],
+            "labelExcludeKeywords": [],
+            "splitSeparators": []
+          }
+        ]
+      },
+      "iah": {
+        "type": "numeric",
+        "label": "IAH Moyen",
+        "unit": "/h",
+        "role": "iah",
+        "labels": [
+          {
+            "text": "IAH Moyen",
+            "range": { "start": 1, "end": 999 },
+            "excludeKeywords": [],
+            "priorityKeywords": [],
+            "labelExcludeKeywords": [],
+            "splitSeparators": []
+          }
+        ]
+      },
+      "pressure95": {
+        "type": "numeric",
+        "label": "Pression (95e)",
+        "unit": "hPa",
+        "labels": [
+          {
+            "text": "Pression (95e)",
+            "range": { "start": 1, "end": 999 },
+            "excludeKeywords": [],
+            "priorityKeywords": [],
+            "labelExcludeKeywords": [],
+            "splitSeparators": []
+          }
+        ]
+      },
+      "leaks95": {
+        "type": "numeric",
+        "label": "Fuites (95e)",
+        "unit": "L/min",
+        "role": "fuites",
+        "labels": [
+          {
+            "text": "Fuites (95e)",
+            "range": { "start": 1, "end": 999 },
+            "excludeKeywords": [],
+            "priorityKeywords": [],
+            "labelExcludeKeywords": [],
+            "splitSeparators": []
+          }
+        ]
+      }
+    },
+    "fieldOrder": [
+      "mode",
+      "iah",
+      "pressure95",
+      "leaks95"
+    ]
+  }
+}

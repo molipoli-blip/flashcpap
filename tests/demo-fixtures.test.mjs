@@ -173,6 +173,34 @@ test('iframe demo exposes the report frame to the analysis access pipeline', asy
   assert.deepEqual(access.origins, ['http://127.0.0.1:8765/*']);
 });
 
+test('importable iframe provider JSON detects and parses the demo report', async () => {
+  const [providerSource, reportHtml] = await Promise.all([
+    readFile(new URL('demo_iframe_provider.json', import.meta.url), 'utf8'),
+    readFile(new URL('demo_ppc_3.html', import.meta.url), 'utf8')
+  ]);
+  const providerJson = JSON.parse(providerSource);
+  const providerKey = providerJson.meta.name.toLowerCase();
+  const fixtureSettings = {
+    patterns: {
+      [providerKey]: providerJson.patterns
+    }
+  };
+
+  assert.equal(
+    detectProviderFromUrl('http://127.0.0.1:8765/demo_iframe.html', fixtureSettings),
+    'Demo_iframe'
+  );
+  assert.deepEqual(
+    parseQuietly(visibleTextFromHtml(reportHtml), 'Demo_iframe', fixtureSettings),
+    {
+      mode: 'APAP (Auto)',
+      iah: '2.1',
+      pressure95: '11.5',
+      leaks95: '18'
+    }
+  );
+});
+
 test('PDF demo is extracted, detected and parsed by the extension pipeline', async () => {
   const bytes = await readFile(new URL('demo-ppc-report-pdf.pdf', import.meta.url));
   const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);

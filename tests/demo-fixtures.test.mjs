@@ -23,6 +23,7 @@ globalThis.chrome = {
 const { extractTextFromPDF } = await import('../lib/pdf-parser.js');
 const { parseTextMeta } = await import('../src/parsing.js');
 const { detectProviderFromUrl } = await import('../src/domain/provider-rules.js');
+const { buildAnalysisAccess } = await import('../src/iframe-permissions.js');
 const { detectProviderFromText } = await import('../src/provider-management.js');
 const { settings } = await import('../src/storage.js');
 
@@ -153,6 +154,24 @@ for (const fixture of htmlFixtures) {
     assert.deepEqual(parseQuietly(text, fixture.provider, fixtureSettings), fixture.expected);
   });
 }
+
+test('iframe demo exposes the report frame to the analysis access pipeline', async () => {
+  const hostHtml = await readFile(new URL('demo_iframe.html', import.meta.url), 'utf8');
+  const iframeSource = hostHtml.match(/<iframe\b[^>]*\bsrc="([^"]+)"/i)?.[1];
+
+  assert.equal(iframeSource, '/demo_ppc_3.html');
+
+  const access = buildAnalysisAccess({
+    id: 42,
+    url: 'http://127.0.0.1:8765/demo_iframe.html'
+  }, [
+    { frameId: 0, parentFrameId: -1, url: 'http://127.0.0.1:8765/demo_iframe.html' },
+    { frameId: 7, parentFrameId: 0, url: `http://127.0.0.1:8765${iframeSource}` }
+  ]);
+
+  assert.deepEqual(access.frameIds, [0, 7]);
+  assert.deepEqual(access.origins, ['http://127.0.0.1:8765/*']);
+});
 
 test('PDF demo is extracted, detected and parsed by the extension pipeline', async () => {
   const bytes = await readFile(new URL('demo-ppc-report-pdf.pdf', import.meta.url));

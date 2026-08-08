@@ -39,16 +39,17 @@ function createInstruction(...parts) {
 export function createQuickStartGuide() {
   const fragment = document.createDocumentFragment();
 
-  const trialIntro = document.createElement('p');
-  trialIntro.className = 'onboarding-trial-intro';
-  const trialIntroText = document.createElement('span');
-  trialIntroText.textContent = t('onboardingQuickStartJourneyStart');
   const trialLink = document.createElement('a');
   trialLink.href = 'https://www.flashcpap.com/espace-essai/';
   trialLink.target = '_blank';
   trialLink.rel = 'noopener noreferrer';
   trialLink.textContent = t('onboardingQuickStartTrialLink');
-  trialIntro.append(trialIntroText, trialLink, document.createTextNode('.'));
+  const trialStep = createInstruction(
+    t('onboardingQuickStartJourneyStart'),
+    trialLink,
+    '.'
+  );
+  trialStep.className = 'onboarding-trial-step';
 
   const instructions = document.createElement('ol');
   instructions.className = 'onboarding-quick-start';
@@ -95,6 +96,7 @@ export function createQuickStartGuide() {
   fieldConfigurationStep.appendChild(criticalDocs);
 
   instructions.append(
+    trialStep,
     createInstruction(t('onboardingQuickStartStep1'), createButtonLabel('tabSettings'), '.'),
     providerStep,
     createInstruction(t('onboardingQuickStartStep3Before'), createButtonLabel('tabAnalyze'), t('onboardingQuickStartStep3Middle'), createButtonLabel('buttonAnalyzePage'), '.'),
@@ -103,6 +105,6 @@ export function createQuickStartGuide() {
     createInstruction(t('onboardingQuickStartStep6Before'), createButtonLabel('tabAnalyze'), t('onboardingQuickStartStep6Middle'), createButtonLabel('buttonAnalyzePage'), '.')
   );
 
-  fragment.append(trialIntro, instructions);
+  fragment.append(instructions);
   return fragment;
 }

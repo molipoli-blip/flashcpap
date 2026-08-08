@@ -44,7 +44,7 @@ function bindAnalyseButton(button, deps) {
     }
 
     if (!access.granted) {
-      await alertInline('L\'autorisation nécessaire pour lire la page et son rapport intégré a été refusée.', 'warning');
+      await alertInline('L\'autorisation nécessaire pour lire la page et son contenu intégré a été refusée.', 'warning');
       return;
     }
 

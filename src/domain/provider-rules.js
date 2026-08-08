@@ -2,6 +2,7 @@
 // Copyright (C) 2026 molipoli-blip
 
 import { logFlow } from '../debug-logger.js';
+import { isSafePropertyKey } from './config-security.js';
 
 function getPatterns(source) {
   if (!source || typeof source !== 'object') return {};
@@ -62,7 +63,8 @@ export function normalizeProviderLabel(providerLabel) {
 }
 
 export function toProviderKey(providerLabel) {
-  return normalizeProviderLabel(providerLabel).toLowerCase();
+  const key = normalizeProviderLabel(providerLabel).toLowerCase();
+  return isSafePropertyKey(key) ? key : '';
 }
 
 export function toProviderLabel(providerKey) {
@@ -85,13 +87,15 @@ export function getFirstAvailableProviderLabel(source) {
 
 export function hasValidProvider(source, providerLabel) {
   const key = toProviderKey(providerLabel);
-  return !!key && !!getPatterns(source)?.[key];
+  const patterns = getPatterns(source);
+  return !!key && Object.hasOwn(patterns, key) && !!patterns[key];
 }
 
 export function getProviderConfig(source, providerLabel) {
   const key = toProviderKey(providerLabel);
   if (!key) return null;
-  return getPatterns(source)?.[key] || null;
+  const patterns = getPatterns(source);
+  return Object.hasOwn(patterns, key) ? patterns[key] : null;
 }
 
 export function ensureProviderConfig(source, providerLabel, defaults = {}) {
@@ -101,7 +105,7 @@ export function ensureProviderConfig(source, providerLabel, defaults = {}) {
   const patterns = getMutablePatterns(source);
   if (!patterns) return null;
 
-  if (!patterns[key] || typeof patterns[key] !== 'object') {
+  if (!Object.hasOwn(patterns, key) || !patterns[key] || typeof patterns[key] !== 'object') {
     patterns[key] = {
       urls: [],
       fields: {},

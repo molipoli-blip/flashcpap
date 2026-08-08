@@ -8,6 +8,7 @@ Their respective licenses are reproduced in full.
 ────────────────────────────────────────────────────────────
 1. PDF.js
    Files : lib/pdf.mjs, lib/pdf.worker.mjs
+   Version: 6.1.200
    Source: https://github.com/mozilla/pdf.js
    Copyright 2023 Mozilla Foundation
    License: Apache License, Version 2.0

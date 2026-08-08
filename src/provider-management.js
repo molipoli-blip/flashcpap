@@ -11,8 +11,10 @@ import { t } from './i18n.js';
 import { markProviderAsShared } from './copy-engagement.js';
 import { ensureProviderEntry, ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
 import { getCustomCheckboxes, linkCustomCheckboxesForProvider, mergeCustomCheckboxLists } from './custom-checkbox-store.js';
+import { assertSafePropertyKey, validateProviderPatterns } from './domain/config-security.js';
 
 let _onRefreshSettings = null;
+const MAX_IMPORT_FILE_BYTES = 2 * 1024 * 1024;
 
 export function isValidProviderSelection(siteLabel) {
   return hasValidProvider(settings, siteLabel);
@@ -56,6 +58,10 @@ export function createProvider(providerName) {
   }
 
   const key = name.toLowerCase().replace(/\s+/g, '_');
+  if (!key || !toProviderKey(key)) {
+    showToast(t('errorProviderNameInvalid'), 'error');
+    return '';
+  }
   if (hasValidProvider(settings, key)) {
     showToast(t('providerExists'), 'error');
     return '';
@@ -169,6 +175,9 @@ function downloadJson(filename, data) {
 }
 
 async function readJsonFile(file) {
+  if (!file || file.size > MAX_IMPORT_FILE_BYTES) {
+    throw new Error('Le fichier JSON dépasse la limite de 2 Mo');
+  }
   const text = await file.text();
   return JSON.parse(text);
 }
@@ -210,6 +219,8 @@ function normalizeProviderImportPayload(jsonData) {
   }
 
   const providerLabel = String(root.meta?.name || jsonData.meta?.name || '').trim();
+  if (providerLabel) assertSafePropertyKey(providerLabel, 'Nom du prestataire');
+  validateProviderPatterns(patterns);
 
   return {
     providerLabel,
@@ -228,7 +239,7 @@ function normalizeProviderImportPayload(jsonData) {
 }
 
 function applyImportedProviderPayload(siteLabel, normalizedPayload) {
-  const key = toProviderKey(siteLabel);
+  const key = assertSafePropertyKey(toProviderKey(siteLabel), 'Identifiant prestataire');
   const targetLabel = toProviderLabel(siteLabel);
 
   settings.patterns[key] = normalizedPayload.patterns || {};

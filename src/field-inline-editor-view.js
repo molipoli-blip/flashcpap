@@ -1,4 +1,5 @@
 import { t } from './i18n.js';
+import { assertSafeFieldKey } from './domain/config-security.js';
 
 function escapeTemplateValue(value) {
   return String(value ?? '')
@@ -38,6 +39,7 @@ function renderUnitAndTupleForSubCard(fieldKey, index, isNumeric, isTime, unit, 
 }
 
 export function renderLabelSubCard(fieldKey, index, lbl, typeOpts = {}) {
+  assertSafeFieldKey(fieldKey);
   const isNumeric = typeOpts.isNumeric || false;
   const isTime = typeOpts.isTime || false;
   const unit = typeOpts.unit || '';
@@ -260,6 +262,7 @@ function renderRoleAndSuffixSection({ fieldKey, roleInitial, suffixInitial }) {
 }
 
 export function buildInlineFieldEditorMarkup({ fieldKey, siteLabel, initialState }) {
+  assertSafeFieldKey(fieldKey);
   const {
     isNumeric,
     isTime,

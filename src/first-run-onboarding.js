@@ -1,27 +1,47 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
-// First-install guide. A pending guide is shown again until the user reaches setup.
+// Versioned getting-started guide. Each guide revision is shown once to both
+// new and existing users, including after an extension update.
 
 import { t } from './i18n.js';
 import { openQuickStartDock } from './quick-start-dock.js';
 
 const ONBOARDING_PENDING_KEY = 'flashcpap:onboarding-pending';
 const ONBOARDING_COMPLETED_KEY = 'flashcpap:onboarding-completed';
+const ONBOARDING_SEEN_REVISION_KEY = 'flashcpap:onboarding-seen-revision';
 const ONBOARDING_ID = 'first-run-onboarding';
-
-function readLocalFlag(key) {
-  try {
-    return localStorage.getItem(key) === '1';
-  } catch {
-    return false;
-  }
-}
+export const CURRENT_ONBOARDING_REVISION = 'quick-start-2026-08';
 
 function writeLocalFlag(key, value) {
   try {
     if (value) localStorage.setItem(key, '1');
     else localStorage.removeItem(key);
   } catch {}
+}
+
+function readLocalValue(key) {
+  try {
+    return localStorage.getItem(key) || '';
+  } catch {
+    return '';
+  }
+}
+
+function writeLocalValue(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
+export function shouldShowCurrentOnboarding() {
+  return readLocalValue(ONBOARDING_SEEN_REVISION_KEY) !== CURRENT_ONBOARDING_REVISION;
+}
+
+export function markCurrentOnboardingSeen() {
+  writeLocalValue(ONBOARDING_SEEN_REVISION_KEY, CURRENT_ONBOARDING_REVISION);
+  // Remove the legacy flags after migration so they cannot affect later guide revisions.
+  writeLocalFlag(ONBOARDING_COMPLETED_KEY, false);
+  writeLocalFlag(ONBOARDING_PENDING_KEY, false);
 }
 
 function openSettings() {
@@ -194,17 +214,17 @@ export function showFirstRunOnboarding({ markComplete = true } = {}) {
 
   const overlay = createOnboardingElement({
     onComplete: async () => {
+      if (markComplete) markCurrentOnboardingSeen();
       try {
         await openQuickStartDock();
-        if (markComplete) {
-          writeLocalFlag(ONBOARDING_COMPLETED_KEY, true);
-          writeLocalFlag(ONBOARDING_PENDING_KEY, false);
-        }
       } catch (error) {
         console.warn('[ONBOARDING] Le guide de démarrage n\'a pas pu être ouvert', error);
       } finally {
         openSettings();
       }
+    },
+    onDismiss: () => {
+      if (markComplete) markCurrentOnboardingSeen();
     }
   });
   document.body.classList.add('onboarding-open');
@@ -215,11 +235,10 @@ export function showFirstRunOnboarding({ markComplete = true } = {}) {
 }
 
 export function initFirstRunOnboarding({ isFirstRun = false } = {}) {
-  if (isFirstRun) writeLocalFlag(ONBOARDING_PENDING_KEY, true);
-
-  const shouldShow = !readLocalFlag(ONBOARDING_COMPLETED_KEY)
-    && (isFirstRun || readLocalFlag(ONBOARDING_PENDING_KEY));
-  if (shouldShow) showFirstRunOnboarding();
+  // `isFirstRun` is kept in the signature for backward compatibility. The
+  // revision check deliberately applies to fresh and pre-existing installs.
+  void isFirstRun;
+  if (shouldShowCurrentOnboarding()) showFirstRunOnboarding();
 
   document.getElementById('btn-replay-onboarding')?.addEventListener('click', () => {
     openQuickStartDock().catch(error => {

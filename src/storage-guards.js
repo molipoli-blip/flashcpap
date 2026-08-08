@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2026 molipoli-blip
 
+import { assertSafePropertyKey } from './domain/config-security.js';
+
 function isPlainObject(value) {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
@@ -23,7 +25,7 @@ export function ensureSettingsArray(root, key, fallback = []) {
 
 export function ensureProviderEntry(root, mapKey, providerKey, fallback = {}) {
   const map = ensureSettingsObject(root, mapKey, {});
-  const safeProviderKey = String(providerKey || '');
+  const safeProviderKey = assertSafePropertyKey(providerKey, 'Identifiant prestataire');
 
   if (Array.isArray(fallback)) {
     if (!Array.isArray(map[safeProviderKey])) map[safeProviderKey] = cloneFallback(fallback);

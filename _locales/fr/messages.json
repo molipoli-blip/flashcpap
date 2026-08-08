@@ -572,6 +572,9 @@
   "fieldSiteRootAlreadyPresent": {
     "message": "Cette racine est déjà enregistrée."
   },
+  "fieldUrlConflict": {
+    "message": "L’URL \"$1\" est déjà utilisée par le prestataire \"$2\". Modifiez ou supprimez cette URL chez ce prestataire avant de l’ajouter ici."
+  },
   "fieldSiteRootAddedGranted": {
     "message": "Racine ajoutée et autorisée: $1"
   },

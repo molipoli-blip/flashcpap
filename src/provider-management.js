@@ -6,7 +6,7 @@ import { syncProviderSelects } from './provider-sync.js';
 import { refreshCheckboxUIs } from './checkbox-refresh.js';
 import { logDebug, logError, logFlow } from './debug-logger.js';
 import { publishTemplate } from '../lib/share.js';
-import { ensureProviderConfig, getAvailableProviderLabels, getFirstAvailableProviderLabel as getFirstAvailableProviderLabelFromRules, getProviderConfig, hasValidProvider, toProviderKey, toProviderLabel } from './domain/provider-rules.js';
+import { ensureProviderConfig, findProviderUrlConflict, getAvailableProviderLabels, getFirstAvailableProviderLabel as getFirstAvailableProviderLabelFromRules, getProviderConfig, hasValidProvider, toProviderKey, toProviderLabel } from './domain/provider-rules.js';
 import { t } from './i18n.js';
 import { markProviderAsShared } from './copy-engagement.js';
 import { ensureProviderEntry, ensureSettingsArray, ensureSettingsObject } from './storage-guards.js';
@@ -242,6 +242,10 @@ function normalizeProviderImportPayload(jsonData) {
 function applyImportedProviderPayload(siteLabel, normalizedPayload) {
   const key = assertSafePropertyKey(toProviderKey(siteLabel), 'Identifiant prestataire');
   const targetLabel = toProviderLabel(siteLabel);
+  const urlConflict = findProviderUrlConflict(settings, siteLabel, normalizedPayload.patterns?.urls || []);
+  if (urlConflict) {
+    throw new Error(t('fieldUrlConflict', [urlConflict.url, urlConflict.providerLabel]));
+  }
 
   settings.patterns[key] = normalizedPayload.patterns || {};
 

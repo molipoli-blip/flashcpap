@@ -6,7 +6,7 @@ import { confirmInline, showToast, alertInline } from './ui-utils.js';
 import { getCheckboxProviderContext } from './checkbox-orchestrator.js';
 import { refreshCheckboxUIs } from './checkbox-refresh.js';
 import { addCurrentSiteRootToProviderConfig } from './platform/site-root.js';
-import { ensureProviderConfig, getProviderConfig, hasValidProvider, toProviderKey } from './domain/provider-rules.js';
+import { ensureProviderConfig, findProviderUrlConflict, getProviderConfig, hasValidProvider, toProviderKey } from './domain/provider-rules.js';
 import { createNewFieldDraft, removeFieldFromConfig, saveInlineFieldChanges } from './field-config-service.js';
 import { bindFieldCardInteractions } from './field-card-interactions.js';
 import { createFieldGroupView } from './field-card-view.js';
@@ -32,7 +32,7 @@ export function renderSettingsUI(siteLabel, expandedFieldKey = null) {
     return;
   }
   const cfg = getProviderConfig(settings, siteLabel);
-  container.appendChild(createUrlsFieldGroup(cfg));
+  container.appendChild(createUrlsFieldGroup(cfg, siteLabel));
   container.appendChild(createPdfKeywordsFieldGroup(cfg));
 
   if (hasValidProvider(settings, siteLabel)) {
@@ -87,7 +87,11 @@ function createLockedProviderMessage() {
   return lockMessage;
 }
 
-function createUrlsFieldGroup(cfg) {
+function createUrlConflictMessage(conflict) {
+  return t('fieldUrlConflict', [conflict.url, conflict.providerLabel]);
+}
+
+function createUrlsFieldGroup(cfg, siteLabel) {
   const group = document.createElement('div');
   group.className = 'field-group';
 
@@ -102,17 +106,25 @@ function createUrlsFieldGroup(cfg) {
   textarea.rows = 3;
   textarea.value = (cfg.urls || []).join('\n');
   textarea.onblur = () => {
-    cfg.urls = textarea.value.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+    const nextUrls = textarea.value.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+    const conflict = findProviderUrlConflict(settings, siteLabel, nextUrls);
+    if (conflict) {
+      textarea.value = (cfg.urls || []).join('\n');
+      showToast(createUrlConflictMessage(conflict), 'error', 5000);
+      return;
+    }
+
+    cfg.urls = nextUrls;
     saveSettings();
   };
 
-  const button = createAddSiteRootButton(cfg, textarea);
+  const button = createAddSiteRootButton(cfg, textarea, siteLabel);
   labelRow.append(label, button);
   group.append(labelRow, textarea);
   return group;
 }
 
-function createAddSiteRootButton(cfg, textarea) {
+function createAddSiteRootButton(cfg, textarea, siteLabel) {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = t('fieldAddSiteRoot');
@@ -143,7 +155,16 @@ function createAddSiteRootButton(cfg, textarea) {
     button.style.opacity = '0.8';
     button.style.cursor = 'wait';
     try {
-      const { pattern, alreadyPresent, permissionGranted } = await addCurrentSiteRootToProviderConfig(cfg);
+      const { pattern, alreadyPresent, permissionGranted } = await addCurrentSiteRootToProviderConfig(cfg, {
+        validatePattern(candidatePattern) {
+          const conflict = findProviderUrlConflict(settings, siteLabel, [candidatePattern]);
+          if (!conflict) return;
+
+          const error = new Error(createUrlConflictMessage(conflict));
+          error.code = 'PROVIDER_URL_CONFLICT';
+          throw error;
+        }
+      });
       if (alreadyPresent) {
         showToast(t('fieldSiteRootAlreadyPresent'), 'info');
         return;
@@ -158,7 +179,11 @@ function createAddSiteRootButton(cfg, textarea) {
         showToast(t('fieldSiteRootAddedDenied'), 'warning', 3200);
       }
     } catch (err) {
-      await alertInline(err?.message || t('fieldSiteRootAddError'), 'warning');
+      if (err?.code === 'PROVIDER_URL_CONFLICT') {
+        showToast(err.message, 'error', 5000);
+      } else {
+        await alertInline(err?.message || t('fieldSiteRootAddError'), 'warning');
+      }
     } finally {
       button.disabled = false;
       button.textContent = initialLabel;

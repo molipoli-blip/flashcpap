@@ -58,6 +58,19 @@ function matchesPattern(urlObj, rawPattern) {
   return !!patternHost && host.includes(patternHost);
 }
 
+function normalizeUrlPattern(rawPattern) {
+  return String(rawPattern || '').trim().toLowerCase();
+}
+
+function getPatternSpecificity(rawPattern) {
+  const normalized = normalizeUrlPattern(rawPattern);
+  if (!normalized || isGlobalUrlPattern(normalized)) return 0;
+
+  const literalLength = normalized.replace(/\*/g, '').length;
+  const wildcardCount = (normalized.match(/\*/g) || []).length;
+  return Math.max(1, (literalLength * 100) - wildcardCount);
+}
+
 export function normalizeProviderLabel(providerLabel) {
   return typeof providerLabel === 'string' ? providerLabel.trim() : '';
 }
@@ -117,6 +130,36 @@ export function ensureProviderConfig(source, providerLabel, defaults = {}) {
   return patterns[key];
 }
 
+export function findProviderUrlConflict(source, providerLabel, candidateUrls) {
+  const currentProviderKey = toProviderKey(providerLabel);
+  const patterns = getPatterns(source);
+  const candidates = new Map();
+
+  for (const rawUrl of candidateUrls || []) {
+    const normalizedUrl = normalizeUrlPattern(rawUrl);
+    if (normalizedUrl && !candidates.has(normalizedUrl)) {
+      candidates.set(normalizedUrl, String(rawUrl).trim());
+    }
+  }
+
+  for (const [providerKey, config] of Object.entries(patterns || {})) {
+    if (toProviderKey(providerKey) === currentProviderKey) continue;
+
+    for (const existingUrl of config?.urls || []) {
+      const normalizedUrl = normalizeUrlPattern(existingUrl);
+      if (!candidates.has(normalizedUrl)) continue;
+
+      return {
+        url: candidates.get(normalizedUrl),
+        providerKey: toProviderKey(providerKey),
+        providerLabel: toProviderLabel(providerKey)
+      };
+    }
+  }
+
+  return null;
+}
+
 export function resolveProviderLabel(providerLabel, source, { fallbackToFirstAvailable = true } = {}) {
   const normalized = normalizeProviderLabel(providerLabel);
   if (hasValidProvider(source, normalized)) return toProviderLabel(normalized);
@@ -147,34 +190,44 @@ export function pickProviderLabel(candidates, source, { fallbackToFirstAvailable
 export function detectProviderFromUrl(url, source) {
   console.log('🔍 [Detection] URL:', url);
   let detected = null;
-  const globalCandidates = [];
 
   try {
     const urlObj = new URL(url);
     const patterns = getPatterns(source);
+    const candidates = [];
 
     for (const site of Object.keys(patterns || {})) {
+      let bestMatch = null;
+
       for (const raw of patterns[site].urls || []) {
         if (!matchesPattern(urlObj, raw)) continue;
 
-        if (isGlobalUrlPattern(raw)) {
-          globalCandidates.push(toProviderLabel(site));
-          continue;
+        const specificity = getPatternSpecificity(raw);
+        if (!bestMatch || specificity > bestMatch.specificity) {
+          bestMatch = { pattern: raw, specificity };
         }
-
-        detected = toProviderLabel(site);
-        break;
       }
 
-      if (detected) break;
+      if (bestMatch) {
+        candidates.push({
+          providerLabel: toProviderLabel(site),
+          ...bestMatch
+        });
+      }
     }
 
-    if (!detected && globalCandidates.length === 1) {
-      detected = globalCandidates[0];
-    }
+    const highestSpecificity = Math.max(-1, ...candidates.map(candidate => candidate.specificity));
+    const bestCandidates = candidates.filter(candidate => candidate.specificity === highestSpecificity);
 
-    if (!detected && globalCandidates.length > 1) {
-      console.warn('[Detection] Plusieurs prestataires avec <all_urls>, detection auto ignoree');
+    if (bestCandidates.length === 1) {
+      detected = bestCandidates[0].providerLabel;
+    } else if (bestCandidates.length > 1) {
+      console.warn('[Detection] Plusieurs prestataires avec des URLs aussi specifiques, detection auto ignoree', {
+        candidates: bestCandidates.map(candidate => ({
+          provider: candidate.providerLabel,
+          pattern: candidate.pattern
+        }))
+      });
     }
   } catch (error) {
     console.error('Detection error', error);

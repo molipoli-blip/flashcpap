@@ -593,6 +593,9 @@
   "fieldSiteRootAlreadyPresent": {
     "message": "This root is already saved."
   },
+  "fieldUrlConflict": {
+    "message": "The URL \"$1\" is already used by provider \"$2\". Change or remove that URL from the other provider before adding it here."
+  },
   "fieldSiteRootAddedGranted": {
     "message": "Root added and authorized: $1"
   },

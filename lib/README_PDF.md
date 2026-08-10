@@ -5,13 +5,23 @@ Pour que l'extraction PDF fonctionne, vous devez télécharger pdf.js (biblioth�
 ## Étapes :
 
 1. **Télécharger PDF.js** depuis le paquet officiel Mozilla ou GitHub :
+
+   ⚠️ Utiliser impérativement les builds **legacy** (qui contiennent le polyfill
+   `Uint8Array.prototype.toHex` requis sous Chrome < 130 et Firefox ESR).
+
    - Option 1 (npm) : `npm pack pdfjs-dist@6.1.200`
-     - Copier `package/build/pdf.mjs`
-     - Copier `package/build/pdf.worker.mjs`
+     - Copier `package/legacy/build/pdf.mjs`
+     - Copier `package/legacy/build/pdf.worker.mjs`
 
    - Option 2 (GitHub) : https://github.com/mozilla/pdf.js/releases/latest
      - Télécharger `pdfjs-*-dist.zip`
-     - Extraire `build/pdf.mjs` et `build/pdf.worker.mjs`
+     - Extraire `legacy/build/pdf.mjs` et `legacy/build/pdf.worker.mjs`
+
+   - Option 3 (unpkg CDN) :
+     ```
+     https://unpkg.com/pdfjs-dist@6.1.200/legacy/build/pdf.mjs
+     https://unpkg.com/pdfjs-dist@6.1.200/legacy/build/pdf.worker.mjs
+     ```
 
 2. **Placer les fichiers** dans le dossier `lib/` de l'extension :
    ```

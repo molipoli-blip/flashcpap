@@ -74,14 +74,17 @@ function buildLabelDefinition({ lblText, lblStart, lblEnd, lblExclude, lblPriori
     range: { start: lblStart, end: lblEnd },
     excludeKeywords: lblExclude,
     priorityKeywords: lblPriority,
-    labelExcludeKeywords: lblLabelExclude
+    labelExcludeKeywords: lblLabelExclude,
+    requireNextLine: true,
+    nextLineRange: [1, 1]
   }];
 }
-
 export function applyFieldEditorValues(definition, values) {
   definition.label = values.label;
   definition.type = values.type;
   definition.unit = values.type === 'numeric' ? values.unit : '';
+
+  if (values.type !== 'time') delete definition.timeFormat;
 
   if (values.role) definition.role = values.role;
   else delete definition.role;

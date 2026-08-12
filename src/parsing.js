@@ -79,10 +79,23 @@ function getLabelExtractionMode(labelDefs = []) {
   }
 
   return {
-    mode: firstLabel.requireNextLine ? 'nextline' : (firstLabel.requireInline ? 'inline' : 'auto'),
+    mode: firstLabel.requireInline ? 'inline' : 'nextline',
     labelText: String(firstLabel.text || ''),
-    nextLineRange: Array.isArray(firstLabel.nextLineRange) ? firstLabel.nextLineRange : null,
+    nextLineRange: firstLabel.requireInline
+      ? null
+      : (Array.isArray(firstLabel.nextLineRange) ? firstLabel.nextLineRange : [1, 1]),
     hasSplitSeparators: Array.isArray(firstLabel.splitSeparators) && firstLabel.splitSeparators.length > 0
+  };
+}
+
+function getNextLineOffsets(nextLineRange) {
+  const start = Number.parseInt(nextLineRange?.[0], 10);
+  const end = Number.parseInt(nextLineRange?.[1], 10);
+  const startOffset = Number.isInteger(start) ? Math.min(20, Math.max(1, start)) : 1;
+  const requestedEnd = Number.isInteger(end) ? Math.min(20, Math.max(1, end)) : 1;
+  return {
+    startOffset,
+    endOffset: Math.max(startOffset, requestedEnd)
   };
 }
 
@@ -282,11 +295,11 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
   }
 
   const L = processedText.split(/\r?\n/);
-  for (let { text: lbl, range, labelExcludeKeywords, requireInline, requireNextLine, nextLineRange } of effectiveLabelDefs) {
+  for (let { text: lbl, range, labelExcludeKeywords, requireInline, nextLineRange } of effectiveLabelDefs) {
     logDebug('PARSE', 'Analyse label numeric', {
       labelLength: String(lbl).length,
       requireInline: !!requireInline,
-      requireNextLine: !!requireNextLine
+      nextLineRange: requireInline ? null : getNextLineOffsets(nextLineRange)
     });
     const start = range?.start ?? 1;
     const end = range?.end ?? L.length;
@@ -314,11 +327,10 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
       const m = line.match(inline);
       logDebug('PARSE', 'Verification inline numeric', { line: i + 1, matched: !!m });
 
-      // requireNextLine ignores inline values and scans following lines.
-      if (requireNextLine) {
-        // Use the configured following-line range when provided.
-        const startOffset = nextLineRange?.[0] || 1;
-        const endOffset = nextLineRange?.[1] || 3;
+      // Inline is explicit. Every other configuration uses following lines;
+      // legacy labels without a mode default to exactly line +1.
+      if (!requireInline) {
+        const { startOffset, endOffset } = getNextLineOffsets(nextLineRange);
 
         for (let j = startOffset; j <= endOffset; j++) {
           const nxt = (L[i + j] || '').trim();
@@ -342,51 +354,9 @@ export function extractSmartMeta(text, labelDefs, fieldUnit = '') {
         return { value: '?', match: null };
       }
 
-      // requireInline only accepts values on the label line.
-      if (requireInline) {
-        if (m) {
-          const raw = m[1];
-          return { value: raw.replace(',', '.'), match: { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
-        }
-        return { value: '?', match: null };
-      }
-
-      // Auto mode tries inline first, then following lines.
       if (m) {
         const raw = m[1];
         return { value: raw.replace(',', '.'), match: { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
-      }
-
-      logParsingStrategy('Mode auto numeric: recherche sur lignes suivantes', {
-        labelText: lbl,
-        labelLength: String(lbl).length,
-        labelLine: i + 1,
-        providerLineWindow: 3
-      });
-      for (let j = 1; j <= 3; j++) {
-        const nxt = (L[i + j] || '').trim();
-        logDebug('PARSE', 'Inspection ligne suivante numeric', { line: i + j + 1, lineLength: nxt.length });
-
-        // Ignore lines that only contain a split marker.
-        if (nxt === '✂' || nxt === '|') {
-            logDebug('PARSE', 'Separateur ignore dans fallback numeric', { line: i + j + 1 });
-            continue;
-        }
-
-        const m2 = fieldUnit
-          ? nxt.match(new RegExp(`${numPattern}\\s*(?:${esc(fieldUnit)})?`, 'i'))
-          : nxt.match(new RegExp(numPattern, 'i'));
-
-        if (m2) {
-          logParsingStrategy('Mode auto numeric: valeur trouvee sur ligne suivante', {
-            labelText: lbl,
-            labelLine: i + 1,
-            valueLine: i + j + 1,
-            fieldUnit: fieldUnit || ''
-          });
-          const raw = m2[1];
-          return { value: raw.replace(',', '.'), match: { line: i + j + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
-        }
       }
     }
   }
@@ -413,7 +383,7 @@ export function extractTextMeta(text, labelDefs) {
   }
 
   const L = processedText.split(/\r?\n/);
-  for (let { text: lbl, range, excludeKeywords, priorityKeywords, labelExcludeKeywords, requireInline, requireNextLine, nextLineRange } of effectiveLabelDefs) {
+  for (let { text: lbl, range, excludeKeywords, priorityKeywords, labelExcludeKeywords, requireInline, nextLineRange } of effectiveLabelDefs) {
     const start = range?.start ?? 1;
     const end = range?.end ?? L.length;
     for (let i = start - 1; i < Math.min(end, L.length); i++) {
@@ -434,13 +404,12 @@ export function extractTextMeta(text, labelDefs) {
 
       const m = line.match(inline);
 
-      // requireNextLine ignores inline values and scans following lines.
-      if (requireNextLine) {
+      // Inline is explicit. Every other configuration uses following lines;
+      // legacy labels without a mode default to exactly line +1.
+      if (!requireInline) {
         const candidates = [];
 
-        // Use the configured following-line range when provided.
-        const startOffset = nextLineRange?.[0] || 1;
-        const endOffset = nextLineRange?.[1] || 5;
+        const { startOffset, endOffset } = getNextLineOffsets(nextLineRange);
 
         for (let j = startOffset; j <= endOffset; j++) {
           const nxt = (L[i + j] || '').trim().replace(/\s*✂\s*/g, '').trim();
@@ -458,69 +427,14 @@ export function extractTextMeta(text, labelDefs) {
           for (const c of candidates) if (priorityPattern?.test(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
         }
         for (const c of candidates) {
-          if (c.raw.length > 3 && !/^(de|du|le|la|les|un|une|des)$/i.test(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
+          if (c.raw.length >= 1 && !/^(de|du|le|la|les|un|une|des)$/i.test(c.raw)) return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
         }
         return { value: '?', match: null };
       }
 
-      // requireInline only accepts values on the label line.
-      if (requireInline) {
-        if (m) {
-          const raw = m[1].replace(/\s*✂\s*/g, '').trim();
-          return { value: raw || '?', match: raw ? { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } : null };
-        }
-        return { value: '?', match: null };
-      }
-
-      // Auto mode tries inline first, then following lines.
       if (m) {
         const raw = m[1].replace(/\s*✂\s*/g, '').trim();
-        if (raw.length > 0) {
-          return { value: raw, match: { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
-        }
-      }
-
-      logParsingStrategy('Mode auto texte: recherche sur lignes suivantes', {
-        labelText: lbl,
-        labelLength: String(lbl).length,
-        labelLine: i + 1,
-        providerLineWindow: 5
-      });
-      const candidates = [];
-      for (let j = 1; j <= 5; j++) {
-        const nxt = (L[i + j] || '').trim().replace(/\s*✂\s*/g, '').trim();
-        if (!nxt) continue;
-        if (/\d{2}\/\d{2}\/\d{4}|depuis le|du \d/.test(nxt)) continue;
-        if (excludeKeywords && excludeKeywords.length > 0) {
-          const excludePattern = buildLiteralKeywordRegex(excludeKeywords);
-          if (excludePattern?.test(nxt)) continue;
-        }
-        candidates.push({ line: i + j + 1, raw: nxt });
-      }
-      if (priorityKeywords && priorityKeywords.length > 0) {
-        const priorityPattern = buildLiteralKeywordRegex(priorityKeywords);
-        for (const c of candidates) {
-          if (priorityPattern?.test(c.raw)) {
-            logParsingStrategy('Mode auto texte: candidat prioritaire trouve sur ligne suivante', {
-              labelText: lbl,
-              labelLine: i + 1,
-              valueLine: c.line,
-              candidateLength: c.raw.length
-            });
-            return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
-          }
-        }
-      }
-      for (const c of candidates) {
-        if (c.raw.length > 3 && !/^(de|du|le|la|les|un|une|des)$/i.test(c.raw)) {
-          logParsingStrategy('Mode auto texte: valeur trouvee sur ligne suivante', {
-            labelText: lbl,
-            labelLine: i + 1,
-            valueLine: c.line,
-            candidateLength: c.raw.length
-          });
-          return { value: c.raw, match: { line: c.line, raw: c.raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } };
-        }
+        return { value: raw || '?', match: raw ? { line: i + 1, raw, labelText: lbl, labelLine: i + 1, labelRange: { start, end } } : null };
       }
     }
   }
@@ -571,7 +485,14 @@ export function parseTextMeta(text, prest, settings) {
       if (!match) {
         logParsingStrategy('Aucune valeur trouvee pour champ', { field: f, mode: strategy.mode, type: 'time' });
       }
-    } else if (def.type === 'tuple' || role === 'obs' || fname === 'obs' || (def.type === 'numeric' && (def.tupleExtraction?.size || 0) >= 2)) {
+    } else if (
+      def.type === 'tuple'
+      || (def.type === 'numeric' && (
+        role === 'obs'
+        || fname === 'obs'
+        || (def.tupleExtraction?.size || 0) >= 2
+      ))
+    ) {
       logDebug('PARSE', 'Champ de type tuple', { field: f });
       const tupleExt = def.tupleExtraction || {};
       const { value, match, tupleMeta } = extractTupleMeta(text, def.labels, { mask: tupleExt.mask || def.mask, connectors: tupleExt.connectors, size: tupleExt.size });
@@ -778,7 +699,7 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
 
     return raw.slice(start, end).trim();
   };
-  for (let { text: lbl, range, labelExcludeKeywords, requireNextLine, requireInline, nextLineRange } of effectiveLabelDefs) {
+  for (let { text: lbl, range, labelExcludeKeywords, requireInline, nextLineRange } of effectiveLabelDefs) {
     const start = range?.start ?? 1;
     const end = range?.end ?? L.length;
     for (let i = start - 1; i < Math.min(end, L.length); i++) {
@@ -818,23 +739,14 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
         }
       };
 
-      if (!requireNextLine) {
+      if (requireInline) {
         const lblMatch = labelBoundaryPattern(lbl).exec(line);
         const afterLabelIdx = lblMatch ? lblMatch.index + lblMatch[0].length : 0;
         scan(line.slice(afterLabelIdx), i, rawLine.slice(afterLabelIdx));
       }
 
-      if (!requireInline && (requireNextLine || collected.length < 2)) {
-        const startOffset = requireNextLine ? (nextLineRange?.[0] || 1) : 1;
-        const endOffset = requireNextLine ? (nextLineRange?.[1] || 3) : 3;
-        if (!requireNextLine) {
-          logParsingStrategy('Mode auto tuple: recherche sur lignes suivantes', {
-            labelText: lbl,
-            labelLine: i + 1,
-            collectedCount: collected.length,
-            providerLineWindow: endOffset
-          });
-        }
+      if (!requireInline) {
+        const { startOffset, endOffset } = getNextLineOffsets(nextLineRange);
         for (let j = startOffset; j <= endOffset && collected.length < maxCollected; j++) {
           const rawNxt = (L[i + j] || '').trim();
           // Ignore lines that only contain a split marker.
@@ -852,17 +764,12 @@ function extractTupleMeta(text, labelDefs, { mask, connectors, size } = {}) {
         // Highlight the first value line, falling back to the label line.
         const matchLine = (firstValueLine !== -1) ? firstValueLine + 1 : i + 1;
         if (firstValueLine !== -1 && firstValueLine + 1 !== i + 1) {
-          logParsingStrategy(
-            requireNextLine
-              ? 'Mode nextline tuple: valeur trouvee sur ligne suivante'
-              : 'Mode auto tuple: valeur trouvee sur ligne suivante',
-            {
+          logParsingStrategy('Mode nextline tuple: valeur trouvee sur ligne suivante', {
               labelText: lbl,
               labelLine: i + 1,
               valueLine: firstValueLine + 1,
               valueLength: value.length
-            }
-          );
+            });
         }
         return {
           value,

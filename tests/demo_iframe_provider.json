@@ -28,7 +28,9 @@
             "excludeKeywords": [],
             "priorityKeywords": [],
             "labelExcludeKeywords": [],
-            "splitSeparators": []
+            "splitSeparators": [],
+            "requireNextLine": true,
+            "nextLineRange": [1, 1]
           }
         ]
       },
@@ -44,7 +46,9 @@
             "excludeKeywords": [],
             "priorityKeywords": [],
             "labelExcludeKeywords": [],
-            "splitSeparators": []
+            "splitSeparators": [],
+            "requireNextLine": true,
+            "nextLineRange": [1, 1]
           }
         ]
       },
@@ -59,7 +63,9 @@
             "excludeKeywords": [],
             "priorityKeywords": [],
             "labelExcludeKeywords": [],
-            "splitSeparators": []
+            "splitSeparators": [],
+            "requireNextLine": true,
+            "nextLineRange": [1, 1]
           }
         ]
       },
@@ -75,7 +81,9 @@
             "excludeKeywords": [],
             "priorityKeywords": [],
             "labelExcludeKeywords": [],
-            "splitSeparators": []
+            "splitSeparators": [],
+            "requireNextLine": true,
+            "nextLineRange": [1, 1]
           }
         ]
       }

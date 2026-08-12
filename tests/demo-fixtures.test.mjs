@@ -68,23 +68,26 @@ function visibleTextFromHtml(html) {
     .trim();
 }
 
-function label(text) {
+function label(text, { mode = 'nextline', nextLineRange = [1, 1] } = {}) {
   return {
     text,
     range: { start: 1, end: 999 },
     excludeKeywords: [],
     priorityKeywords: [],
     labelExcludeKeywords: [],
-    splitSeparators: []
+    splitSeparators: [],
+    ...(mode === 'inline'
+      ? { requireInline: true }
+      : { requireNextLine: true, nextLineRange })
   };
 }
 
-function numericField(text, unit = '') {
-  return { type: 'numeric', label: text, unit, labels: [label(text)] };
+function numericField(text, unit = '', extraction = {}) {
+  return { type: 'numeric', label: text, unit, labels: [label(text, extraction)] };
 }
 
-function textField(text) {
-  return { type: 'text', label: text, labels: [label(text)] };
+function textField(text, extraction = {}) {
+  return { type: 'text', label: text, labels: [label(text, extraction)] };
 }
 
 function parseQuietly(text, provider, fixtureSettings) {
@@ -115,7 +118,7 @@ const htmlFixtures = [
     fields: {
       mode: textField('Mode de Traitement'),
       pressure: numericField('Pression Prescrite'),
-      iah: numericField('IAH'),
+      iah: numericField('IAH', '', { nextLineRange: [2, 2] }),
       leaks: numericField('Fuites non intentionnelles (95%)')
     },
     expected: { mode: 'PPC Fixe', pressure: '8.5', iah: '8.5', leaks: '2.0' }
@@ -207,9 +210,9 @@ test('PDF demo is extracted, detected and parsed by the extension pipeline', asy
   const text = await extractTextFromPDF(arrayBuffer);
   const provider = 'demo_pdf';
   const fields = {
-    averageAhi: numericField('Average AHI'),
-    pressure: numericField('CPAP Pressure'),
-    usagePercent: numericField('Percent Days with Device Usage')
+    averageAhi: numericField('Average AHI', '', { mode: 'inline' }),
+    pressure: numericField('CPAP Pressure', '', { mode: 'inline' }),
+    usagePercent: numericField('Percent Days with Device Usage', '', { mode: 'inline' })
   };
   const fixtureSettings = {
     patterns: {

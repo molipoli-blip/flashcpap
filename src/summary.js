@@ -7,14 +7,19 @@ import { normalizePhraseGroupId } from './shared/id.js';
 function toHoursNumber(v) {
   if (v == null) return NaN;
   const s = String(v).trim().toLowerCase().replace(',', '.');
-  const m = s.match(/^(?:(\d+(?:\.\d+)?)\s*h)?\s*(?:(\d+)\s*m)?$/i);
-  if (m) {
-    const h = m[1] ? parseFloat(m[1]) : 0;
-    const min = m[2] ? parseFloat(m[2]) : 0;
-    return (isNaN(h) && isNaN(min)) ? NaN : (h + min / 60);
+  if (!s) return NaN;
+
+  const duration = s.match(/^(?:(\d+(?:\.\d+)?)\s*(?:h|heures?))?\s*(?:(\d+(?:\.\d+)?)\s*(?:m|mn|min(?:ute)?s?))?$/i);
+  if (duration) {
+    const hours = duration[1] ? Number(duration[1]) : 0;
+    const minutes = duration[2] ? Number(duration[2]) : 0;
+    return hours + (minutes / 60);
   }
-  const n = parseFloat(s);
-  return isNaN(n) ? NaN : n;
+
+  // Decimal observance values are already expressed in hours. Keep this
+  // fallback strict so mixed measurements cannot be partially interpreted.
+  const decimalHours = Number(s);
+  return Number.isFinite(decimalHours) ? decimalHours : NaN;
 }
 
 function parseDecimalNumber(v) {
@@ -99,6 +104,11 @@ function getDerivedTimeUnit(fieldDef) {
 }
 
 function getFieldUnit(value, fieldDef) {
+  // Text extraction preserves the source value verbatim. Imported legacy
+  // configurations can still carry a stale numeric/time unit after their type
+  // was changed to text; do not append that metadata to the raw text.
+  if (fieldDef?.type === 'text') return '';
+
   const unit = fieldDef?.unit ? ` ${fieldDef.unit}` : getDerivedTimeUnit(fieldDef);
   if (!unit || !value) return unit;
 

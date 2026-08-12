@@ -171,12 +171,22 @@ function toFriendlyLabel(key) {
 
 function normalizeLabelDefinition(label) {
   if (typeof label === 'string') {
-    return { text: label, range: { start: 1, end: 999 }, excludeKeywords: [], priorityKeywords: [], labelExcludeKeywords: [] };
+    return { text: label, range: { start: 1, end: 999 }, excludeKeywords: [], priorityKeywords: [], labelExcludeKeywords: [], requireNextLine: true, nextLineRange: [1, 1] };
   }
 
   if (!isObject(label)) {
-    return { text: '', range: { start: 1, end: 999 }, excludeKeywords: [], priorityKeywords: [], labelExcludeKeywords: [], splitSeparators: [] };
+    return { text: '', range: { start: 1, end: 999 }, excludeKeywords: [], priorityKeywords: [], labelExcludeKeywords: [], requireNextLine: true, nextLineRange: [1, 1], splitSeparators: [] };
   }
+
+  const requireInline = label.requireInline === true;
+  const rawStart = Number.parseInt(label.nextLineRange?.[0], 10);
+  const rawEnd = Number.parseInt(label.nextLineRange?.[1], 10);
+  const normalizedStart = Number.isInteger(rawStart) ? Math.min(20, Math.max(1, rawStart)) : 1;
+  const normalizedEnd = Number.isInteger(rawEnd) ? Math.min(20, Math.max(1, rawEnd)) : 1;
+  const nextLineRange = [
+    normalizedStart,
+    Math.max(normalizedStart, normalizedEnd)
+  ];
 
   return {
     text: label.text || '',
@@ -184,8 +194,7 @@ function normalizeLabelDefinition(label) {
     excludeKeywords: label.excludeKeywords || [],
     priorityKeywords: label.priorityKeywords || [],
     labelExcludeKeywords: label.labelExcludeKeywords || [],
-    ...(label.requireInline ? { requireInline: label.requireInline } : {}),
-    ...(label.requireNextLine ? { requireNextLine: label.requireNextLine } : {}),
+    ...(requireInline ? { requireInline: true } : { requireNextLine: true, nextLineRange }),
     splitSeparators: label.splitSeparators || []
   };
 }

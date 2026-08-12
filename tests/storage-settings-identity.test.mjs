@@ -49,7 +49,7 @@ test('loadSettings preserves references captured before a provider import', () =
             type: 'numeric',
             label: 'IAH Moyen',
             unit: '/h',
-            labels: [label('IAH Moyen')]
+            labels: [{ ...label('IAH Moyen'), requireNextLine: true, nextLineRange: [1, 2] }]
           }
         },
         fieldOrder: ['iah']
@@ -66,6 +66,10 @@ test('loadSettings preserves references captured before a provider import', () =
   }
 
   assert.strictEqual(storageModule.settings, capturedSettings);
+  assert.deepEqual(
+    capturedSettings.patterns.demo_iframe.fields.iah.labels[0].nextLineRange,
+    [1, 2]
+  );
   assert.equal(
     detectProviderFromUrl('http://127.0.0.1:8765/demo_iframe.html', capturedSettings),
     'Demo_iframe'

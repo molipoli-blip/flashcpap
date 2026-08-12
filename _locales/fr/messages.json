@@ -863,15 +863,6 @@
   "fieldEditorExtractionModeTitle": {
     "message": "⚙️ Mode d'extraction"
   },
-  "fieldEditorExtractionAutoTitle": {
-    "message": "🤖 Automatique (par défaut)"
-  },
-  "fieldEditorExtractionAutoDesc": {
-    "message": "Cherche d'abord sur la ligne du label, puis sur les lignes suivantes si vide."
-  },
-  "fieldEditorExtractionAutoExample": {
-    "message": "Exemple: \"Mode: APAP\" → \"APAP\" | \"Mode:\nAPAP\" → \"APAP\""
-  },
   "fieldEditorExtractionInlineTitle": {
     "message": "🔒 Ligne du label uniquement"
   },
@@ -894,7 +885,7 @@
     "message": "📏 Plage de recherche dans les lignes suivantes"
   },
   "fieldEditorNextRangeHelpHtml": {
-    "message": "<strong>Auto</strong> : cherche d'abord inline, puis dans cette plage si vide.<strong>Lignes suivantes</strong> : cherche directement dans cette plage."
+    "message": "Le mode <strong>Lignes suivantes</strong> cherche uniquement dans la plage enregistrée ci-dessous."
   },
   "fieldEditorNextRangeFrom": {
     "message": "De +"
@@ -909,7 +900,7 @@
     "message": "Ex: 1 à 1 = juste la ligne suivante · Ex: 1 à 5 = cherche dans les 5 lignes suivantes"
   },
   "fieldEditorModeUsageHtml": {
-    "message": "<strong>💡 Quand utiliser quel mode :</strong><br>• <strong>Automatique</strong> : Format variable (parfois inline, parfois sur ligne suivante)<br>• <strong>Ligne du label uniquement</strong> : Valeur TOUJOURS sur la même ligne (ex: Mode, Type appareil)<br>• <strong>Lignes suivantes uniquement</strong> : Valeur TOUJOURS sur ligne suivante (ex: certains formats de rapports)"
+    "message": "<strong>💡 Choisissez la position réelle :</strong><br>• <strong>Ligne du label uniquement</strong> : valeur sur la même ligne (ex: Mode, Type appareil)<br>• <strong>Lignes suivantes uniquement</strong> : valeur après le label, avec une plage par défaut de +1 à +1"
   },
   "fieldEditorRoleLabel": {
     "message": "Rôle (pour l'interprétation)"

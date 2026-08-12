@@ -25,7 +25,8 @@ test('configured keywords are treated as literals instead of executable regex pa
 
   const result = extractTextMeta(`Valeur ${'a'.repeat(20_000)}!`, [{
     text: 'Valeur',
-    labelExcludeKeywords: [maliciousPattern]
+    labelExcludeKeywords: [maliciousPattern],
+    requireInline: true
   }]);
   assert.notEqual(result.value, '?');
 });
@@ -53,6 +54,25 @@ test('provider import validation rejects unsafe field identifiers', () => {
     fields: prototypeFields,
     fieldOrder: ['__proto__']
   }), /Identifiant de champ non autorisé/);
+});
+
+test('provider import validation rejects invalid following-line ranges', () => {
+  const patterns = {
+    urls: [],
+    fields: {
+      value: {
+        type: 'text',
+        labels: [{
+          text: 'Valeur',
+          requireNextLine: true,
+          nextLineRange: [10, 1]
+        }]
+      }
+    },
+    fieldOrder: ['value']
+  };
+
+  assert.throws(() => validateProviderPatterns(patterns), /Plage de lignes suivantes invalide/);
 });
 
 test('inline field markup refuses an unsafe field key before using innerHTML', async () => {

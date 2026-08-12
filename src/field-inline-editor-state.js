@@ -164,18 +164,20 @@ export function readInlineEditorFormState(contentWrap, fieldKey) {
     const priorityKeywords = (card.querySelector('.label-subcard-priority')?.value || '').trim();
     const splitSepsStr = (card.querySelector('.label-subcard-split-seps')?.value || '').trim();
     const splitSeparators = splitSepsStr ? splitSepsStr.split(',').map((v) => v.trim()).filter(Boolean) : [];
-    const extractionMode = card.querySelector(`input[name="extraction-mode-${safeFieldKey}-${idx}"]:checked`)?.value || 'auto';
+    const extractionMode = card.querySelector(`input[name="extraction-mode-${safeFieldKey}-${idx}"]:checked`)?.value || 'nextline';
     const requireInline = extractionMode === 'inline';
     const requireNextLine = extractionMode === 'nextline';
     const nextLineMinEl = card.querySelector(`#add-label-nextline-min-${safeFieldKey}-${idx}`);
     const nextLineMaxEl = card.querySelector(`#add-label-nextline-max-${safeFieldKey}-${idx}`);
-    const nextLineMin = parseInt(nextLineMinEl?.value || '1', 10);
-    const nextLineMax = parseInt(nextLineMaxEl?.value || '3', 10);
-    const nextLineRange = requireNextLine && !isNaN(nextLineMin) && !isNaN(nextLineMax) ? [nextLineMin, nextLineMax] : undefined;
+    const parsedNextLineMin = parseInt(nextLineMinEl?.value || '1', 10);
+    const parsedNextLineMax = parseInt(nextLineMaxEl?.value || '1', 10);
+    const nextLineMin = Number.isInteger(parsedNextLineMin) ? Math.min(20, Math.max(1, parsedNextLineMin)) : 1;
+    const requestedNextLineMax = Number.isInteger(parsedNextLineMax) ? Math.min(20, Math.max(1, parsedNextLineMax)) : 1;
+    const nextLineRange = requireNextLine ? [nextLineMin, Math.max(nextLineMin, requestedNextLineMax)] : undefined;
     return { text, start, end, labelExclude, contentExclude, priorityKeywords, splitSeparators, requireInline, requireNextLine, nextLineRange };
   });
   const labelText = labelsData[0]?.text || '';
-  const extractionMode = labelsData[0] ? (labelsData[0].requireInline ? 'inline' : labelsData[0].requireNextLine ? 'nextline' : 'auto') : 'auto';
+  const extractionMode = labelsData[0]?.requireInline ? 'inline' : 'nextline';
 
   return {
     labelWanted: nameElement?.value || '',
@@ -225,7 +227,7 @@ export function buildInlineLabels(fieldKey, state, { silent = false } = {}) {
 
   if (filtered.length === 0) {
     console.log(`[FIELD-MGMT][WARNING] Champ "${fieldKey}" : aucun mot-clé défini.`);
-    if (!silent && state.extractionMode && state.extractionMode !== 'auto') {
+    if (!silent && state.extractionMode) {
       alertInline(
         `Le mode d'extraction nécessite de définir au moins un "Mot-clé d'ancrage".`,
         'warning'

@@ -67,6 +67,8 @@ function setupInlineLabelCards(contentWrap, fieldKey, cardInit = {}) {
     const timeFormatWrap = card.querySelector(`#add-field-time-format-${fieldKey}-${si}`);
     const timeRawSelect = card.querySelector(`#add-field-time-raw-${fieldKey}-${si}`);
     const timeDisplaySelect = card.querySelector(`#add-field-time-display-${fieldKey}-${si}`);
+    const nextLineRangeWrap = card.querySelector(`#nextline-range-config-${fieldKey}-${si}`);
+    const extractionModeRadios = card.querySelectorAll(`input[name="extraction-mode-${fieldKey}-${si}"]`);
     const updateTitle = () => {
       if (!titleEl) return;
       const kw = keywordInput?.value.trim() || t('fieldEditorEmptyKeyword');
@@ -174,6 +176,13 @@ function setupInlineLabelCards(contentWrap, fieldKey, cardInit = {}) {
         refreshTimeFormatsFromMask();
       });
     }
+
+    const updateExtractionMode = () => {
+      const mode = Array.from(extractionModeRadios).find((radio) => radio.checked)?.value || 'nextline';
+      if (nextLineRangeWrap) nextLineRangeWrap.style.display = mode === 'nextline' ? 'block' : 'none';
+    };
+    extractionModeRadios.forEach((radio) => radio.addEventListener('change', updateExtractionMode));
+    updateExtractionMode();
 
     if (header && body && toggle) {
       header.addEventListener('click', (ev) => {

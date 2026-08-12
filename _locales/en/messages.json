@@ -884,15 +884,6 @@
   "fieldEditorExtractionModeTitle": {
     "message": "⚙️ Extraction mode"
   },
-  "fieldEditorExtractionAutoTitle": {
-    "message": "🤖 Automatic (default)"
-  },
-  "fieldEditorExtractionAutoDesc": {
-    "message": "Looks on the label line first, then on the following lines if empty."
-  },
-  "fieldEditorExtractionAutoExample": {
-    "message": "Example: \"Mode: APAP\" → \"APAP\" | \"Mode:\nAPAP\" → \"APAP\""
-  },
   "fieldEditorExtractionInlineTitle": {
     "message": "🔒 Label line only"
   },
@@ -915,7 +906,7 @@
     "message": "📏 Search range in following lines"
   },
   "fieldEditorNextRangeHelpHtml": {
-    "message": "<strong>Auto</strong>: looks inline first, then in this range if empty.<strong>Following lines</strong>: looks directly in this range."
+    "message": "The <strong>Following lines</strong> mode only searches within the range saved below."
   },
   "fieldEditorNextRangeFrom": {
     "message": "From +"
@@ -930,7 +921,7 @@
     "message": "e.g. 1 to 1 = only the next line · e.g. 1 to 5 = search in the next 5 lines"
   },
   "fieldEditorModeUsageHtml": {
-    "message": "<strong>💡 When to use each mode:</strong><br>• <strong>Automatic</strong>: variable format (sometimes inline, sometimes on the next line)<br>• <strong>Label line only</strong>: value ALWAYS on the same line (e.g. Mode, Device type)<br>• <strong>Following lines only</strong>: value ALWAYS on the next line (e.g. some report formats)"
+    "message": "<strong>💡 Choose the actual position:</strong><br>• <strong>Label line only</strong>: value on the same line (e.g. Mode, Device type)<br>• <strong>Following lines only</strong>: value after the label, with a default range of +1 to +1"
   },
   "fieldEditorRoleLabel": {
     "message": "Role (for interpretation)"

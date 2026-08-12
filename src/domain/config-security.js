@@ -97,6 +97,28 @@ function validateLabelDefinition(label, fieldKey) {
   validateStringArray(label.priorityKeywords, `Mots-clés prioritaires de ${fieldKey}`);
   validateStringArray(label.labelExcludeKeywords, `Mots-clés d’exclusion du libellé ${fieldKey}`);
   validateStringArray(label.splitSeparators, `Séparateurs de ${fieldKey}`);
+  if (label.requireInline !== undefined && typeof label.requireInline !== 'boolean') {
+    throw new Error(`Mode ligne du libellé invalide pour le champ ${fieldKey}`);
+  }
+  if (label.requireNextLine !== undefined && typeof label.requireNextLine !== 'boolean') {
+    throw new Error(`Mode ligne suivante invalide pour le champ ${fieldKey}`);
+  }
+  if (label.requireInline === true && label.requireNextLine === true) {
+    throw new Error(`Modes d’extraction incompatibles pour le champ ${fieldKey}`);
+  }
+  if (label.nextLineRange !== undefined) {
+    const [start, end] = Array.isArray(label.nextLineRange) ? label.nextLineRange : [];
+    if (
+      label.nextLineRange.length !== 2
+      || !Number.isInteger(start)
+      || !Number.isInteger(end)
+      || start < 1
+      || end < start
+      || end > 20
+    ) {
+      throw new Error(`Plage de lignes suivantes invalide pour le champ ${fieldKey}`);
+    }
+  }
 }
 
 export function validateProviderPatterns(patterns) {

@@ -188,14 +188,6 @@ function renderExtractionModeSectionForSubCard(fieldKey, index, lbl) {
                 <div style="font-size:12px; font-weight:bold; color:#444; margin-bottom:8px;">${t('fieldEditorExtractionModeTitle')}</div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                   <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:11px;">
-                    <input type="radio" name="extraction-mode-${fieldKey}-${index}" value="auto" ${lbl?.requireInline === true || lbl?.requireNextLine === true ? '' : 'checked'} style="margin-top:2px;">
-                    <div>
-                      <div style="font-weight:bold; color:#28a745;">${t('fieldEditorExtractionAutoTitle')}</div>
-                      <div style="color:#666; margin-top:2px;">${t('fieldEditorExtractionAutoDesc')}</div>
-                      <div style="color:#888; font-size:10px; margin-top:2px;">${t('fieldEditorExtractionAutoExample')}</div>
-                    </div>
-                  </label>
-                  <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:11px;">
                     <input type="radio" name="extraction-mode-${fieldKey}-${index}" value="inline" ${lbl?.requireInline === true ? 'checked' : ''} style="margin-top:2px;">
                     <div>
                       <div style="font-weight:bold; color:#0066cc;">${t('fieldEditorExtractionInlineTitle')}</div>
@@ -204,7 +196,7 @@ function renderExtractionModeSectionForSubCard(fieldKey, index, lbl) {
                     </div>
                   </label>
                   <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:11px;">
-                    <input type="radio" name="extraction-mode-${fieldKey}-${index}" value="nextline" ${lbl?.requireNextLine === true ? 'checked' : ''} style="margin-top:2px;">
+                    <input type="radio" name="extraction-mode-${fieldKey}-${index}" value="nextline" ${lbl?.requireInline === true ? '' : 'checked'} style="margin-top:2px;">
                     <div>
                       <div style="font-weight:bold; color:#cc6600;">${t('fieldEditorExtractionNextTitle')}</div>
                       <div style="color:#666; margin-top:2px;">${t('fieldEditorExtractionNextDesc')}</div>
@@ -222,7 +214,7 @@ function renderExtractionModeSectionForSubCard(fieldKey, index, lbl) {
                     <span style="font-size:11px;">${t('fieldEditorNextRangeFrom')}</span>
                     <input id="add-label-nextline-min-${fieldKey}-${index}" type="number" min="1" max="20" value="${escapeTemplateValue(lbl?.nextLineRange?.[0] || 1)}" style="width:40px; padding:2px; font-size:11px;">
                     <span style="font-size:11px;">${t('fieldEditorNextRangeTo')}</span>
-                    <input id="add-label-nextline-max-${fieldKey}-${index}" type="number" min="1" max="20" value="${escapeTemplateValue(lbl?.nextLineRange?.[1] || 3)}" style="width:40px; padding:2px; font-size:11px;">
+                    <input id="add-label-nextline-max-${fieldKey}-${index}" type="number" min="1" max="20" value="${escapeTemplateValue(lbl?.nextLineRange?.[1] || 1)}" style="width:40px; padding:2px; font-size:11px;">
                     <span style="font-size:10px; color:#888;">${t('fieldEditorNextRangeUnit')}</span>
                   </div>
                   <div style="font-size:10px; color:#888; margin-top:2px;">

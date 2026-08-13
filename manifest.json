@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "1.4.2",
+  "version": "1.4.4",
   "description": "__MSG_extDescription__",
   "default_locale": "fr",
   "icons": {
@@ -14,7 +14,9 @@
     "default_icon": "icons/favicon_128px.png"
   },
   "background": {
-    "scripts": ["background.js"]
+    "scripts": [
+      "background.js"
+    ]
   },
   "permissions": [
     "scripting",
@@ -36,7 +38,9 @@
     "gecko": {
       "id": "flashcpap@molipoli-blip",
       "data_collection_permissions": {
-        "required": ["none"],
+        "required": [
+          "none"
+        ],
         "optional": []
       }
     }

@@ -8,6 +8,17 @@ import {
   growSummaryPreviewToContent
 } from './summary-preview-resize.js';
 
+export function blockExternalSummaryDrop(event, internalDragActive = false) {
+  if (internalDragActive) return false;
+
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  try {
+    if (event?.dataTransfer) event.dataTransfer.dropEffect = 'none';
+  } catch {}
+  return true;
+}
+
 export function renderSummaryPreview(preview, toggle, textarea, raw, {
   revealCheckboxId = ''
 } = {}) {
@@ -315,6 +326,7 @@ export function renderSummaryPreview(preview, toggle, textarea, raw, {
       function onDrop(e){
         if (!draggingRow) return;
         e.preventDefault();
+        e.stopPropagation();
         const target = e.currentTarget;
         target.classList.remove('drag-over');
         if (target === draggingRow) return;
@@ -431,11 +443,19 @@ export function renderSummaryPreview(preview, toggle, textarea, raw, {
       };
 
       preview.addEventListener('dragover', (e) => {
-        if (!draggingRow || pointerActive) return;
+        if (!draggingRow || pointerActive) {
+          blockExternalSummaryDrop(e);
+          return;
+        }
         e.preventDefault();
       });
       preview.addEventListener('drop', (e) => {
-        if (!draggingRow || pointerActive) return;
+        if (!draggingRow || pointerActive) {
+          if (blockExternalSummaryDrop(e)) {
+            logWarn('DND', 'Depot externe bloque dans le resume');
+          }
+          return;
+        }
         e.preventDefault();
         const y = e.clientY;
         const rowsNow = Array.from(preview.querySelectorAll('.pv-row'));
@@ -459,6 +479,16 @@ export function renderSummaryPreview(preview, toggle, textarea, raw, {
         rebuildRaw();
       });
     })();
+
+    // Firefox can otherwise insert a dragged HTML selection directly into a
+    // contenteditable summary row. The drop handlers above are the primary
+    // guard; beforeinput is a second line of defence for browser-specific
+    // contenteditable behaviour.
+    preview.addEventListener('beforeinput', (event) => {
+      if (event.inputType !== 'insertFromDrop') return;
+      event.preventDefault();
+      logWarn('DND', 'Insertion native issue d un depot bloquee');
+    });
 
     let syncTimer = null;
     function rebuildRaw() {
